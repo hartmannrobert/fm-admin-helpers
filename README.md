@@ -32,9 +32,16 @@ The focus is on:
 - **Script and Role Button**
   - Always navigates to the given administration setting
 - **Workflow Button**
+
   - Is only available when in a workspace and opens the workflow editor for the given workspace in a new tab.
 
-![Shortcut Buttons](images/Shortcut-Buttons.png)
+<p align="center">
+    <img
+        src="images/Shortcut-Buttons.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+</p>
 
 ### Workspace Manager Improvements
 
@@ -44,7 +51,13 @@ The focus is on:
 
   - Display Workspace ID for easier copy possiblity
 
-![Workspace Manager Improvements](images/Workspace-Manager-Filter.png)
+<p align="center">
+    <img
+        src="images/Workspace-Manager-Filter.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+</p>
 
 ### Item Details Improvements
 
@@ -55,11 +68,18 @@ The focus is on:
   - One-click expansion or collapse of all workspace setup sections
 
 - **Layout Optimization**
+
   - Move Edit, Clone and Delete Button next to Item Details Name
   - Add FieldID next to the Item Details Name
   - Click FieldID to copy it to clipboard
 
-![Item Details Improvements](images/Item-Details.png)
+<p align="center">
+    <img
+        src="images/Item-Details.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+</p>
 
 ### Security Administration Improvements
 
@@ -71,12 +91,25 @@ The focus is on:
 
   - Reordered action columns for better usability
 
+<p align="center">
+    <img
+        src="images/Security-Filter.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+</p>
+
 - **Improved Selection Screen**
 - _Add All_ and _Remove All_ buttons to quickly move all options at once
 - Increased size for the window itself to list more options at once and reduce scrolling need
 
-![Security Filter](images/Security-Filter.png)
-![Security Selection Screen Improvements](images/Security-Selection-Screen.png)
+<p align="center">
+    <img
+        src="images/Security-Selection-Screen.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+</p>
 
 ---
 
@@ -87,7 +120,13 @@ The focus is on:
 - **Layout Optimization**
   - Move the action columns further to the front for better usability
 
-![Scripting Filter](images/Script-Filter.png)
+<p align="center">
+    <img
+        src="images/Script-Filter.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+</p>
 
 ---
 
