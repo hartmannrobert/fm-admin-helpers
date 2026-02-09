@@ -124,7 +124,7 @@ After pulling updates or modifying the source code:
 
 ### Item Details Improvements
 
-- **Filter ItemDetails**
+- **Filter Item Details**
   - Hides item details not matching filter and jumps to the next instance by hitting Enter
 - **Expand All / Collapse All sections**
 
