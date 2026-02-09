@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Fusion Manage Helper",
+  "version": "0.1.0",
+  "action": {
+    "default_title": "FM",
+    "default_popup": "popup/popup.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://*.autodeskplm360.net/plm/*",
+    "https://*.autodeskplm360.net/admin*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.autodeskplm360.net/plm/*",
+        "https://*.autodeskplm360.net/admin*"
+      ],
+      "js": [
+        "content/config-bridge.js",
+        "content/utils.js",
+        "content/feature-buttons.js",
+        "content/feature-fieldid.js",
+        "content/feature-scripts.js",
+        "content/feature-security.js",
+        "content/feature-workspace.js",
+        "content/bootstrap.js"
+      ],
+      "css": ["content.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

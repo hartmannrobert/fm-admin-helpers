@@ -1,0 +1,192 @@
+.fm-btn {
+  height: 30px;
+  min-width: 25px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border: none;
+  border-radius: 2px;
+  padding: 0 2px;
+
+  background: #d9d9d9;
+  color: #666666b3;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fm-btn .material-icons {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.fm-btn:hover .material-icons {
+  color: #000;
+}
+
+.fm-btn.disabled {
+  opacity: 0.1;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.fm-field-id{
+  color: #4675A8;
+  cursor: copy;
+  font-weight: 600;
+  padding-right: 7px;
+  padding-left: 3px;
+  user-select: nontexe;
+  opacity: 0.95;
+}
+.fm-ws-id-badge {
+  color: #4675A8;
+  cursor: text;
+  font-weight: 600;
+  padding-right: 7px;
+  padding-left: 3px;
+  user-select: text;
+  opacity: 0.95;
+}
+
+.fm-field-id:hover {
+  text-decoration: underline;
+}
+
+
+#fm-search-security,
+#fm-search-script,
+.fm-search-input {
+  padding: 0 10px;
+  padding: 3px 12px 3px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  margin: 10px 0;
+  line-height: 1.6;
+  font-size: 100%;
+  min-width: 120px;
+  max-width: 50vw;
+}
+
+#fm-admin-search::placeholder {
+  color: #64748b;
+}
+.fm-field-id {
+  font-weight: 600;
+}
+
+.fm-field-icons {
+  display: inline-flex;
+  gap: 2px;
+  margin-right: 0;
+  vertical-align: middle;
+}
+
+.fm-field-icons img {
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Stack bulk buttons above single-move arrows */
+.roundButtonsWrapperWithDescription {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: auto;
+  overflow: visible;
+}
+
+/* Container for the two bulk buttons */
+.fm-bulk-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* Reset native button styling */
+.fm-bulk-btn {
+  background: transparent;
+  border: 0;
+  padding: 2px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* Google Material icon styling */
+.fm-bulk-btn .material-icons {
+  font-size: 22px;
+  color: #555;
+}
+
+.fm-bulk-btn:hover .material-icons {
+  color: #000;
+}
+
+/* Optional: subtle disabled state */
+.fm-bulk-btn[data-fm-busy="1"] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: 400;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Base style for expand / collapse icon buttons */
+#fm-collapse-sections-btn,
+#fm-expand-sections-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 27px;
+  min-width: 28px;
+  padding: 0 8px;          /* horizontal only */
+  box-sizing: border-box;
+
+  border:1px solid #C9C9C9;
+  border-radius: 3px;
+  background: #EAEAEA;
+  cursor: pointer;
+  box-shadow: 0 1px 0 0 rgba(204, 204, 204, 0.5);
+}
+
+#fm-collapse-sections-btn:hover,
+#fm-expand-sections-btn:hover {
+  background: #C9C9C9;
+}
+
+#setupbuttons > span:last-child {
+  display: inline-flex;
+  align-items: center;
+}
+
+#fm-collapse-sections-btn .material-icons,
+#fm-expand-sections-btn .material-icons {
+  font-size: 20px;
+  line-height: 1;          /* critical */
+  display: block;          /* removes inline baseline quirks */
+}
+
+/* Active match (the one you cycled to) */
+#layoutContainer div.fieldIdentifier.fm-field-match-active {
+  outline: 2px solid rgba(37, 99, 235, 0.55);
+  outline-offset: -1px;
+  border-radius: 4px;
+}
