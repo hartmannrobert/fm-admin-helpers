@@ -86,8 +86,6 @@ After pulling updates or modifying the source code:
 
 ---
 
----
-
 ## Features
 
 ### Shortcut Buttons
@@ -165,8 +163,8 @@ After pulling updates or modifying the source code:
 </p>
 
 - **Improved Selection Screen**
-- _Add All_ and _Remove All_ buttons to quickly move all options at once
-- Increased size for the window itself to list more options at once and reduce scrolling need
+  - _Add All_ and _Remove All_ buttons to quickly move all options at once
+  - Increased size for the window itself to list more options at once and reduce scrolling need
 
 <p align="center">
     <img
@@ -175,8 +173,6 @@ After pulling updates or modifying the source code:
         style="border:1px solid #d0d7de; border-radius:6px;"
     />
 </p>
-
----
 
 ### Scripting and Picklist Manager Improvements
 
