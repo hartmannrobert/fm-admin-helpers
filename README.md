@@ -23,6 +23,71 @@ The focus is on:
 
 ---
 
+## Setup Instructions
+
+This extension is distributed as source code and must be loaded as an unpacked Chrome extension.
+
+### Installation Steps
+
+1. **Download the repository**
+
+2. **Open the Chrome Extensions page**
+
+   - Navigate to:
+     ```
+     chrome://extensions
+     ```
+
+3. **Enable Developer Mode**
+
+   - Toggle **Developer mode** in the top-right corner
+
+4. **Load the unpacked extension**
+
+   - Click **Load unpacked**
+   - Select the **root folder of the extension** (the folder containing `manifest.json`)
+
+5. **Verify installation**
+
+   - The extension should now appear in the list of installed extensions
+   - No browser restart is required
+
+6. **(Optional) Pin Extension for easier toggle**
+   - Pin the Extension to easily access it and toggle the features you want to use
+
+<table>
+  <tr>
+    <td>
+      <img
+        src="images/Pin-Extension.png"
+        width="320"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+      />
+    </td>
+    <td>
+      <img
+        src="images/Control-Center.png"
+        width="300"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+      />
+    </td>
+  </tr>
+</table>
+
+---
+
+### Updating the Extension
+
+After pulling updates or modifying the source code:
+
+1. Go to `chrome://extensions`
+2. Click the **Refresh** icon on the extension card
+3. Reload the Fusion Manage page
+
+---
+
+---
+
 ## Features
 
 ### Shortcut Buttons
