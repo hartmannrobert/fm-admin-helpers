@@ -1,27 +1,33 @@
 window.FM = window.FM || {};
 
-function moveTableColumnToFront(tableEl, colIndex) {
-    const thead = tableEl.querySelector("thead");
-    const tbody = tableEl.querySelector("tbody");
-    if (!thead || !tbody) return false;
-  
-    const headerRow = thead.rows?.[0];
-    if (!headerRow || headerRow.cells.length <= colIndex) return false;
-  
-    // Move header cell
-    const headerCell = headerRow.cells[colIndex];
-    headerRow.insertBefore(headerCell, headerRow.cells[0]);
-  
-    // Move body cells
-    const bodyRows = tbody.rows || [];
-    for (const row of bodyRows) {
-      if (!row.cells || row.cells.length <= colIndex) continue;
-      const cell = row.cells[colIndex];
-      row.insertBefore(cell, row.cells[0]);
-    }
-  
-    return true;
+function moveColumn(tableContainerEl, fromIndex, toIndex) {
+  const theadRow = tableContainerEl.querySelector("thead tr");
+  const tbody = tableContainerEl.querySelector("tbody");
+  if (!theadRow || !tbody) return false;
+
+  const headCells = theadRow.cells;
+  if (!headCells || headCells.length <= fromIndex) return false;
+
+  const hCell = headCells[fromIndex];
+  hCell.remove();
+
+  const headAfterRemoval = theadRow.cells.length;
+  if (toIndex >= headAfterRemoval) theadRow.appendChild(hCell);
+  else theadRow.insertBefore(hCell, theadRow.cells[toIndex]);
+
+  for (const row of Array.from(tbody.rows || [])) {
+    if (!row.cells || row.cells.length <= fromIndex) continue;
+
+    const cell = row.cells[fromIndex];
+    cell.remove();
+
+    const len = row.cells.length;
+    if (toIndex >= len) row.appendChild(cell);
+    else row.insertBefore(cell, row.cells[toIndex]);
   }
+
+  return true;
+}
 
 
 FM.runScriptsTabMover =function() {
@@ -64,7 +70,171 @@ FM.runScriptsTabMover =function() {
     return rows;
   }
 
+  function getScriptIdFromHref(href) {
+    const h = String(href || "");
+    const m = h.match(/script\.form\?ID=(\d+)/i);
+    return m ? m[1] : null;
+  }
 
+
+  function ensureEditInNewTabButtons(tableContainerEl) {
+    const rows = tableContainerEl.querySelectorAll("tbody tr");
+    for (const row of rows) {
+      const editLink = row.querySelector('a[href*="script.form?ID="]');
+      if (!editLink) continue;
+
+      const actionCell = editLink.closest("td");
+      if (!actionCell) continue;
+
+      if (actionCell.querySelector("a.fm-open-script-newtab")) continue;
+
+      const scriptId = getScriptIdFromHref(editLink.getAttribute("href"));
+      if (!scriptId) continue;
+
+      actionCell.classList.add("fm-action-cell");
+
+      const a = document.createElement("a");
+      a.className = "fm-open-script-newtab";
+      a.href = `/script.form?ID=${scriptId}`;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.title = "Edit (open in new tab)";
+
+      const mi = document.createElement("span");
+      mi.className = "material-icons";
+      mi.textContent = "open_in_new";
+
+      const fb = document.createElement("span");
+      fb.className = "fm-fallback";
+      fb.textContent = "↗";
+      fb.style.display = "none";
+
+      a.appendChild(mi);
+      a.appendChild(fb);
+
+      setTimeout(() => {
+        const w = mi.getBoundingClientRect().width;
+        if (!w || w < 10) {
+          mi.style.display = "none";
+          fb.style.display = "";
+        }
+      }, 0);
+
+      actionCell.insertBefore(a, actionCell.firstChild);
+    }
+  }
+
+  function identifyScriptsCells(row) {
+    const tds = Array.from(row.querySelectorAll(":scope > td"));
+    if (!tds.length) return null;
+
+    const action = tds.find(td => td.querySelector('a[href*="script.form?ID="]')) || null;
+    const whereUsed =
+      tds.find(td => {
+        const a = td.querySelector("a");
+        const txt = (a?.textContent || td.textContent || "").toLowerCase();
+        const onclick = String(a?.getAttribute("onclick") || "");
+        return txt.includes("where used") || onclick.includes("showAjaxWhereUsed");
+      }) || null;
+
+    const name =
+      tds.find(td => td.querySelector("b")) ||
+      tds.find(td => (td.textContent || "").trim() && td.classList.contains("nowrap")) ||
+      null;
+
+    const used = new Set([action, whereUsed, name].filter(Boolean));
+    const desc = tds.find(td => !used.has(td)) || null;
+
+    return { action, name, desc, whereUsed, tds };
+  }
+
+  function reorderScriptsBody(tableContainerEl) {
+    const tbody = tableContainerEl.querySelector("tbody");
+    if (!tbody) return false;
+
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    if (!rows.length) return false;
+
+    let changed = false;
+
+    for (const row of rows) {
+      const info = identifyScriptsCells(row);
+      if (!info) continue;
+
+      const { name, action, desc, whereUsed } = info;
+      if (!name || !action) continue; // minimum to act safely
+
+      // Desired order
+      const desired = [name, action, desc, whereUsed].filter(Boolean);
+
+      // If already in desired order, skip
+      const current = Array.from(row.querySelectorAll(":scope > td"));
+      const same =
+        current.length === desired.length &&
+        current.every((c, i) => c === desired[i]);
+
+      if (same) continue;
+
+      // Re-append in desired order
+      for (const cell of desired) row.appendChild(cell);
+      changed = true;
+    }
+
+    return changed;
+  }
+
+  function rebuildScriptsHeader(tableContainerEl) {
+    const theadRow = tableContainerEl.querySelector("thead tr");
+    if (!theadRow) return;
+
+    const ths = Array.from(theadRow.querySelectorAll(":scope > th"));
+    if (!ths.length) return;
+
+    // Only rebuild if it looks like the scripts header (has Action / Unique Name / Description)
+    const headerText = ths.map(th => (th.textContent || "").trim().toLowerCase()).join("|");
+    const looksLikeScripts =
+      headerText.includes("unique name") || headerText.includes("description") || headerText.includes("action");
+    if (!looksLikeScripts) return;
+
+    // Create a clean 4-column header matching our body order
+    theadRow.innerHTML = "";
+
+    const mk = (txt, style) => {
+      const th = document.createElement("th");
+      th.textContent = txt;
+      if (style) th.setAttribute("style", style);
+      return th;
+    };
+
+    // Match your sample: name has min-width, description grows, action narrow, where used narrow
+    theadRow.appendChild(mk("Unique Name", "min-width:8em"));
+    theadRow.appendChild(mk("Action", ""));
+    theadRow.appendChild(mk("Description", "width:100%"));
+    theadRow.appendChild(mk("", "")); // Where Used has blank header in your DOM
+  }
+
+  FM.runScriptsTabEnhancements = function () {
+    if (!isOnScriptsTab()) return;
+
+    const containers = document.querySelectorAll(".tableContainer");
+    if (!containers.length) return;
+
+    
+    for (const c of containers) {
+      c.classList.add("fm-scripts-table");
+      // IMPORTANT: do NOT permanently guard the whole function,
+      // because tbody can re-render while the container stays the same.
+      // We instead guard only the header rebuild.
+      if (c.dataset.fmScriptsHeaderRebuilt !== "1") {
+        rebuildScriptsHeader(c);
+        c.dataset.fmScriptsHeaderRebuilt = "1";
+      }
+
+      // Always reorder body (idempotent) and ensure buttons (idempotent)
+      reorderScriptsBody(c);
+      ensureEditInNewTabButtons(c);
+    }
+  };
   function applyScriptsFilter(query) {
     const q = normalize(query);
     const rows = getScriptsTableRows();

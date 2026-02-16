@@ -339,3 +339,44 @@ td .fm-open-newtab-btn {
   flex: 0 0 auto;
 }
 
+/* Scripts tab: "Edit in new tab" button inside Action cell */
+a.fm-open-script-newtab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: middle;
+  text-decoration: none !important;
+  opacity: 0.9;
+}
+
+a.fm-open-script-newtab:hover {
+  opacity: 1;
+}
+
+a.fm-open-script-newtab .material-icons {
+  font-size: 16px;
+  line-height: 16px;
+}
+
+a.fm-open-script-newtab .fm-fallback {
+  font-size: 13px;
+  line-height: 16px;
+}
+
+/* Keep Action cell tight */
+.tableContainer table td.fm-action-cell {
+  white-space: nowrap !important;
+}
+
+.fm-scripts-table table th:nth-child(1),
+.fm-scripts-table table td:nth-child(1) {
+  width: 300px !important;
+  min-width: 300px !important;
+  max-width: 300px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}

@@ -32,7 +32,7 @@ function mainTick() {
   if (FM.isEnabled("enabledOther")) {
     FM.safeRun("workflowState", () => FM.updateWorkflowButtonState?.());
     FM.safeRun("fieldId", () => FM.runFieldIdFeature?.());
-    FM.safeRun("scriptsMover", () => FM.runScriptsTabMover?.());
+    FM.safeRun("runScriptsTabEnhancements", () => FM.runScriptsTabEnhancements?.());
     FM.safeRun("scriptsSearch", () => FM.runScriptsSearchFeature?.());
     FM.safeRun("adminUsersSearch", () => FM.runAdminUsersSearchTick?.());
     FM.safeRun("adminMover", () => FM.runSecurityRolesGroupsLayoutTick?.());
