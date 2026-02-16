@@ -31,6 +31,12 @@ async function copyToClipboard(text) {
  * reliable (DOM order alone can still render "odd" due to FM styling).
  */
 function moveButtonsInFrontOfFieldId(itemSpan, fieldIdSpan) {
+
+  if (!itemSpan || !fieldIdSpan) return;
+
+  const lc = document.getElementById("layoutContainer");
+  if (!lc || !lc.contains(itemSpan)) return; // <-- prevents nonLayoutContainer proxying
+
   if (!itemSpan || !fieldIdSpan) return;
 
   const container = itemSpan.closest("div.fieldIdentifier");
