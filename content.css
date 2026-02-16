@@ -220,4 +220,68 @@
   margin-right: 2px;
 }
 
+/* If the page already loads Material Icons, you can remove any @import.
+   If it doesn't, keep whatever mechanism you're using to load them. */
+
+   td .fm-open-newtab-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  
+    background: transparent;
+    border: 0;
+    padding: 0;
+    margin-right: 6px;
+  
+    cursor: pointer;
+    vertical-align: middle;
+  
+    /* prevent inheriting weird text styling */
+    font: inherit;
+    line-height: 1 !important;
+  }
+  
+  td .fm-open-newtab-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  
+  /* High-specificity + important where FM tends to override */
+  td .fm-open-newtab-btn .fm-open-newtab-icon.material-icons {
+    font-size: 16px !important;
+    line-height: 16px !important;
+    height: 16px;
+    width: 16px;
+  
+    color: #3c7392 !important;
+    vertical-align: middle;
+  
+    /* material-icons sometimes inherit font-weight/letter-spacing */
+    font-weight: normal !important;
+    letter-spacing: normal !important;
+  }
+  
+  td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
+    color: #2a566f !important;
+  }
+  
+
+  /* Wrapper makes the first column act like "text left, icon right" */
+td .fm-open-newtab-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* Keep link on the left */
+td .fm-open-newtab-wrap > a {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Push the button to the far right so all icons line up */
+td .fm-open-newtab-btn {
+  margin-left: 10px;
+  flex: 0 0 auto;
+}
 

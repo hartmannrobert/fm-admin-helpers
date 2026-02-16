@@ -48,6 +48,8 @@ function mainTick() {
 
 
     FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
+
+    FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
   }
 }
 
