@@ -190,3 +190,34 @@
   outline-offset: -1px;
   border-radius: 4px;
 }
+
+/* === Field ID – Icon Proxy Layout === */
+
+/* Wrapper that appears before the Field ID */
+#layoutContainer .fm-field-icons {
+  display: inline-flex;
+  gap: 2px;
+  margin-right: 2px;
+  vertical-align: middle;
+}
+
+#layoutContainer .fm-field-icons img {
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+/* Hide native FM icons but keep them in DOM for native wiring */
+#layoutContainer .fm-native-icon-hidden {
+  visibility: hidden !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Field ID spacing */
+#layoutContainer .fm-field-id {
+  margin-right: 2px;
+}
+
+

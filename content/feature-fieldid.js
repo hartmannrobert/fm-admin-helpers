@@ -36,59 +36,82 @@ function moveButtonsInFrontOfFieldId(itemSpan, fieldIdSpan) {
   const container = itemSpan.closest("div.fieldIdentifier");
   if (!container) return;
 
-  // Find the actual elements (direct children of the outer container)
-  const deleteBtn = container.querySelector(":scope > img.deleteButton");
-  const cloneBtn  = container.querySelector(":scope > img.cloneIcon");
-  const editBtn   = container.querySelector(":scope > img.editIcon");
+  // Native FM icons live here (and must stay here to keep wiring)
+  const nativeDelete = container.querySelector(":scope > img.deleteButton");
+  const nativeClone  = container.querySelector(":scope > img.cloneIcon");
+  const nativeEdit   = container.querySelector(":scope > img.editIcon");
 
-  const buttonsByKey = {
-    edit: editBtn,
-    clone: cloneBtn,
-    delete: deleteBtn,
-  };
+  // If there are no native icons to proxy, do nothing
+  if (!nativeEdit && !nativeClone && !nativeDelete) return;
 
-  // Nothing to move
-  if (!editBtn && !cloneBtn && !deleteBtn) return;
-
-  // Desired visual order: Edit, Clone, Delete
-  const desiredOrder = ["edit", "clone", "delete"];
-
-  // Create or reuse wrapper inside the span (before fieldIdSpan)
-  let iconWrapper = itemSpan.querySelector(":scope > .fm-field-icons");
-  if (!iconWrapper) {
-    iconWrapper = document.createElement("span");
-    iconWrapper.className = "fm-field-icons";
-    itemSpan.insertBefore(iconWrapper, fieldIdSpan);
+  // Create or reuse proxy wrapper inside the span (before fieldIdSpan)
+  let proxy = itemSpan.querySelector(":scope > .fm-field-icons");
+  if (!proxy) {
+    proxy = document.createElement("span");
+    proxy.className = "fm-field-icons";
+    proxy.setAttribute("data-fm-proxy-icons", "1");
+    itemSpan.insertBefore(proxy, fieldIdSpan);
+  } else {
+    // If this wrapper was created by other logic and contains moved native imgs, stop.
+    // We only support proxy mode now.
+    proxy.setAttribute("data-fm-proxy-icons", "1");
   }
 
-  // Check existing order in wrapper (by key) to avoid unnecessary DOM ops
-  const currentKeys = Array.from(iconWrapper.children)
-    .map((el) => (el.classList.contains("editIcon") ? "edit" :
-                  el.classList.contains("cloneIcon") ? "clone" :
-                  el.classList.contains("deleteButton") ? "delete" : null))
-    .filter(Boolean);
+  // Hide native icons in place (do not remove / do not move)
+  // Use visibility hidden so layout stays stable if FM expects it.
+  if (nativeEdit) nativeEdit.classList.add("fm-native-icon-hidden");
+  if (nativeClone) nativeClone.classList.add("fm-native-icon-hidden");
+  if (nativeDelete) nativeDelete.classList.add("fm-native-icon-hidden");
 
-  const needsReorder = desiredOrder.join(",") !== currentKeys.join(",");
+  // Helper to build a proxy <img> that triggers the native icon
+  function ensureProxyButton(key, nativeEl, src, className) {
+    if (!nativeEl) return;
 
-  if (!needsReorder) {
-    // Mark as done so other code can skip heavy ops if you like
-    itemSpan.dataset.fmButtonsMoved = "1";
-    return;
+    let btn = proxy.querySelector(`:scope > img[data-fm-proxy="${key}"]`);
+    if (!btn) {
+      btn = document.createElement("img");
+      btn.setAttribute("data-fm-proxy", key);
+      btn.src = src;
+      btn.className = className;
+      btn.draggable = false;
+
+      // Critical: stop row click and trigger native behavior
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Dispatch a real click on the native control
+        nativeEl.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+      }, true);
+
+      proxy.appendChild(btn);
+    } else {
+      // Keep src/class in sync
+      if (btn.src !== src) btn.src = src;
+      if (btn.className !== className) btn.className = className;
+    }
   }
 
-  // Move nodes into wrapper in desired order (appendChild moves existing node)
-  for (const key of desiredOrder) {
-    const el = buttonsByKey[key];
-    if (el) iconWrapper.appendChild(el);
-  }
+  // Clear proxies and rebuild in deterministic order
+  // This avoids duplicates when FM re-renders.
+  const desired = [
+    { key: "edit",   el: nativeEdit,   src: "images/icons/edit_16.png",      cls: "editIcon" },
+    { key: "clone",  el: nativeClone,  src: "images/icons/copy_file_16.png", cls: "cloneIcon" },
+    { key: "delete", el: nativeDelete, src: "images/buttons/delete_16.png",  cls: "deleteButton" },
+  ];
 
-  // Optionally ensure any remaining icon-like imgs (unexpected cases) are appended
-  // This keeps things robust if FM adds extra icons later.
-  const leftover = Array.from(container.children).filter(c => c.tagName === "IMG" && !iconWrapper.contains(c));
-  leftover.forEach(img => iconWrapper.appendChild(img));
+  // Remove any old proxies not in desired
+  Array.from(proxy.querySelectorAll(":scope > img[data-fm-proxy]")).forEach((img) => {
+    const k = img.getAttribute("data-fm-proxy");
+    if (!desired.some(d => d.key === k)) img.remove();
+  });
+
+  // Rebuild in order
+  desired.forEach(d => ensureProxyButton(d.key, d.el, d.src, d.cls));
 
   itemSpan.dataset.fmButtonsMoved = "1";
 }
+
 
 
 function enhanceFieldIdentifiersOnce(root = document) {
@@ -617,3 +640,10 @@ window.FM.runFieldIdFeature = function () {
     ensureFilterOnce();
   };
 })();
+
+
+
+
+
+
+
