@@ -1,36 +1,90 @@
-.fm-btn {
-  height: 30px;
-  min-width: 25px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-
-  border: none;
-  border-radius: 2px;
-  padding: 0 2px;
-
-  background: #d9d9d9;
-  color: #666666b3;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.fm-btn .material-icons {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.fm-btn:hover .material-icons {
-  color: #000;
-}
-
-.fm-btn.disabled {
-  opacity: 0.1;
-  cursor: not-allowed;
-  pointer-events: none;
-}
+/* ---------------------------
+   Base button (main UI default)
+   --------------------------- */
+   #fm-shortcuts .fm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 4px 8px;
+    background: #d9d9d9;
+    color: #666666b3;
+    cursor: pointer;
+    line-height: 1;
+  }
+  
+  #fm-shortcuts .fm-btn .material-icons {
+    font-size: 18px;
+    line-height: 18px;
+  }
+  
+  #fm-shortcuts .fm-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .fm-btn:hover .material-icons {
+    color: #000;
+  }
+  
+  /* ---------------------------
+     Admin UI header: scoped container
+     Buttons live next to the admin <li>
+     Use transparent background and inherit color from nav
+     --------------------------- */
+  #global_navigation #fm-shortcuts {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+  }
+  
+  /* Lightweight nav-style buttons.
+     Do not reset everything. Override only the chrome that matters. */
+  #global_navigation #fm-shortcuts .fm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;               /* reduce clickable area for nav */
+    border-radius: 4px;
+    background: transparent;    /* inherit nav background */
+    border: none;
+    box-shadow: none;
+    color: inherit;             /* match nav text/icon color */
+    cursor: pointer;
+  }
+  
+  /* Slightly smaller icon for tighter nav spacing */
+  #global_navigation #fm-shortcuts .material-icons {
+    font-size: 16px;
+    line-height: 16px;
+    color: inherit;
+  }
+  
+  /* Subtle hover that will also adapt to dark/light themes.
+     Use rgba white/black depending on nav color. If you need strict
+     tenant parity, replace with a computed variable. */
+  #global_navigation #fm-shortcuts .fm-btn:hover {
+    background: rgba(255,255,255,0.06); /* works well on dark nav */
+  }
+  
+  /* Force-remove any stubborn chrome only in this scope */
+  #global_navigation #fm-shortcuts .fm-btn {
+    box-shadow: none !important;
+    background-image: none !important;
+  }
+  
+  /* Optional: more compact variant (uncomment to use) */
+  /*
+  #global_navigation #fm-shortcuts .fm-btn {
+    padding: 2px;
+  }
+  #global_navigation #fm-shortcuts .material-icons {
+    font-size: 14px;
+  }
+  */
+  
+  
 
 .fm-field-id{
   color: #4675A8;

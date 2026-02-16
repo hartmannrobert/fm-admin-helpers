@@ -26,7 +26,7 @@ FM.injectMaterialIcons?.();
 
 function mainTick() {
   if (FM.isEnabled("enabledButtons")) {
-    FM.safeRun("buttons", () => FM.injectButtons?.());
+    FM.safeRun("buttons", () => FM.initShortcuts?.());
   }
 
   if (FM.isEnabled("enabledOther")) {
