@@ -52,6 +52,13 @@ FM.runScriptsTabMover =function() {
     const hash = String(location.hash || "");
     return href.includes("tab=scripts") || hash.includes("tab=scripts");
   }
+
+  function cleanupScriptsTableMarkers() {
+    // Remove scripts-only marker from any table containers when not on scripts tab
+    for (const el of document.querySelectorAll('.tableContainer[data-fm-scripts-table="1"]')) {
+      delete el.dataset.fmScriptsTable;
+    }
+  }
   
   function normalize(s) {
     return (s || "").toLowerCase().trim();
@@ -214,17 +221,17 @@ FM.runScriptsTabMover =function() {
   }
 
   FM.runScriptsTabEnhancements = function () {
-    if (!isOnScriptsTab()) return;
+    if (!isOnScriptsTab()) {
+      cleanupScriptsTableMarkers();
+      return;
+    }
 
     const containers = document.querySelectorAll(".tableContainer");
     if (!containers.length) return;
 
     
     for (const c of containers) {
-      c.classList.add("fm-scripts-table");
-      // IMPORTANT: do NOT permanently guard the whole function,
-      // because tbody can re-render while the container stays the same.
-      // We instead guard only the header rebuild.
+      c.dataset.fmScriptsTable = "1";
       if (c.dataset.fmScriptsHeaderRebuilt !== "1") {
         rebuildScriptsHeader(c);
         c.dataset.fmScriptsHeaderRebuilt = "1";

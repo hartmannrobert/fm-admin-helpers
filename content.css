@@ -371,8 +371,8 @@ a.fm-open-script-newtab .fm-fallback {
   white-space: nowrap !important;
 }
 
-.fm-scripts-table table th:nth-child(1),
-.fm-scripts-table table td:nth-child(1) {
+.tableContainer[data-fm-scripts-table="1"] table th:nth-child(1),
+.tableContainer[data-fm-scripts-table="1"] table td:nth-child(1) {
   width: 300px !important;
   min-width: 300px !important;
   max-width: 300px !important;
