@@ -360,24 +360,27 @@ window.FM = window.FM || {};
       );
     }
 
-    // Insert AFTER the text (after the anchor) but aligned by wrapper CSS
     wrap.appendChild(btn);
 
     anchor.dataset.fmNewtabInjected = "1";
   }
 
   function injectButtons(root) {
-    // Standard ds-path links
-    root.querySelectorAll('a.link[data-ds-path]').forEach(addOpenButtonNextTo);
 
-    // workspacewarning rows
-    root.querySelectorAll("a.workspacewarning").forEach(addOpenButtonNextTo);
-
-    // Workflow editor modal link
     root
-      .querySelectorAll('a[onclick*="workflowEditorActions"][onclick*="showWorkflowModal"]')
+      .querySelectorAll('td:not(.workspaceEditButtons) > a.link[data-ds-path]')
+      .forEach((a) => {
+        if (a.closest(".workspaceEditButtons")) return;    
+        if (a.querySelector("img")) return;                  
+        addOpenButtonNextTo(a);
+      });
+      
+    root.querySelectorAll("td:not(.workspaceEditButtons) > a.workspacewarning").forEach(addOpenButtonNextTo);
+    root
+      .querySelectorAll('td:not(.workspaceEditButtons) > a[onclick*="workflowEditorActions"][onclick*="showWorkflowModal"]')
       .forEach(addOpenButtonNextTo);
   }
+  
 
   function getRoot() {
     return document.getElementById("layoutContainer") || document.body;
