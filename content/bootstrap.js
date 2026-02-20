@@ -1,3 +1,4 @@
+// bootstrap.js
 window.FM = window.FM || {};
 
 FM.config = FM.config || {
@@ -9,7 +10,6 @@ window.addEventListener("message", (ev) => {
   if (ev.source !== window) return;
   const msg = ev.data;
   if (!msg || msg.type !== "FM_CONFIG") return;
-
   FM.config = { ...FM.config, ...(msg.payload || {}) };
 });
 
@@ -21,48 +21,91 @@ FM.safeRun = FM.safeRun || function (name, fn) {
   try { fn(); } catch (e) { console.warn(`[FM] Feature failed: ${name}`, e); }
 };
 
-
 FM.injectMaterialIcons?.();
 
+// Main tick now uses the grouped feature API from fm-features.js
 function mainTick() {
   if (FM.isEnabled("enabledButtons")) {
     FM.safeRun("buttons", () => FM.initShortcuts?.());
   }
 
-  if (FM.isEnabled("enabledOther")) {
-    FM.safeRun("workflowState", () => FM.updateWorkflowButtonState?.());
-    FM.safeRun("fieldId", () => FM.runFieldIdFeature?.());
-    FM.safeRun("runScriptsTabEnhancements", () => FM.runScriptsTabEnhancements?.());
-    FM.safeRun("scriptsSearch", () => FM.runScriptsSearchFeature?.());
-    FM.safeRun("adminUsersSearch", () => FM.runAdminUsersSearchTick?.());
-    FM.safeRun("adminMover", () => FM.runSecurityRolesGroupsLayoutTick?.());
+  if (!FM.isEnabled("enabledOther")) return;
 
+  FM.safeRun("workflowState", () => FM.updateWorkflowButtonState?.());
+  FM.safeRun("fieldId", () => FM.runFieldIdFeature?.());
 
-    FM.safeRun("sectionToggle", () => FM.runSectionToggleFeature?.());
-    FM.safeRun("workspaceFilter", () => FM.runWorkspacesSearchFeature?.());
-    FM.safeRun("picklistsActions", () => FM.runPicklistsTick?.());
+  // Scripts + Picklists grouped features (from fm-features.js)
+  FM.safeRun("scriptsAndPicklists", () => {
+    // Prefer the combined helper if present; fall back to per-feature ticks
+    if (typeof FM.tickFeatures === "function") {
+      FM.tickFeatures();
+      return;
+    }
+    FM.features?.scripts?.tick?.();
+    FM.features?.picklists?.tick?.();
+  });
 
+  FM.safeRun("adminUsersSearch", () => FM.runAdminUsersSearchTick?.());
+  FM.safeRun("adminMover", () => FM.runSecurityRolesGroupsLayoutTick?.());
 
-    FM.safeRun("securityWindow", () => FM.injectAdminUsersPaneCSS?.());
-    FM.safeRun("securityMoveAllButton", () => FM.ensureBulkMoveButtonsInCenter?.());
+  FM.safeRun("sectionToggle", () => FM.runSectionToggleFeature?.());
 
+  FM.safeRun("injectCollapseExpandButtons", () => FM.injectCollapseExpandButtons()?.());
+  
+  FM.safeRun("workspaceFilter", () => FM.runWorkspacesSearchFeature?.());
+  FM.safeRun("picklistsActions", () => FM.runPicklistsTick?.());
 
-    FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
+  FM.safeRun("securityWindow", () => FM.injectAdminUsersPaneCSS?.());
+  FM.safeRun("securityMoveAllButton", () => FM.ensureBulkMoveButtonsInCenter?.());
 
-    FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
-  }
+  FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
+  FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
+
+  FM.safeRun("runWorkspacesCompactModeTick", () => FM.runWorkspacesCompactModeTick?.());
 }
 
-mainTick();
-setInterval(mainTick, 800);
+(function () {
+  let dirty = true;          // run at least once
+  let scheduled = false;
+  let lastRun = 0;
 
-let pending = false;
-const mo = new MutationObserver(() => {
-  if (pending) return;
-  pending = true;
-  setTimeout(() => {
-    pending = false;
-    mainTick();
-  }, 200);
-});
-mo.observe(document.documentElement, { childList: true, subtree: true });
+  const MIN_GAP_MS = 350;    // lower = more responsive, higher = more stable
+  const FALLBACK_INTERVAL_MS = 1200;
+
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+
+    requestAnimationFrame(() => {
+      scheduled = false;
+
+      const now = Date.now();
+      if (!dirty) return;
+
+      // throttle
+      if (now - lastRun < MIN_GAP_MS) {
+        // try again shortly, still coalesced
+        setTimeout(schedule, MIN_GAP_MS);
+        return;
+      }
+
+      dirty = false;
+      lastRun = now;
+      mainTick();
+    });
+  }
+
+  // Fallback interval so we still recover if some DOM changes are missed
+  setInterval(() => {
+    dirty = true;
+    schedule();
+  }, FALLBACK_INTERVAL_MS);
+
+  // MutationObserver sets dirty only, does NOT call mainTick directly
+  const mo = new MutationObserver(() => {
+    dirty = true;
+    schedule();
+  });
+
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+})();

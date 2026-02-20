@@ -380,3 +380,195 @@ a.fm-open-script-newtab .fm-fallback {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
+
+/* === Scripts: Simplified Grid View === */
+#print_body.fm-scripts-simple-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 46px 1fr;
+  gap: 10px;
+}
+
+/* Your own topbar occupies the whole first row */
+#print_body.fm-scripts-simple-grid #fm-scripts-topbar {
+  grid-column: 1 / 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  box-sizing: border-box;
+}
+
+/* Existing menu should also span full width */
+#print_body.fm-scripts-simple-grid .itemsectionmenu {
+  grid-column: 1 / 5;
+}
+
+/* Hide 3rd column in scripts tables only when grid mode is active */
+#print_body.fm-scripts-simple-grid .tableContainer table thead tr > th:nth-child(3),
+#print_body.fm-scripts-simple-grid .tableContainer table tbody tr > td:nth-child(3) {
+  width: 1px !important;
+  max-width: 1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  visibility: hidden !important; /* hides text but leaves it in DOM */
+  pointer-events: none !important;
+}
+
+/* Script name hover */
+.tableContainer td.fm-script-name-hover {
+  text-decoration: underline;
+}
+
+/* .itemsectionmenu {
+  display: flex;
+  align-items: center;
+} */
+
+/* Grid toggle icon button */
+.itemsectionmenu .fm-scripts-grid-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  border: 0;
+  background: transparent;
+  vertical-align: middle;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-active {
+  background: rgba(60, 115, 146, 0.12);
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn .material-icons {
+  font-size: 22px;
+  line-height: 1;
+  color: #666;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-active .material-icons {
+  color: #3c7392;
+}
+
+/* Workspace compact list: name column + aligned quicklink pills */
+.fm-ws-namewrap {
+  display: inline-block;
+  width: 420px;            /* adjust once to control where pills start */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.fm-ws-links-slot {
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: middle;
+  margin-left: 10px;
+}
+
+.fm-ws-links-bar {
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.fm-ws-pill {
+  width: 40px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-left: 4px;
+  box-sizing: border-box;
+
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+
+  text-decoration: none;
+  color: #3c7396;
+
+  vertical-align: middle;
+}
+
+.fm-ws-pill-icon.material-icons {
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.fm-ws-pill:hover {
+  background-color: #3c7396;
+  border-color: #3c7396;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.fm-ws-pill:hover .fm-ws-pill-icon {
+  color: #ffffff;
+}
+
+/* Compact toggle icon button */
+
+.fm-ws-compact-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+
+  width: 28px;
+  height: 28px;
+  margin-left: 8px;
+
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  background: #fff;
+
+  cursor: pointer;
+  box-sizing: border-box;
+
+  transition: background-color 120ms ease,
+              border-color 120ms ease,
+              box-shadow 120ms ease;
+}
+
+.fm-ws-compact-toggle-btn .material-icons {
+  font-size: 18px;
+  color: #3c7396;
+}
+
+/* Hover */
+.fm-ws-compact-toggle-btn:hover {
+  background-color: rgba(60, 115, 150, 0.08);
+  border-color: rgba(60, 115, 150, 0.4);
+}
+
+/* Active state when compact mode is enabled */
+.fm-ws-compact-toggle-btn.active {
+  background-color: #3c7396;
+  border-color: #3c7396;
+}
+
+.fm-ws-compact-toggle-btn.active .material-icons {
+  color: #ffffff;
+}
+
+/* Focus */
+.fm-ws-compact-toggle-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(60, 115, 150, 0.35);
+}
+
+#fm-search-workspaces {
+  vertical-align: middle;
+}
