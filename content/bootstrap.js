@@ -1,3 +1,4 @@
+// bootstrap.js
 window.FM = window.FM || {};
 
 FM.config = FM.config || {
@@ -9,7 +10,6 @@ window.addEventListener("message", (ev) => {
   if (ev.source !== window) return;
   const msg = ev.data;
   if (!msg || msg.type !== "FM_CONFIG") return;
-
   FM.config = { ...FM.config, ...(msg.payload || {}) };
 });
 
@@ -21,37 +21,42 @@ FM.safeRun = FM.safeRun || function (name, fn) {
   try { fn(); } catch (e) { console.warn(`[FM] Feature failed: ${name}`, e); }
 };
 
-
 FM.injectMaterialIcons?.();
 
+// Main tick now uses the grouped feature API from fm-features.js
 function mainTick() {
   if (FM.isEnabled("enabledButtons")) {
     FM.safeRun("buttons", () => FM.initShortcuts?.());
   }
 
-  if (FM.isEnabled("enabledOther")) {
-    FM.safeRun("workflowState", () => FM.updateWorkflowButtonState?.());
-    FM.safeRun("fieldId", () => FM.runFieldIdFeature?.());
-    FM.safeRun("runScriptsTabEnhancements", () => FM.runScriptsTabEnhancements?.());
-    FM.safeRun("scriptsSearch", () => FM.runScriptsSearchFeature?.());
-    FM.safeRun("adminUsersSearch", () => FM.runAdminUsersSearchTick?.());
-    FM.safeRun("adminMover", () => FM.runSecurityRolesGroupsLayoutTick?.());
+  if (!FM.isEnabled("enabledOther")) return;
 
+  FM.safeRun("workflowState", () => FM.updateWorkflowButtonState?.());
+  FM.safeRun("fieldId", () => FM.runFieldIdFeature?.());
 
-    FM.safeRun("sectionToggle", () => FM.runSectionToggleFeature?.());
-    FM.safeRun("workspaceFilter", () => FM.runWorkspacesSearchFeature?.());
-    FM.safeRun("picklistsActions", () => FM.runPicklistsTick?.());
+  // Scripts + Picklists grouped features (from fm-features.js)
+  FM.safeRun("scriptsAndPicklists", () => {
+    // Prefer the combined helper if present; fall back to per-feature ticks
+    if (typeof FM.tickFeatures === "function") {
+      FM.tickFeatures();
+      return;
+    }
+    FM.features?.scripts?.tick?.();
+    FM.features?.picklists?.tick?.();
+  });
 
+  FM.safeRun("adminUsersSearch", () => FM.runAdminUsersSearchTick?.());
+  FM.safeRun("adminMover", () => FM.runSecurityRolesGroupsLayoutTick?.());
 
-    FM.safeRun("securityWindow", () => FM.injectAdminUsersPaneCSS?.());
-    FM.safeRun("securityMoveAllButton", () => FM.ensureBulkMoveButtonsInCenter?.());
+  FM.safeRun("sectionToggle", () => FM.runSectionToggleFeature?.());
+  FM.safeRun("workspaceFilter", () => FM.runWorkspacesSearchFeature?.());
+  FM.safeRun("picklistsActions", () => FM.runPicklistsTick?.());
 
+  FM.safeRun("securityWindow", () => FM.injectAdminUsersPaneCSS?.());
+  FM.safeRun("securityMoveAllButton", () => FM.ensureBulkMoveButtonsInCenter?.());
 
-    FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
-
-    FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
-    FM.safeRun("scriptsSimpleGridView", () => FM.runScriptsSimpleGridViewTick?.());
-  }
+  FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
+  FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
 }
 
 (function () {
