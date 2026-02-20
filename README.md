@@ -113,10 +113,23 @@ After pulling updates or modifying the source code:
 - **Layout Optimization**
 
   - Display Workspace ID for easier copy possiblity
+  - Quicklink Buttons to open the given setting in a new tab
 
 <p align="center">
     <img
         src="images/Workspace-Manager-Filter.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+</p>
+
+- **Expert Mode**
+  - Moves the most important settings into the header of the workspace for easy access
+  - Disables the auto-expand when 2 or less hits on filtering the workspace
+
+<p align="center">
+    <img
+        src="images/Workspace-Manager-Expert-Mode.png"
         width="600"
         style="border:1px solid #d0d7de; border-radius:6px;"
     />
@@ -179,7 +192,9 @@ After pulling updates or modifying the source code:
 - **Filter Results**
   - Hides items that do not match the filter
 - **Layout Optimization**
+  - Put Action scripts to the top as they are the most used
   - Move the action columns further to the front for better usability
+  - Click on the script name to open it in a new tab
 
 <p align="center">
     <img
@@ -188,6 +203,18 @@ After pulling updates or modifying the source code:
         style="border:1px solid #d0d7de; border-radius:6px;"
     />
 </p>
+
+- **Script Grid Mode**
+
+  - Switches between a list of all scripts and a grid layout
+
+    <p align="center">
+      <img
+          src="images/Script-Grid-View.png"
+          width="600"
+          style="border:1px solid #d0d7de; border-radius:6px;"
+      />
+  </p>
 
 ---
 
