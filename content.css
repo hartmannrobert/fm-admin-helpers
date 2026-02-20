@@ -380,3 +380,82 @@ a.fm-open-script-newtab .fm-fallback {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
+
+/* === Scripts: Simplified Grid View === */
+#print_body.fm-scripts-simple-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 46px 1fr;
+  gap: 10px;
+}
+
+/* Your own topbar occupies the whole first row */
+#print_body.fm-scripts-simple-grid #fm-scripts-topbar {
+  grid-column: 1 / 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  box-sizing: border-box;
+}
+
+/* Existing menu should also span full width */
+#print_body.fm-scripts-simple-grid .itemsectionmenu {
+  grid-column: 1 / 5;
+}
+
+/* Hide 3rd column in scripts tables only when grid mode is active */
+#print_body.fm-scripts-simple-grid .tableContainer table thead tr > th:nth-child(3),
+#print_body.fm-scripts-simple-grid .tableContainer table tbody tr > td:nth-child(3) {
+  width: 1px !important;
+  max-width: 1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  visibility: hidden !important; /* hides text but leaves it in DOM */
+  pointer-events: none !important;
+}
+
+/* Script name hover */
+.tableContainer td.fm-script-name-hover {
+  text-decoration: underline;
+}
+
+/* .itemsectionmenu {
+  display: flex;
+  align-items: center;
+} */
+
+/* Grid toggle icon button */
+.itemsectionmenu .fm-scripts-grid-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  border: 0;
+  background: transparent;
+  vertical-align: middle;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-active {
+  background: rgba(60, 115, 146, 0.12);
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn .material-icons {
+  font-size: 22px;
+  line-height: 1;
+  color: #666;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-active .material-icons {
+  color: #3c7392;
+}

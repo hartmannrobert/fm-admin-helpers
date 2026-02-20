@@ -50,19 +50,52 @@ function mainTick() {
     FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
 
     FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
+    FM.safeRun("scriptsSimpleGridView", () => FM.runScriptsSimpleGridViewTick?.());
   }
 }
 
-mainTick();
-setInterval(mainTick, 800);
+(function () {
+  let dirty = true;          // run at least once
+  let scheduled = false;
+  let lastRun = 0;
 
-let pending = false;
-const mo = new MutationObserver(() => {
-  if (pending) return;
-  pending = true;
-  setTimeout(() => {
-    pending = false;
-    mainTick();
-  }, 200);
-});
-mo.observe(document.documentElement, { childList: true, subtree: true });
+  const MIN_GAP_MS = 350;    // lower = more responsive, higher = more stable
+  const FALLBACK_INTERVAL_MS = 1200;
+
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+
+    requestAnimationFrame(() => {
+      scheduled = false;
+
+      const now = Date.now();
+      if (!dirty) return;
+
+      // throttle
+      if (now - lastRun < MIN_GAP_MS) {
+        // try again shortly, still coalesced
+        setTimeout(schedule, MIN_GAP_MS);
+        return;
+      }
+
+      dirty = false;
+      lastRun = now;
+      mainTick();
+    });
+  }
+
+  // Fallback interval so we still recover if some DOM changes are missed
+  setInterval(() => {
+    dirty = true;
+    schedule();
+  }, FALLBACK_INTERVAL_MS);
+
+  // MutationObserver sets dirty only, does NOT call mainTick directly
+  const mo = new MutationObserver(() => {
+    dirty = true;
+    schedule();
+  });
+
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+})();

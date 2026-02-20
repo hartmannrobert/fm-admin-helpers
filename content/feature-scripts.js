@@ -1,5 +1,154 @@
 window.FM = window.FM || {};
 
+FM.state = FM.state || {};
+FM.state.scriptsFilterLastInputAt = 0;
+
+function isScriptsGridEnabled() {
+  return localStorage.getItem("fmScriptsSimpleGridView") === "1";
+}
+
+function findScriptsFilterInput() {
+  // Prefer your known ID if you have one, otherwise fall back
+  return (
+    document.querySelector("#fm-search-script input") ||
+    document.querySelector('.itemsectionmenu input[placeholder*="Filter"]') ||
+    document.querySelector('.itemsectionmenu input[type="search"]') ||
+    null
+  );
+}
+
+function ensureScriptsFilterInputListener() {
+  const input = findScriptsFilterInput();
+  if (!input) return;
+
+  if (input.dataset.fmFilterWatch === "1") return;
+  input.dataset.fmFilterWatch = "1";
+
+  const mark = () => { FM.state.scriptsFilterLastInputAt = Date.now(); };
+  input.addEventListener("input", mark, { passive: true });
+  input.addEventListener("keyup", mark, { passive: true });
+}
+
+function isActivelyFilteringScripts() {
+  const input = findScriptsFilterInput();
+  if (!input) return false;
+
+  // "Actively filtering" = user is typing or DOM is still updating shortly after typing
+  const recentlyTyped = Date.now() - (FM.state.scriptsFilterLastInputAt || 0) < 350;
+
+  // If focused and has content, treat it as active while user interacts
+  const focused = document.activeElement === input;
+  const hasValue = String(input.value || "").trim().length > 0;
+
+  return recentlyTyped || (focused && hasValue);
+}
+
+const LS_KEY = "fmScriptsSimpleGridView";
+const TOGGLE_CLASS = "fm-scripts-grid-toggle";
+
+function getPrintBody() {
+  return document.getElementById("print_body");
+}
+
+function getEnabled() {
+  return localStorage.getItem(LS_KEY) === "1";
+}
+
+function setEnabled(v) {
+  localStorage.setItem(LS_KEY, v ? "1" : "0");
+}
+
+function applyState() {
+  const pb = getPrintBody();
+  if (!pb) return;
+  pb.classList.toggle("fm-scripts-simple-grid", getEnabled());
+}
+
+function updateVisual(btn, enabled) {
+  if (!btn) return;
+
+  btn.classList.toggle("fm-active", !!enabled);
+  btn.title = enabled
+    ? "Switch to List View"
+    : "Switch to Grid View";
+
+  btn.setAttribute("aria-pressed", enabled ? "true" : "false");
+}
+
+
+function ensureToggleOnce() {
+  const menu = document.querySelector(".itemsectionmenu");
+  // const LS_KEY = "fmScriptsSimpleGridView";
+  const BTN_CLASS = "fm-scripts-grid-toggle-btn";
+
+  if (!menu) return;
+
+  let btn = menu.querySelector(`.${BTN_CLASS}`);
+  if (btn) return;
+
+  btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = BTN_CLASS;
+
+  const icon = document.createElement("span");
+  icon.className = "material-icons";
+  icon.textContent = "calendar_view_week";
+
+  btn.appendChild(icon);
+
+  btn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    const next = !getEnabled();
+    setEnabled(next);
+    applyState(next);
+    updateVisual(btn, next);
+  });
+
+  menu.appendChild(btn);
+
+  // Initialize state
+  const enabled = getEnabled();
+  applyState(enabled);
+  updateVisual(btn, enabled);
+}
+
+FM.runScriptsSimpleGridViewTick = function () {
+  if (!isOnScriptsTab()) return;
+  ensureToggleOnce();
+
+  const menu = document.querySelector(".itemsectionmenu");
+  const btn = menu ? menu.querySelector(`.${BTN_CLASS}`) : null;
+  const enabled = getEnabled();
+
+  applyState(enabled);
+  updateVisual(btn, enabled);
+};
+
+
+let lastGridEnabled = null;
+
+function applyStateIfChanged() {
+  const enabled = getEnabled();
+  if (enabled === lastGridEnabled) return; // nothing to do
+  lastGridEnabled = enabled;
+
+  const pb = document.getElementById("print_body");
+  if (!pb) return;
+  pb.classList.toggle("fm-scripts-simple-grid", enabled);
+}
+
+FM.runScriptsSimpleGridViewTick = function () {
+  if (!isOnScriptsTab()) return;
+
+  applyStateIfChanged();
+  ensureToggleOnce();
+};
+
+
+
+
 function moveColumn(tableContainerEl, fromIndex, toIndex) {
   const theadRow = tableContainerEl.querySelector("thead tr");
   const tbody = tableContainerEl.querySelector("tbody");
@@ -83,53 +232,6 @@ FM.runScriptsTabMover =function() {
     return m ? m[1] : null;
   }
 
-
-  function ensureEditInNewTabButtons(tableContainerEl) {
-    const rows = tableContainerEl.querySelectorAll("tbody tr");
-    for (const row of rows) {
-      const editLink = row.querySelector('a[href*="script.form?ID="]');
-      if (!editLink) continue;
-
-      const actionCell = editLink.closest("td");
-      if (!actionCell) continue;
-
-      if (actionCell.querySelector("a.fm-open-script-newtab")) continue;
-
-      const scriptId = getScriptIdFromHref(editLink.getAttribute("href"));
-      if (!scriptId) continue;
-
-      actionCell.classList.add("fm-action-cell");
-
-      const a = document.createElement("a");
-      a.className = "fm-open-script-newtab";
-      a.href = `/script.form?ID=${scriptId}`;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.title = "Edit (open in new tab)";
-
-      const mi = document.createElement("span");
-      mi.className = "material-icons";
-      mi.textContent = "open_in_new";
-
-      const fb = document.createElement("span");
-      fb.className = "fm-fallback";
-      fb.textContent = "↗";
-      fb.style.display = "none";
-
-      a.appendChild(mi);
-      a.appendChild(fb);
-
-      setTimeout(() => {
-        const w = mi.getBoundingClientRect().width;
-        if (!w || w < 10) {
-          mi.style.display = "none";
-          fb.style.display = "";
-        }
-      }, 0);
-
-      actionCell.insertBefore(a, actionCell.firstChild);
-    }
-  }
 
   function identifyScriptsCells(row) {
     const tds = Array.from(row.querySelectorAll(":scope > td"));
@@ -219,11 +321,100 @@ FM.runScriptsTabMover =function() {
     theadRow.appendChild(mk("Description", "width:100%"));
     theadRow.appendChild(mk("", "")); // Where Used has blank header in your DOM
   }
+  function moveChildByIdToIndex(parentEl, childId, targetIndex) {
+    if (!parentEl) return false;
+  
+    const child = parentEl.querySelector(`#${CSS.escape(childId)}`);
+    if (!child) return false;
+  
+    const kids = Array.from(parentEl.children).filter(n => n.nodeType === 1);
+    if (!kids.length) return false;
+  
+    const clampedIndex = Math.max(0, Math.min(targetIndex, kids.length - 1));
+    if (kids[clampedIndex] === child) return true; // already there
+  
+    // Insert before the element currently at target index
+    parentEl.insertBefore(child, kids[clampedIndex]);
+    return true;
+  }
+
+  function ensureScriptNameOpensInNewTab(tableContainerEl) {
+    const rows = tableContainerEl.querySelectorAll("tbody tr");
+    for (const row of rows) {
+      // Guard once per row instance
+      if (row.dataset.fmNameNewtab === "1") continue;
+  
+      // Find the edit link to extract script ID (reliable)
+      const editLink = row.querySelector('a[href*="script.form?ID="]');
+      if (!editLink) continue;
+  
+      const scriptId = getScriptIdFromHref(editLink.getAttribute("href"));
+      if (!scriptId) continue;
+  
+      // Find the name cell (your first td with <b>)
+      const nameCell =
+        row.querySelector('td b')?.closest("td") ||
+        row.querySelector("td.nowrap") ||
+        row.querySelector("td");
+  
+      if (!nameCell) continue;
+  
+      // Make it feel like a link
+      nameCell.style.cursor = "pointer";
+  
+      // Optional: add subtle hint on hover (can move to content.css if you prefer)
+      nameCell.addEventListener(
+        "mouseenter",
+        () => nameCell.classList.add("fm-script-name-hover"),
+        { passive: true }
+      );
+      nameCell.addEventListener(
+        "mouseleave",
+        () => nameCell.classList.remove("fm-script-name-hover"),
+        { passive: true }
+      );
+  
+      nameCell.addEventListener("click", (ev) => {
+        // Only hijack normal left click without modifiers
+        if (ev.defaultPrevented) return;
+        if (ev.button !== 0) return; // not left click
+        if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+  
+        // If user clicked an actual interactive element inside the cell, do nothing
+        const interactive = ev.target?.closest?.("a, button, input, textarea, select, label");
+        if (interactive) return;
+  
+        ev.preventDefault();
+        ev.stopPropagation();
+  
+        window.open(`/script.form?ID=${scriptId}`, "_blank", "noopener,noreferrer");
+      });
+  
+      row.dataset.fmNameNewtab = "1";
+    }
+  }
 
   FM.runScriptsTabEnhancements = function () {
     if (!isOnScriptsTab()) {
       cleanupScriptsTableMarkers();
       return;
+    }
+
+      // Make sure we have the listener wired once the filter exists
+    ensureScriptsFilterInputListener();
+
+  // Key change: while filtering in grid view, do not touch the scripts DOM
+    if (isScriptsGridEnabled() && isActivelyFilteringScripts()) {
+      return;
+    }
+    const actionEl = document.getElementById("list-ACTION");
+    const parent = actionEl?.parentElement;
+    if (parent) {
+      // Guard so we do it once per parent instance
+      if (parent.dataset.fmScriptsOrderDone !== "1") {
+        const ok = moveChildByIdToIndex(parent, "list-ACTION", 1);
+        if (ok) parent.dataset.fmScriptsOrderDone = "1";
+      }
     }
 
     const containers = document.querySelectorAll(".tableContainer");
@@ -239,17 +430,22 @@ FM.runScriptsTabMover =function() {
 
       // Always reorder body (idempotent) and ensure buttons (idempotent)
       reorderScriptsBody(c);
-      ensureEditInNewTabButtons(c);
+     ensureScriptNameOpensInNewTab(c);
     }
   };
+
   function applyScriptsFilter(query) {
     const q = normalize(query);
     const rows = getScriptsTableRows();
     if (rows.length === 0) return;
   
     for (const row of rows) {
-      // If table has “no data” placeholder rows, keep them visible
-      const text = normalize(row.innerText);
+      // Cache the searchable text once per row instance
+      if (row.dataset.fmSearchText == null) {
+        row.dataset.fmSearchText = normalize(row.textContent);
+      }
+    
+      const text = row.dataset.fmSearchText;
       const match = q === "" || text.includes(q);
       row.style.display = match ? "" : "none";
     }
