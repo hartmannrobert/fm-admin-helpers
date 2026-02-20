@@ -459,3 +459,61 @@ a.fm-open-script-newtab .fm-fallback {
 .itemsectionmenu .fm-scripts-grid-toggle-btn.fm-active .material-icons {
   color: #3c7392;
 }
+
+/* Workspace compact list: name column + aligned quicklink pills */
+.fm-ws-namewrap {
+  display: inline-block;
+  width: 420px;            /* adjust once to control where pills start */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.fm-ws-links-slot {
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: middle;
+  margin-left: 10px;
+}
+
+.fm-ws-links-bar {
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.fm-ws-pill {
+  width: 40px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-left: 4px;
+  box-sizing: border-box;
+
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+
+  text-decoration: none;
+  color: #3c7396;
+
+  vertical-align: middle;
+}
+
+.fm-ws-pill-icon.material-icons {
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.fm-ws-pill:hover {
+  background-color: #3c7396;
+  border-color: #3c7396;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.fm-ws-pill:hover .fm-ws-pill-icon {
+  color: #ffffff;
+}

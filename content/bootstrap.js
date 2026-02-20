@@ -60,6 +60,8 @@ function mainTick() {
 
   FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
   FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
+
+  FM.safeRun("runWorkspacesCompactModeTick", () => FM.runWorkspacesCompactModeTick?.());
 }
 
 (function () {
