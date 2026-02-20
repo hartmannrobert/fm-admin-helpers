@@ -632,38 +632,39 @@ const LINK_DEFS = [
   function ensureToggleButtonOnce(root) {
     const searchInput = root.querySelector("#fm-search-workspaces");
     if (!searchInput) return;
-
-    if (root.querySelector(`#${TOGGLE_ID}`)) return;
-
+  
+    if (root.querySelector("#fm-ws-compact-toggle")) return;
+  
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.id = TOGGLE_ID;
-    btn.className = "submitinput";
-    btn.textContent = readCompactState() ? "Normal list" : "Compact list";
-
-    btn.style.marginLeft = "8px";
-    btn.style.height = "22px";
-    btn.style.padding = "0 8px";
-    btn.style.verticalAlign = "middle";
-    btn.style.cursor = "pointer";
-
+    btn.id = "fm-ws-compact-toggle";
+    btn.className = "fm-ws-compact-toggle-btn";
+    btn.title = "Toggle Compact List";
+  
+    const icon = document.createElement("span");
+    icon.className = "material-icons";
+    icon.textContent = "token";
+  
+    btn.appendChild(icon);
+  
     btn.addEventListener("click", (e) => {
       e.preventDefault();
+  
       const next = !readCompactState();
       writeCompactState(next);
-
-      btn.textContent = next ? "Normal list" : "Compact list";
+  
+      btn.classList.toggle("active", next);
+  
       applyCompactMode(root, next);
-
-      // Let your filter logic react immediately (auto-expand suppression etc.)
       window.FM.runWorkspacesSearchFeature?.();
     });
-
-    // Insert right after the filter input (same TD)
+  
+    // initial state styling
+    if (readCompactState()) {
+      btn.classList.add("active");
+    }
+  
     searchInput.insertAdjacentElement("afterend", btn);
-
-    // Apply initial
-    applyCompactMode(root, readCompactState());
   }
 
   function observeRerenders(root) {

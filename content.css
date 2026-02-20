@@ -517,3 +517,58 @@ a.fm-open-script-newtab .fm-fallback {
 .fm-ws-pill:hover .fm-ws-pill-icon {
   color: #ffffff;
 }
+
+/* Compact toggle icon button */
+
+.fm-ws-compact-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+
+  width: 28px;
+  height: 28px;
+  margin-left: 8px;
+
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  background: #fff;
+
+  cursor: pointer;
+  box-sizing: border-box;
+
+  transition: background-color 120ms ease,
+              border-color 120ms ease,
+              box-shadow 120ms ease;
+}
+
+.fm-ws-compact-toggle-btn .material-icons {
+  font-size: 18px;
+  color: #3c7396;
+}
+
+/* Hover */
+.fm-ws-compact-toggle-btn:hover {
+  background-color: rgba(60, 115, 150, 0.08);
+  border-color: rgba(60, 115, 150, 0.4);
+}
+
+/* Active state when compact mode is enabled */
+.fm-ws-compact-toggle-btn.active {
+  background-color: #3c7396;
+  border-color: #3c7396;
+}
+
+.fm-ws-compact-toggle-btn.active .material-icons {
+  color: #ffffff;
+}
+
+/* Focus */
+.fm-ws-compact-toggle-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(60, 115, 150, 0.35);
+}
+
+#fm-search-workspaces {
+  vertical-align: middle;
+}
