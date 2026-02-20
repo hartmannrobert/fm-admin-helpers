@@ -3,10 +3,27 @@
   window.FM = window.FM || {};
 
   // ------------------ small helpers ------------------
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const safeQueryAll = (sel, root = document) => Array.from((root || document).querySelectorAll(sel || ""));
-  const safeQuery = (sel, root = document) => { try { return (root || document).querySelector(sel); } catch (e) { return null; } };
+  const safeQuery = (sel, root = document) => {
+    try { return (root || document).querySelector(sel); }
+    catch (e) { return null; }
+  };
+
+  // ------------------ page gates ------------------
+  function isAutodeskPlmHost() {
+    return /(^|\.)autodeskplm360\.net$/i.test(location.hostname || "");
+  }
+
+  function isOnWorkspaceGridTab() {
+    return location.href.includes("section=setuphome") &&
+           location.href.includes("tab=workspaces") &&
+           location.href.includes("item=grid");
+  }
+
+  function isOnWorkspaceItemDetailsTab() {
+    if (!isAutodeskPlmHost()) return false;
+    return location.href.includes("admin#section=setuphome&tab=workspaces&item=itemdetails");
+  }
 
   // ------------------ clipboard util ------------------
   async function copyToClipboard(text) {
@@ -152,248 +169,129 @@
     enhanceFieldIdentifiersOnce(document);
   };
 
-  // ------------------ Section expand / collapse ------------------
-  (function sectionToggleFeature() {
+  // ------------------ Section expand / collapse + button injection ------------------
+  (function () {
+    const ROOT_ID = "layoutContainer";
+
     const BTN_COLLAPSE_ID = "fm-collapse-sections-btn";
     const BTN_EXPAND_ID = "fm-expand-sections-btn";
-    const COLLAPSED_HEIGHT_PX = 24;
-    const EPS = 4; // visual epsilon
+    const FILTER_INPUT_ID = "fm-field-filter-input";
 
-    function isOnWorkspaceGridTab() {
-      return location.href.includes("section=setuphome") &&
-             location.href.includes("tab=workspaces") &&
-             location.href.includes("item=grid");
+    function getRoot() {
+      return document.getElementById(ROOT_ID);
     }
 
-    function getRoot() { return document.getElementById("layoutContainer"); }
-    function getSections() {
-      const r = getRoot();
-      if (!r) return [];
-      return safeQueryAll("div.sectionIdentifier", r).filter(s => r.contains(s));
+    function clickNativeToggleFromSection(section) {
+      if (!section) return false;
+
+      const sectionId = String(section.id || "");
+      const m = sectionId.match(/^(\d+)divSection$/);
+
+      const headerSpan =
+        (m && document.getElementById(`${m[1]}null`)) ||
+        section.querySelector("div.header span.sectionIdentifier");
+
+      if (!headerSpan) return false;
+
+      const toggleTarget = headerSpan.closest(
+        "a,button,[role='button'],.toggle,.sectionIdentifier"
+      );
+
+      if (!toggleTarget) return false;
+
+      toggleTarget.click();
+      return true;
     }
 
-    // Prefer real toggle anchor if present (a.toggle or header link). Fallback to span.
-    function findToggleTarget(section) {
-      // header may be child or parent depending on template
-      const toggleSelectors = [
-        'a.toggle',
-        '.header a.toggle',
-        '.header a',
-        'span.sectionIdentifier a',
-        'span.sectionIdentifier',
-      ];
-      for (const sel of toggleSelectors) {
-        const el = section.querySelector(sel);
-        if (el) return el;
-      }
-      // last resort: look up the section's header element in case toggle sits outside
-      const header = section.querySelector(".header");
-      if (header) {
-        const a = header.querySelector("a.toggle, a");
-        if (a) return a;
-      }
-      return section;
+    function collapseAllSectionsNative() {
+      const root = getRoot();
+      if (!root) return;
+
+      const opened = root.querySelectorAll("div.sectionIdentifier.sectionIdentifier_opened");
+      opened.forEach(section => clickNativeToggleFromSection(section));
     }
 
-    function clickToggle(section) {
-      const target = findToggleTarget(section);
-      if (!target) return false;
-      // If it's an anchor with href="javascript:...", dispatch a MouseEvent to trigger handlers
-      try {
-        target.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
-        return true;
-      } catch (e) {
-        try { target.click(); return true; } catch (_) { return false; }
-      }
+    function expandAllSectionsNative() {
+      const root = getRoot();
+      if (!root) return;
+
+      const collapsedSections = root.querySelectorAll(
+        'div.sectionIdentifier[id$="divSection"]:not(.sectionIdentifier_opened)'
+      );
+
+      collapsedSections.forEach((section, idx) => {
+        setTimeout(() => {
+          clickNativeToggleFromSection(section);
+        }, idx * 30);
+      });
     }
 
-    function getVisualHeightPx(el) {
-      try { return el?.getBoundingClientRect?.().height || 0; } catch (_) { return 0; }
-    }
+    function buildIconButton({ id, iconName, title, onClick }) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.id = id;
+      btn.title = title;
 
-    function isHeight24(section) {
-      const h = (section?.style?.height || "").trim();
-      return h === "24px" || h === `${COLLAPSED_HEIGHT_PX}px`;
-    }
+      const icon = document.createElement("span");
+      icon.className = "material-icons";
+      icon.textContent = iconName;
+      btn.appendChild(icon);
 
-    function isVisuallyCollapsed(section) {
-      // Prefer measured height; fallback to inline style check
-      const vh = getVisualHeightPx(section);
-      if (vh > 0) return vh <= (COLLAPSED_HEIGHT_PX + EPS);
-      return isHeight24(section);
-    }
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      });
 
-    async function ensureState(section, wantCollapsed) {
-      // multiple attempts to tolerate async re-renders
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const collapsedNow = isVisuallyCollapsed(section);
-        if (wantCollapsed ? collapsedNow : !collapsedNow) return true;
-
-        // if expanded but height pinned to 24 inline, clear it to allow expand
-        if (!wantCollapsed && isHeight24(section)) section.style.height = "";
-
-        if (!clickToggle(section)) return false;
-
-        // small backoff to allow UI to settle
-        await sleep(70 + attempt * 30);
-      }
-      // final check
-      return wantCollapsed ? isVisuallyCollapsed(section) : !isVisuallyCollapsed(section);
-    }
-
-    function enforceCollapsedStyle(section) {
-      section.style.cursor = "pointer";
-      section.style.height = `${COLLAPSED_HEIGHT_PX}px`;
-    }
-
-    async function expandAll() {
-      const sections = getSections();
-      if (!sections.length) return;
-
-      // First pass: remove inline collapsed heights so FM can expand properly
-      for (const s of sections) {
-        if (isHeight24(s)) s.style.height = "";
-      }
-
-      // Second pass: ensure each expanded
-      for (const s of sections) {
-        if (!isVisuallyCollapsed(s)) continue;
-        await ensureState(s, false);
-        // clear any inline collapsed height left behind
-        if (isHeight24(s)) s.style.height = "";
-        await sleep(20);
-      }
-    }
-
-    async function collapseAll() {
-      const sections = getSections().filter(s => !isVisuallyCollapsed(s));
-      if (!sections.length) return;
-    
-      if (FM._collapseRunning) return;
-      FM._collapseRunning = true;
-    
-      try {
-        const CONCURRENCY = 4;
-        let idx = 0;
-    
-        async function worker() {
-          while (idx < sections.length) {
-            const s = sections[idx++];
-            await ensureState(s, true);
-            if (!isVisuallyCollapsed(s)) enforceCollapsedStyle(s);
-          }
-        }
-    
-        await Promise.all(
-          Array.from({ length: Math.min(CONCURRENCY, sections.length) }, worker)
-        );
-      } finally {
-        FM._collapseRunning = false;
-      }
-    }
-    function findCancelButton() {
-      return safeQuery('#setuptoolsbuttons input.submitinput.cancel[name="cancelbutton"]') ||
-             safeQuery("#setuptoolsbuttons input.submitinput.cancel") ||
-             safeQuery('input.submitinput.cancel[value="Cancel"]');
-    }
-
-    function injectCssOnce() {
-      if (document.getElementById("fm-sectiontoggle-css")) return;
-      const style = document.createElement("style");
-      style.id = "fm-sectiontoggle-css";
-      style.textContent = `.fm-icon-btn { margin-left: 6px; } .fm-icon-btn[disabled] { opacity: 0.5; }`;
-      document.documentElement.appendChild(style);
-    }
-
-    function setBusy(btn, busy) {
-      if (!btn) return;
-      btn.dataset.fmBusy = busy ? "1" : "0";
-      btn.disabled = !!busy;
-    }
-
-    // create or reuse icon button via FM helper if available
-    function createIconButtonSpec({ id, icon, title, onClick }) {
-      let btn;
-    
-      if (typeof FM.createIconButton === "function") {
-        // FM.createIconButton does not wire onClick, so we wire it below
-        btn = FM.createIconButton({ id, icon, title });
-      } else {
-        btn = document.createElement("button");
-        btn.id = id;
-        btn.type = "button";
-        btn.title = title;
-        btn.className = "fm-icon-btn";
-        const span = document.createElement("span");
-        span.className = "material-icons";
-        span.textContent = icon;
-        btn.appendChild(span);
-      }
-    
-      if (typeof onClick === "function") {
-        // avoid duplicate bindings if called twice
-        btn.removeEventListener("click", onClick);
-        btn.addEventListener("click", onClick, { passive: false });
-      }
-    
       return btn;
     }
 
-    function ensureButtonsOnce() {
-      const cancelBtn = findCancelButton();
-      if (!cancelBtn) return null;
+    function ensureButtonsAfterFilter() {
+      // Security: do not inject anywhere else
+      if (!isOnWorkspaceItemDetailsTab()) return;
 
-      injectCssOnce();
+      // Need the section DOM
+      if (!getRoot()) return;
 
-      let collapseBtn = document.getElementById(BTN_COLLAPSE_ID);
-      if (!collapseBtn) {
-        collapseBtn = createIconButtonSpec({
-          id: BTN_COLLAPSE_ID,
-          icon: "unfold_less",
-          title: "Collapse sections",
-          onClick: () => {
-            const liveCollapse = document.getElementById(BTN_COLLAPSE_ID);
-            const liveExpand = document.getElementById(BTN_EXPAND_ID);
-            if (!liveCollapse || !liveExpand) return;
-            if (liveCollapse.dataset.fmBusy === "1" || liveExpand.dataset.fmBusy === "1") return;
-            setBusy(liveCollapse, true); setBusy(liveExpand, true);
-            collapseAll().finally(() => { setBusy(liveCollapse, false); setBusy(liveExpand, false); });
-          }
-        });
-        cancelBtn.insertAdjacentElement("afterend", collapseBtn);
-      }
+      const filterInput = document.getElementById(FILTER_INPUT_ID);
+      if (!filterInput) return;
 
-      let expandBtn = document.getElementById(BTN_EXPAND_ID);
-      if (!expandBtn) {
-        expandBtn = createIconButtonSpec({
-          id: BTN_EXPAND_ID,
-          icon: "unfold_more",
-          title: "Expand sections",
-          onClick: () => {
-            const liveCollapse = document.getElementById(BTN_COLLAPSE_ID);
-            const liveExpand = document.getElementById(BTN_EXPAND_ID);
-            if (!liveCollapse || !liveExpand) return;
-            if (liveCollapse.dataset.fmBusy === "1" || liveExpand.dataset.fmBusy === "1") return;
-            setBusy(liveCollapse, true); setBusy(liveExpand, true);
-            expandAll().finally(() => { setBusy(liveCollapse, false); setBusy(liveExpand, false); });
-          }
-        });
-        collapseBtn.insertAdjacentElement("afterend", expandBtn);
-      }
+      // Place inside the same wrapper span as Cancel + Filter
+      const wrapperSpan = filterInput.closest("span");
+      if (!wrapperSpan) return;
 
-      // Re-insert if FM moved them
-      if (collapseBtn.previousElementSibling !== cancelBtn) cancelBtn.insertAdjacentElement("afterend", collapseBtn);
-      if (expandBtn.previousElementSibling !== collapseBtn) collapseBtn.insertAdjacentElement("afterend", expandBtn);
+      // Avoid duplicates
+      if (document.getElementById(BTN_COLLAPSE_ID) || document.getElementById(BTN_EXPAND_ID)) return;
 
-      return { collapseBtn, expandBtn };
+      const collapseBtn = buildIconButton({
+        id: BTN_COLLAPSE_ID,
+        iconName: "unfold_less",
+        title: "Collapse all sections",
+        onClick: collapseAllSectionsNative
+      });
+
+      const expandBtn = buildIconButton({
+        id: BTN_EXPAND_ID,
+        iconName: "unfold_more",
+        title: "Expand all sections",
+        onClick: expandAllSectionsNative
+      });
+
+      // Insert after the filter input: [Cancel][Filter][Collapse][Expand]
+      filterInput.insertAdjacentElement("afterend", collapseBtn);
+      collapseBtn.insertAdjacentElement("afterend", expandBtn);
+
+      // Small spacing (keeps your content.css as the main styling source)
+      collapseBtn.style.marginLeft = "6px";
+      expandBtn.style.marginLeft = "6px";
     }
 
-    window.FM.runSectionToggleFeature = function () {
-      if (isOnWorkspaceGridTab()) return;
-      if (!getRoot()) return;
-      if (!getSections().length) return;
-      injectCssOnce();
-      ensureButtonsOnce();
+    window.FM.collapseAllSectionsNative = collapseAllSectionsNative;
+    window.FM.expandAllSectionsNative = expandAllSectionsNative;
+
+    // Call this from mainTick
+    window.FM.injectCollapseExpandButtons = function () {
+      ensureButtonsAfterFilter();
     };
   })();
 
@@ -406,12 +304,6 @@
     let lastQuery = "";
     let matchIds = [];
     let matchIndex = -1;
-
-    function isOnWorkspaceGridTab() {
-      return location.href.includes("section=setuphome") &&
-             location.href.includes("tab=workspaces") &&
-             location.href.includes("item=grid");
-    }
 
     function getRoot() { return document.getElementById("layoutContainer"); }
     function findCancelButton() {

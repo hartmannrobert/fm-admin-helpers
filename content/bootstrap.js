@@ -49,6 +49,9 @@ function mainTick() {
   FM.safeRun("adminMover", () => FM.runSecurityRolesGroupsLayoutTick?.());
 
   FM.safeRun("sectionToggle", () => FM.runSectionToggleFeature?.());
+
+  FM.safeRun("injectCollapseExpandButtons", () => FM.injectCollapseExpandButtons()?.());
+  
   FM.safeRun("workspaceFilter", () => FM.runWorkspacesSearchFeature?.());
   FM.safeRun("picklistsActions", () => FM.runPicklistsTick?.());
 

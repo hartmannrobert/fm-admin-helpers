@@ -322,32 +322,6 @@
       return true;
     }
 
-    // Table mover that moves the 3rd column to front (for scripts tab tables)
-    function moveTableColumnToFront(tableEl, fromIndex) {
-      // Reuse the earlier algorithm; avoid global name collision
-      const theadRow = tableEl.querySelector("thead tr");
-      const tbody = tableEl.querySelector("tbody");
-      if (!theadRow || !tbody) return false;
-      const headCells = theadRow.cells;
-      if (!headCells || headCells.length <= fromIndex) return false;
-
-      const hCell = headCells[fromIndex];
-      hCell.remove();
-      const headAfterRemoval = theadRow.cells.length;
-      if (0 >= headAfterRemoval) theadRow.appendChild(hCell);
-      else theadRow.insertBefore(hCell, theadRow.cells[0]);
-
-      for (const row of Array.from(tbody.rows || [])) {
-        if (!row.cells || row.cells.length <= fromIndex) continue;
-        const cell = row.cells[fromIndex];
-        cell.remove();
-        const len = row.cells.length;
-        if (0 >= len) row.appendChild(cell);
-        else row.insertBefore(cell, row.cells[0]);
-      }
-      return true;
-    }
-
     // Public ticks called by mainTick
     function tickSimpleGridView() {
       if (!isOnScriptsTab()) return;
