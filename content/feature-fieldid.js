@@ -266,20 +266,31 @@
     }
 
     async function collapseAll() {
-      const sections = getSections();
+      const sections = getSections().filter(s => !isVisuallyCollapsed(s));
       if (!sections.length) return;
-
-      for (const s of sections) {
-        if (isVisuallyCollapsed(s)) {
-          enforceCollapsedStyle(s);
-          continue;
+    
+      if (FM._collapseRunning) return;
+      FM._collapseRunning = true;
+    
+      try {
+        const CONCURRENCY = 4;
+        let idx = 0;
+    
+        async function worker() {
+          while (idx < sections.length) {
+            const s = sections[idx++];
+            await ensureState(s, true);
+            if (!isVisuallyCollapsed(s)) enforceCollapsedStyle(s);
+          }
         }
-        await ensureState(s, true);
-        enforceCollapsedStyle(s);
-        await sleep(20);
+    
+        await Promise.all(
+          Array.from({ length: Math.min(CONCURRENCY, sections.length) }, worker)
+        );
+      } finally {
+        FM._collapseRunning = false;
       }
     }
-
     function findCancelButton() {
       return safeQuery('#setuptoolsbuttons input.submitinput.cancel[name="cancelbutton"]') ||
              safeQuery("#setuptoolsbuttons input.submitinput.cancel") ||
@@ -302,20 +313,29 @@
 
     // create or reuse icon button via FM helper if available
     function createIconButtonSpec({ id, icon, title, onClick }) {
+      let btn;
+    
       if (typeof FM.createIconButton === "function") {
-        return FM.createIconButton({ id, icon, title, onClick });
+        // FM.createIconButton does not wire onClick, so we wire it below
+        btn = FM.createIconButton({ id, icon, title });
+      } else {
+        btn = document.createElement("button");
+        btn.id = id;
+        btn.type = "button";
+        btn.title = title;
+        btn.className = "fm-icon-btn";
+        const span = document.createElement("span");
+        span.className = "material-icons";
+        span.textContent = icon;
+        btn.appendChild(span);
       }
-      // fallback simple button with material icon span
-      const btn = document.createElement("button");
-      btn.id = id;
-      btn.type = "button";
-      btn.title = title;
-      btn.className = "fm-icon-btn";
-      const span = document.createElement("span");
-      span.className = "material-icons";
-      span.textContent = icon;
-      btn.appendChild(span);
-      btn.addEventListener("click", onClick);
+    
+      if (typeof onClick === "function") {
+        // avoid duplicate bindings if called twice
+        btn.removeEventListener("click", onClick);
+        btn.addEventListener("click", onClick, { passive: false });
+      }
+    
       return btn;
     }
 
