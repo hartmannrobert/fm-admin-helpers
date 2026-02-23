@@ -287,20 +287,21 @@ window.FM = window.FM || {};
   }
 
   function resolveTargetUrl(anchor) {
-    // A) Standard links: use their ds-path directly
-    const dsPath = anchor.getAttribute("data-ds-path") || anchor.dataset?.dsPath;
-    const abs = toAbsoluteUrl(dsPath);
-    if (abs) return abs;
-
-    // Per-anchor workspace context
     const wid = getWorkspaceIdForAnchor(anchor);
-    if (!wid) return null;
-
-    // B) workspacewarning links: build the matching /admin hash URL
     const td = anchor.closest("td");
-    const dsItem = td?.getAttribute("data-ds-item") || td?.dataset?.dsItem;
+    // data-ds-item is on the anchor (e.g. a[data-ds-item="workspaceedit"]), fallback to td
+    const dsItem =
+      anchor.getAttribute("data-ds-item") ||
+      anchor.dataset?.dsItem ||
+      td?.getAttribute("data-ds-item") ||
+      td?.dataset?.dsItem;
 
-    const map = {
+    const hashUrlMap = {
+      workspaceedit: () => buildAdminHashUrl({ item: "workspaceedit", workspaceID: wid }),
+      tabsedit: () => buildAdminHashUrl({ item: "tabsedit", workspaceID: wid }),
+      printview: () => buildAdminHashUrl({ item: "printview", workspaceID: wid }),
+      advancedPrintViewList: () => buildAdminHashUrl({ item: "advancedPrintViewList", workspaceID: wid }),
+      behavior: () => buildAdminHashUrl({ item: "behavior", workspaceID: wid }),
       itemdetails: () => buildAdminHashUrl({ item: "itemdetails", workspaceID: wid, metaType: "D" }),
       descriptor: () => buildAdminHashUrl({ item: "descriptor", workspaceID: wid }),
       grid: () => buildAdminHashUrl({ item: "grid", workspaceID: wid, metaType: "G" }),
@@ -310,11 +311,19 @@ window.FM = window.FM || {};
       relationship: () => buildAdminHashUrl({ item: "relationship", workspaceID: wid }),
     };
 
-    if (dsItem && typeof map[dsItem] === "function") {
-      return map[dsItem]();
+    // Prefer admin hash URL when we have workspace context and a known item (overrides stale data-ds-path)
+    if (wid && dsItem && typeof hashUrlMap[dsItem] === "function") {
+      return hashUrlMap[dsItem]();
     }
 
-    // C) Workflow Editor modal link: open standalone editor page with correct workspace id
+    // Standard links: use data-ds-path when no hash mapping applies
+    const dsPath = anchor.getAttribute("data-ds-path") || anchor.dataset?.dsPath;
+    const abs = toAbsoluteUrl(dsPath);
+    if (abs) return abs;
+
+    if (!wid) return null;
+
+    // Workflow Editor: open standalone editor page with correct workspace id
     const onclick = anchor.getAttribute("onclick") || "";
     if (onclick.includes("workflowEditorActions") && onclick.includes("showWorkflowModal")) {
       return `${location.origin}/workflowEditor.form?workspaceId=${encodeURIComponent(wid)}`;
