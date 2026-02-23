@@ -1,120 +1,102 @@
 /* ---------------------------
    Base button (main UI default)
    --------------------------- */
-   #fm-shortcuts .fm-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    border: 1px solid #d9d9d9;
-    border-radius: 4px;
-    padding: 4px 8px;
-    background: #d9d9d9;
-    color: #666666b3;
-    cursor: pointer;
-    line-height: 1;
-  }
-  
-  #fm-shortcuts .fm-btn .material-icons {
-    font-size: 18px;
-    line-height: 18px;
-  }
-  
-  #fm-shortcuts .fm-btn.disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-  .fm-btn:hover .material-icons {
-    color: #000;
-  }
-  
-  /* ---------------------------
-     Admin UI header: scoped container
-     Buttons live next to the admin <li>
-     Use transparent background and inherit color from nav
-     --------------------------- */
-  #global_navigation #fm-shortcuts {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: 8px;
-  }
-  
-  /* Lightweight nav-style buttons.
-     Do not reset everything. Override only the chrome that matters. */
-  #global_navigation #fm-shortcuts .fm-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;               /* reduce clickable area for nav */
-    border-radius: 4px;
-    background: transparent;    /* inherit nav background */
-    border: none;
-    box-shadow: none;
-    color: inherit;             /* match nav text/icon color */
-    cursor: pointer;
-  }
-  
-  /* Slightly smaller icon for tighter nav spacing */
-  #global_navigation #fm-shortcuts .material-icons {
-    font-size: 16px;
-    line-height: 16px;
-    color: inherit;
-  }
-  
-  /* Subtle hover that will also adapt to dark/light themes.
-     Use rgba white/black depending on nav color. If you need strict
-     tenant parity, replace with a computed variable. */
-  #global_navigation #fm-shortcuts .fm-btn:hover {
-    background: rgba(255,255,255,0.06); /* works well on dark nav */
-  }
-  
-  /* Force-remove any stubborn chrome only in this scope */
-  #global_navigation #fm-shortcuts .fm-btn {
-    box-shadow: none !important;
-    background-image: none !important;
-  }
-  
-  /* Optional: more compact variant (uncomment to use) */
-  /*
-  #global_navigation #fm-shortcuts .fm-btn {
-    padding: 2px;
-  }
-  #global_navigation #fm-shortcuts .material-icons {
-    font-size: 14px;
-  }
-  */
-  
-  
-
-.fm-field-id{
-  color: #4675A8;
-  cursor: copy;
-  font-weight: 600;
-  padding-right: 7px;
-  padding-left: 3px;
-  user-select: nontexe;
-  opacity: 0.95;
+#fm-shortcuts .fm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 4px 8px;
+  background: #d9d9d9;
+  color: #666666b3;
+  cursor: pointer;
+  line-height: 1;
 }
+
+#fm-shortcuts .fm-btn .material-icons {
+  font-size: 18px;
+  line-height: 18px;
+}
+
+#fm-shortcuts .fm-btn.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Shared hover: main nav and bulk buttons */
+.fm-btn:hover .material-icons,
+.fm-bulk-btn:hover .material-icons {
+  color: #000;
+}
+
+/* ---------------------------
+   Admin UI header: scoped container
+   Buttons live next to the admin <li>. Transparent background, inherit nav color.
+   --------------------------- */
+#global_navigation #fm-shortcuts {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+#global_navigation #fm-shortcuts .fm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none !important;
+  background-image: none !important;
+  color: inherit;
+  cursor: pointer;
+}
+
+#global_navigation #fm-shortcuts .fm-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+#global_navigation #fm-shortcuts .material-icons {
+  font-size: 16px;
+  line-height: 16px;
+  color: inherit;
+}
+
+/* ---------------------------
+   Field ID & workspace ID badge
+   --------------------------- */
+.fm-field-id,
 .fm-ws-id-badge {
   color: #4675A8;
-  cursor: text;
   font-weight: 600;
-  padding-right: 7px;
-  padding-left: 3px;
-  user-select: text;
+  padding: 0 7px 0 3px;
   opacity: 0.95;
+}
+
+.fm-field-id {
+  cursor: copy;
+  user-select: none;
 }
 
 .fm-field-id:hover {
   text-decoration: underline;
 }
 
+.fm-ws-id-badge {
+  cursor: text;
+  user-select: text;
+}
 
+/* ---------------------------
+   Search inputs
+   --------------------------- */
 #fm-search-security,
 #fm-search-script,
 .fm-search-input {
-  padding: 0 10px;
-  padding: 3px 12px 3px 12px;
+  padding: 3px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   margin: 10px 0;
@@ -127,10 +109,10 @@
 #fm-admin-search::placeholder {
   color: #64748b;
 }
-.fm-field-id {
-  font-weight: 600;
-}
 
+/* ---------------------------
+   Field icons (base + layout container overrides)
+   --------------------------- */
 .fm-field-icons {
   display: inline-flex;
   gap: 2px;
@@ -145,7 +127,29 @@
   vertical-align: middle;
 }
 
-/* Stack bulk buttons above single-move arrows */
+#layoutContainer .fm-field-icons {
+  margin-right: 2px;
+}
+
+#layoutContainer .fm-field-icons img {
+  cursor: pointer;
+}
+
+#layoutContainer .fm-field-id {
+  margin-right: 2px;
+}
+
+#layoutContainer .fm-native-icon-hidden {
+  visibility: hidden !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ---------------------------
+   Bulk buttons & round wrapper
+   --------------------------- */
 .roundButtonsWrapperWithDescription {
   display: flex;
   flex-direction: column;
@@ -155,14 +159,12 @@
   overflow: visible;
 }
 
-/* Container for the two bulk buttons */
 .fm-bulk-buttons {
   display: flex;
   gap: 8px;
   justify-content: center;
 }
 
-/* Reset native button styling */
 .fm-bulk-btn {
   background: transparent;
   border: 0;
@@ -171,22 +173,19 @@
   line-height: 1;
 }
 
-/* Google Material icon styling */
 .fm-bulk-btn .material-icons {
   font-size: 22px;
   color: #555;
 }
 
-.fm-bulk-btn:hover .material-icons {
-  color: #000;
-}
-
-/* Optional: subtle disabled state */
 .fm-bulk-btn[data-fm-busy="1"] {
   opacity: 0.5;
   pointer-events: none;
 }
 
+/* ---------------------------
+   Material Symbols
+   --------------------------- */
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined";
   font-weight: 400;
@@ -202,19 +201,19 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Base style for expand / collapse icon buttons */
+/* ---------------------------
+   Expand / collapse section buttons
+   --------------------------- */
 #fm-collapse-sections-btn,
 #fm-expand-sections-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   height: 27px;
   min-width: 28px;
-  padding: 0 8px;          /* horizontal only */
+  padding: 0 8px;
   box-sizing: border-box;
-
-  border:1px solid #C9C9C9;
+  border: 1px solid #C9C9C9;
   border-radius: 3px;
   background: #EAEAEA;
   cursor: pointer;
@@ -226,120 +225,79 @@
   background: #C9C9C9;
 }
 
-#setupbuttons > span:last-child {
+#fm-collapse-sections-btn .material-icons,
+#fm-expand-sections-btn .material-icons {
+  font-size: 20px;
+  line-height: 1;
+  display: block;
+}
+
+#setupbuttons>span:last-child {
   display: inline-flex;
   align-items: center;
 }
 
-#fm-collapse-sections-btn .material-icons,
-#fm-expand-sections-btn .material-icons {
-  font-size: 20px;
-  line-height: 1;          /* critical */
-  display: block;          /* removes inline baseline quirks */
-}
-
-/* Active match (the one you cycled to) */
+/* ---------------------------
+   Field match (active cycle highlight)
+   --------------------------- */
 #layoutContainer div.fieldIdentifier.fm-field-match-active {
   outline: 2px solid rgba(37, 99, 235, 0.55);
   outline-offset: -1px;
   border-radius: 4px;
 }
 
-/* === Field ID – Icon Proxy Layout === */
-
-/* Wrapper that appears before the Field ID */
-#layoutContainer .fm-field-icons {
-  display: inline-flex;
-  gap: 2px;
-  margin-right: 2px;
-  vertical-align: middle;
-}
-
-#layoutContainer .fm-field-icons img {
-  vertical-align: middle;
-  cursor: pointer;
-}
-
-/* Hide native FM icons but keep them in DOM for native wiring */
-#layoutContainer .fm-native-icon-hidden {
-  visibility: hidden !important;
-  width: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  pointer-events: none !important;
-}
-
-/* Field ID spacing */
-#layoutContainer .fm-field-id {
-  margin-right: 2px;
-}
-
-/* If the page already loads Material Icons, you can remove any @import.
-   If it doesn't, keep whatever mechanism you're using to load them. */
-
-   td .fm-open-newtab-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  
-    background: transparent;
-    border: 0;
-    padding: 0;
-    margin-right: 6px;
-  
-    cursor: pointer;
-    vertical-align: middle;
-  
-    /* prevent inheriting weird text styling */
-    font: inherit;
-    line-height: 1 !important;
-  }
-  
-  td .fm-open-newtab-btn:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-  
-  /* High-specificity + important where FM tends to override */
-  td .fm-open-newtab-btn .fm-open-newtab-icon.material-icons {
-    font-size: 16px !important;
-    line-height: 16px !important;
-    height: 16px;
-    width: 16px;
-  
-    color: #3c7392 !important;
-    vertical-align: middle;
-  
-    /* material-icons sometimes inherit font-weight/letter-spacing */
-    font-weight: normal !important;
-    letter-spacing: normal !important;
-  }
-  
-  td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
-    color: #2a566f !important;
-  }
-  
-
-  /* Wrapper makes the first column act like "text left, icon right" */
+/* ---------------------------
+   Open-in-new-tab button (table cell)
+   --------------------------- */
 td .fm-open-newtab-wrap {
   display: flex;
   align-items: center;
   width: 100%;
 }
 
-/* Keep link on the left */
-td .fm-open-newtab-wrap > a {
+td .fm-open-newtab-wrap>a {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-/* Push the button to the far right so all icons line up */
 td .fm-open-newtab-btn {
-  margin-left: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
+  margin: 0 6px 0 10px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  vertical-align: middle;
+  font: inherit;
+  line-height: 1 !important;
 }
 
-/* Scripts tab: "Edit in new tab" button inside Action cell */
+td .fm-open-newtab-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+td .fm-open-newtab-btn .fm-open-newtab-icon.material-icons {
+  font-size: 16px !important;
+  line-height: 16px !important;
+  height: 16px;
+  width: 16px;
+  color: #3c7392 !important;
+  vertical-align: middle;
+  font-weight: normal !important;
+  letter-spacing: normal !important;
+}
+
+td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
+  color: #2a566f !important;
+}
+
+/* ---------------------------
+   Scripts: Edit in new tab link
+   --------------------------- */
 a.fm-open-script-newtab {
   display: inline-flex;
   align-items: center;
@@ -366,7 +324,6 @@ a.fm-open-script-newtab .fm-fallback {
   line-height: 16px;
 }
 
-/* Keep Action cell tight */
 .tableContainer table td.fm-action-cell {
   white-space: nowrap !important;
 }
@@ -381,7 +338,9 @@ a.fm-open-script-newtab .fm-fallback {
   text-overflow: ellipsis !important;
 }
 
-/* === Scripts: Simplified Grid View === */
+/* ---------------------------
+   Scripts: Simplified grid view
+   --------------------------- */
 #print_body.fm-scripts-simple-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -389,7 +348,6 @@ a.fm-open-script-newtab .fm-fallback {
   gap: 10px;
 }
 
-/* Your own topbar occupies the whole first row */
 #print_body.fm-scripts-simple-grid #fm-scripts-topbar {
   grid-column: 1 / 5;
   display: flex;
@@ -399,33 +357,25 @@ a.fm-open-script-newtab .fm-fallback {
   box-sizing: border-box;
 }
 
-/* Existing menu should also span full width */
 #print_body.fm-scripts-simple-grid .itemsectionmenu {
   grid-column: 1 / 5;
 }
 
-/* Hide 3rd column in scripts tables only when grid mode is active */
-#print_body.fm-scripts-simple-grid .tableContainer table thead tr > th:nth-child(3),
-#print_body.fm-scripts-simple-grid .tableContainer table tbody tr > td:nth-child(3) {
+#print_body.fm-scripts-simple-grid .tableContainer table thead tr>th:nth-child(3),
+#print_body.fm-scripts-simple-grid .tableContainer table tbody tr>td:nth-child(3) {
   width: 1px !important;
   max-width: 1px !important;
   padding: 0 !important;
   border: 0 !important;
   overflow: hidden !important;
   white-space: nowrap !important;
-  visibility: hidden !important; /* hides text but leaves it in DOM */
+  visibility: hidden !important;
   pointer-events: none !important;
 }
 
-/* Script name hover */
 .tableContainer td.fm-script-name-hover {
   text-decoration: underline;
 }
-
-/* .itemsectionmenu {
-  display: flex;
-  align-items: center;
-} */
 
 /* Grid toggle icon button */
 .itemsectionmenu .fm-scripts-grid-toggle-btn {
@@ -435,10 +385,10 @@ a.fm-open-script-newtab .fm-fallback {
   margin-left: 10px;
   padding: 2px 6px;
   border-radius: 4px;
-  cursor: pointer;
-  user-select: none;
   border: 0;
   background: transparent;
+  cursor: pointer;
+  user-select: none;
   vertical-align: middle;
 }
 
@@ -460,45 +410,41 @@ a.fm-open-script-newtab .fm-fallback {
   color: #3c7392;
 }
 
-/* Workspace compact list: name column + aligned quicklink pills */
+/* ---------------------------
+   Workspace: compact list, pills, toggle
+   --------------------------- */
 .fm-ws-namewrap {
   display: inline-block;
-  width: 420px;            /* adjust once to control where pills start */
+  width: 420px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: middle;
 }
 
-.fm-ws-links-slot {
-  display: inline-block;
-  white-space: nowrap;
-  vertical-align: middle;
-  margin-left: 10px;
-}
-
+.fm-ws-links-slot,
 .fm-ws-links-bar {
   display: inline-block;
   white-space: nowrap;
   vertical-align: middle;
 }
 
+.fm-ws-links-slot {
+  margin-left: 10px;
+}
+
 .fm-ws-pill {
-  width: 40px;
-  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
+  width: 40px;
+  height: 24px;
   margin-left: 4px;
   box-sizing: border-box;
-
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 12px;
-
   text-decoration: none;
   color: #3c7396;
-
   vertical-align: middle;
 }
 
@@ -518,28 +464,21 @@ a.fm-open-script-newtab .fm-fallback {
   color: #ffffff;
 }
 
-/* Compact toggle icon button */
-
 .fm-ws-compact-toggle-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  vertical-align: middle;
-
   width: 28px;
   height: 28px;
   margin-left: 8px;
-
+  padding: 0;
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 6px;
   background: #fff;
-
   cursor: pointer;
   box-sizing: border-box;
-
-  transition: background-color 120ms ease,
-              border-color 120ms ease,
-              box-shadow 120ms ease;
+  vertical-align: middle;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .fm-ws-compact-toggle-btn .material-icons {
@@ -547,13 +486,11 @@ a.fm-open-script-newtab .fm-fallback {
   color: #3c7396;
 }
 
-/* Hover */
 .fm-ws-compact-toggle-btn:hover {
   background-color: rgba(60, 115, 150, 0.08);
   border-color: rgba(60, 115, 150, 0.4);
 }
 
-/* Active state when compact mode is enabled */
 .fm-ws-compact-toggle-btn.active {
   background-color: #3c7396;
   border-color: #3c7396;
@@ -563,7 +500,6 @@ a.fm-open-script-newtab .fm-fallback {
   color: #ffffff;
 }
 
-/* Focus */
 .fm-ws-compact-toggle-btn:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(60, 115, 150, 0.35);
