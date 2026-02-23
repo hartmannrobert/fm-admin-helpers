@@ -30,20 +30,20 @@ window.FM = window.FM || {};
   function ensureWorkspaceIdBadge(blockEl) {
     const menu = blockEl.querySelector(".itemmenu");
     if (!menu) return;
-  
+
     // Guard: only once per workspace instance
     if (menu.dataset.fmWsIdInjected === "1") return;
-  
+
     const wsId = (blockEl.getAttribute("data-ds-workspaceid") || "").trim();
     if (!wsId) return;
-  
+
     const badge = document.createElement("span");
     badge.className = "fm-ws-id-badge";
     badge.textContent = ` ${wsId}`;
-  
+
     // Preferred target: the grey subtitle span (e.g. "Basic Workspace")
     const subtitleSpan = menu.querySelector('span[style*="font-size:11px"]');
-  
+
     if (subtitleSpan) {
       subtitleSpan.insertAdjacentElement("afterend", badge);
     } else {
@@ -51,10 +51,10 @@ window.FM = window.FM || {};
       const a = menu.querySelector("a.toggle");
       if (a) a.insertAdjacentElement("afterend", badge);
     }
-  
+
     menu.dataset.fmWsIdInjected = "1";
   }
-  
+
 
   function setExpandedState(blockEl, expanded) {
     // expanded true -> itemdisplay, false -> itemhide
@@ -66,7 +66,7 @@ window.FM = window.FM || {};
       blockEl.classList.add("itemhide");
     }
   }
-  
+
   function isCompactListEnabled() {
     return localStorage.getItem("FM.wsCompact") === "1";
   }
@@ -98,7 +98,7 @@ window.FM = window.FM || {};
       }
       return;
     }
-    
+
     // If 2 or less remain, expand them
     if (visibleBlocks.length > 0 && visibleBlocks.length <= 2) {
       for (const block of visibleBlocks) {
@@ -228,7 +228,7 @@ window.FM = window.FM || {};
       const u = new URL(location.href);
       const wid = u.searchParams.get("workspaceID") || u.searchParams.get("workspaceId");
       if (wid) return String(wid);
-    } catch (e) {}
+    } catch (e) { }
 
     const any = document.querySelector('a[data-ds-path*="workspaceID="], a[data-ds-path*="workspaceId="]');
     const dsPath = any?.getAttribute("data-ds-path");
@@ -385,17 +385,17 @@ window.FM = window.FM || {};
     root
       .querySelectorAll('td:not(.workspaceEditButtons) > a.link[data-ds-path]')
       .forEach((a) => {
-        if (a.closest(".workspaceEditButtons")) return;    
-        if (a.querySelector("img")) return;                  
+        if (a.closest(".workspaceEditButtons")) return;
+        if (a.querySelector("img")) return;
         addOpenButtonNextTo(a);
       });
-      
+
     root.querySelectorAll("td:not(.workspaceEditButtons) > a.workspacewarning").forEach(addOpenButtonNextTo);
     root
       .querySelectorAll('td:not(.workspaceEditButtons) > a[onclick*="workflowEditorActions"][onclick*="showWorkflowModal"]')
       .forEach(addOpenButtonNextTo);
   }
-  
+
 
   function getRoot() {
     return document.getElementById("layoutContainer") || document.body;
@@ -492,8 +492,7 @@ window.FM = window.FM || {};
     // These reflect the full set you have in the itembody table plus the derived editor routes
     // Keep keys stable, labels are defined in LINK_DEFS below.
     return {
-      // Workspace level settings (real endpoint)
-      ws: `${location.origin}/workspaceEdit.do?workspaceID=${encodeURIComponent(wid)}`,
+      ws: buildAdminHashUrl({ item: "workspaceedit", workspaceID: wid }),
 
       // Setuphome editors (hash + params JSON)
       itemdetails: buildAdminHashUrl({ item: "itemdetails", workspaceID: wid, metaType: "D" }),
@@ -505,11 +504,10 @@ window.FM = window.FM || {};
       relationship: buildAdminHashUrl({ item: "relationship", workspaceID: wid }),
 
       // Additional admin pages in itembody (real endpoints)
-      tabs: `${location.origin}/tabsEdit.do?workspaceID=${encodeURIComponent(wid)}`,
-      print: `${location.origin}/printViewEdit.do?workspaceID=${encodeURIComponent(wid)}`,
-      advprint: `${location.origin}/adminPrintViewsView.form?workspaceID=${encodeURIComponent(wid)}`,
-      behavior: `${location.origin}/behavior.form?workspaceID=${encodeURIComponent(wid)}`,
-
+      tabs: buildAdminHashUrl({ item: "tabsedit", workspaceID: wid }),
+      print: buildAdminHashUrl({ item: "printview", workspaceID: wid }),
+      advprint: buildAdminHashUrl({ item: "advancedPrintViewList", workspaceID: wid }),
+      behavior: buildAdminHashUrl({ item: "behavior", workspaceID: wid }),
       // Workflow editor (based on your existing resolver)
       wf: `${location.origin}/workflowEditor.form?workspaceId=${encodeURIComponent(wid)}`
     };
@@ -517,27 +515,27 @@ window.FM = window.FM || {};
 
   // Fixed-width columns so each label aligns vertically across the workspace list.
   // Keep labels short. Full meaning goes into title tooltip.
-// ===== JS changes (compact list file) =====
+  // ===== JS changes (compact list file) =====
 
-// 1) Replace your LINK_DEFS with this (icons + tooltips)
-const LINK_DEFS = [
-  { key: "ws", icon: "settings", title: "Workspace Settings" },
+  // 1) Replace your LINK_DEFS with this (icons + tooltips)
+  const LINK_DEFS = [
+    { key: "ws", icon: "settings", title: "Workspace Settings" },
 
-  { key: "itemdetails", icon: "list_alt", title: "Item Details Tab" },
-  { key: "descriptor", icon: "sell", title: "Descriptor" },
-  { key: "grid", icon: "grid_on", title: "Grid Tab" },
-  { key: "workflowitems", icon: "add_to_queue", title: "Managed Items Tab" },
-  { key: "bom", icon: "list", title: "Bill of Materials Tab" },
-  { key: "sourcing", icon: "local_shipping", title: "Sourcing Tab" },
-  { key: "relationship", icon: "link", title: "Workspace Relationships" },
+    { key: "itemdetails", icon: "list_alt", title: "Item Details Tab" },
+    { key: "descriptor", icon: "sell", title: "Descriptor" },
+    { key: "grid", icon: "grid_on", title: "Grid Tab" },
+    { key: "workflowitems", icon: "add_to_queue", title: "Managed Items Tab" },
+    { key: "bom", icon: "list", title: "Bill of Materials Tab" },
+    { key: "sourcing", icon: "local_shipping", title: "Sourcing Tab" },
+    { key: "relationship", icon: "link", title: "Workspace Relationships" },
 
-  { key: "tabs", icon: "tab", title: "Tab Names" },
-  // { key: "print", icon: "print", title: "Print Views" },
-  // { key: "advprint", icon: "tune", title: "Advanced Print Views" },
+    { key: "tabs", icon: "tab", title: "Tab Names" },
+    // { key: "print", icon: "print", title: "Print Views" },
+    // { key: "advprint", icon: "tune", title: "Advanced Print Views" },
 
-  { key: "behavior", icon: "tune", title: "Behaviors" },
-  { key: "wf", icon: "schema", title: "Workflow Editor" }
-];
+    { key: "behavior", icon: "tune", title: "Behaviors" },
+    { key: "wf", icon: "schema", title: "Workflow Editor" }
+  ];
 
   function removeCompactQuicklinks(cardEl) {
     const slot = cardEl.querySelector('[data-fm-ws-links-slot="1"]');
@@ -548,72 +546,72 @@ const LINK_DEFS = [
     const menu = cardEl.querySelector(".itemmenu");
     const li = menu?.querySelector("ul > li");
     if (!li) return;
-  
+
     // Prevent duplicates
     if (li.querySelector('[data-fm-ws-links-slot="1"]')) return;
-  
+
     const wsId = cardEl.getAttribute("data-ds-workspaceid");
     const urls = getAllCompactTargets(wsId);
-  
+
     // Identify the name anchor (keeps expand/collapse behavior intact)
     const nameA = li.querySelector("a.toggle");
     if (!nameA) return;
-  
+
     // Wrap "name area" into fixed-width span so links start aligned for every row
     let nameWrap = li.querySelector('span[data-fm-ws-namewrap="1"]');
     if (!nameWrap) {
       nameWrap = document.createElement("span");
       nameWrap.setAttribute("data-fm-ws-namewrap", "1");
       nameWrap.className = NAMEWRAP_CLASS;
-  
+
       // Insert wrap before name anchor, then move the pieces into it
       nameA.insertAdjacentElement("beforebegin", nameWrap);
-  
+
       // Move name link
       nameWrap.appendChild(nameA);
-  
+
       // Move subtitle (the grey span) if present
       const subtitle = li.querySelector('span[style*="font-size:11px"]');
       if (subtitle && subtitle.parentElement === li) nameWrap.appendChild(subtitle);
-  
+
       // Move ws id badge if present
       const badge = li.querySelector(".fm-ws-id-badge");
       if (badge && badge.parentElement === li) nameWrap.appendChild(badge);
     }
-  
+
     // Create link slot placed AFTER the fixed name area
     const slot = document.createElement("span");
     slot.setAttribute("data-fm-ws-links-slot", "1");
     slot.className = SLOT_CLASS;
-  
+
     const bar = document.createElement("span");
     bar.setAttribute(QUICKLINKS_ATTR, "1");
     bar.className = BAR_CLASS;
-  
+
     // Render ALL defined links in fixed columns, aligned across rows
     for (const def of LINK_DEFS) {
       const url = urls[def.key];
       if (!url) continue;
-    
+
       const a = document.createElement("a");
       a.href = "javascript:;";
       a.title = `${def.title} (WS ${wsId})`;
       a.className = PILL_CLASS;
-    
+
       const icon = document.createElement("span");
       icon.className = "material-icons fm-ws-pill-icon";
       icon.textContent = def.icon;
-    
+
       a.appendChild(icon);
-    
+
       a.addEventListener("click", (e) => {
         e.preventDefault();
         window.open(url, "_blank", "noopener,noreferrer");
       });
-    
+
       bar.appendChild(a);
     }
-  
+
     slot.appendChild(bar);
     nameWrap.insertAdjacentElement("afterend", slot);
   }
@@ -632,38 +630,38 @@ const LINK_DEFS = [
   function ensureToggleButtonOnce(root) {
     const searchInput = root.querySelector("#fm-search-workspaces");
     if (!searchInput) return;
-  
+
     if (root.querySelector("#fm-ws-compact-toggle")) return;
-  
+
     const btn = document.createElement("button");
     btn.type = "button";
     btn.id = "fm-ws-compact-toggle";
     btn.className = "fm-ws-compact-toggle-btn";
     btn.title = "Toggle Compact List";
-  
+
     const icon = document.createElement("span");
     icon.className = "material-icons";
     icon.textContent = "token";
-  
+
     btn.appendChild(icon);
-  
+
     btn.addEventListener("click", (e) => {
       e.preventDefault();
-  
+
       const next = !readCompactState();
       writeCompactState(next);
-  
+
       btn.classList.toggle("active", next);
-  
+
       applyCompactMode(root, next);
       window.FM.runWorkspacesSearchFeature?.();
     });
-  
+
     // initial state styling
     if (readCompactState()) {
       btn.classList.add("active");
     }
-  
+
     searchInput.insertAdjacentElement("afterend", btn);
   }
 
