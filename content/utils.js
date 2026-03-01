@@ -18,7 +18,12 @@ FM.tenantNameFromLocation = function() {
 
 FM.isWorkspaceContext = function(url) {
     return /\/plm\/workspaces\/\d+/.test(url);
-}
+};
+
+/** True when on frontend item details page (not admin). Workspace ID may vary. */
+FM.isOnFrontendItemDetailsPage = function(url) {
+  return typeof url === "string" && /autodeskplm360\.net\/plm\/workspaces\/\d+\/items\/itemDetails/.test(url);
+};
 
 FM.isOnScriptsTab = function() {
     return location.href.includes("tab=scripts");

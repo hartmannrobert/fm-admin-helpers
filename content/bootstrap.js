@@ -32,6 +32,7 @@ function mainTick() {
   if (!FM.isEnabled("enabledOther")) return;
 
   FM.safeRun("workflowState", () => FM.updateWorkflowButtonState?.());
+  FM.safeRun("itemDetailsAdminMode", () => FM.applyItemDetailsAdminModeIfActive?.());
   FM.safeRun("fieldId", () => FM.runFieldIdFeature?.());
 
   // Scripts + Picklists grouped features (from fm-features.js)

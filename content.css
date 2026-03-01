@@ -91,6 +91,41 @@
 }
 
 /* ---------------------------
+   Item Details ADMIN mode (frontend): field ID next to collapsed value
+   --------------------------- */
+.fm-item-detail-field-id {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1.4;
+  color: #4675A8;
+  font-weight: 600;
+  padding: 0 6px;
+  cursor: copy;
+  user-select: all;
+  white-space: nowrap;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.fm-item-detail-field-id:hover {
+  text-decoration: underline;
+}
+
+.plm-matrix .fm-item-detail-field-id {
+  vertical-align: middle;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-mode-on {
+  background: #4675A8;
+  color: #fff;
+  border-color: #4675A8;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-mode-on .material-icons {
+  color: inherit;
+}
+
+/* ---------------------------
    Search inputs
    --------------------------- */
 #fm-search-security,
