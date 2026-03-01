@@ -6,6 +6,21 @@ This extension is designed for Fusion Manage administrators, implementation cons
 
 Special thanks to **Patrick Flügge**, who originally created the first features of this extension.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Setup Instructions](#setup-instructions)
+- [Features](#features)
+  - [Shortcut Buttons](#shortcut-buttons)
+  - [Workspace Manager Improvements](#workspace-manager-improvements)
+  - [Item Details Improvements](#item-details-improvements)
+  - [Security Administration Improvements](#security-administration-improvements)
+  - [Scripting and Picklist Manager Improvements](#scripting-and-picklist-manager-improvements)
+- [Architecture](#architecture)
+- [Safety and Supportability](#safety-and-supportability)
+- [Disclaimer](#disclaimer)
+
+
 ---
 
 ## Overview
@@ -106,13 +121,25 @@ After pulling updates or modifying the source code:
     />
 </p>
 
+- **Item Details Admin Mode Button**
+
+  - Is only available when in a workspace and on the item details tab. It replaces the values of all visible fields with their given unique FieldID with the option to copy the value to the clipboard. 
+
+<p align="center">
+    <img
+        src="images/Item-Details-FieldID.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+</p>
+
 ### Workspace Manager Improvements
 
 - **Filter Workspaces**
   - Auto Expand when 2 or less workspaces match the criteria
 - **Layout Optimization**
 
-  - Display Workspace ID for easier copy possiblity
+  - Display Workspace ID for easier copy possibility
   - Quicklink Buttons to open the given setting in a new tab
 
 <p align="center">
@@ -248,7 +275,6 @@ The extension is built using a modular **Manifest V3** architecture, designed fo
 - No interference with Fusion Manage APIs
 - Fully client-side
 - Easily removable by disabling the extension
-- Google
 
 **The extension is intended for internal use, demos, POCs, and admin power users, not as a replacement for standard product functionality.**
 
