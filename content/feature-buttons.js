@@ -318,19 +318,34 @@ FM.ensureButtonsPresent = function () {
       container.appendChild(btn);
     }
   }
+  var onItemDetailsPage = FM.isOnFrontendItemDetailsPage(location.href);
+  if (!FM.isAdminUi()) {
+    if (onItemDetailsPage) {
+      var itemDetailsBtn = document.getElementById("fm-btn-itemdetails-admin");
+      if (!itemDetailsBtn) {
+        itemDetailsBtn = FM.createIconButton({ id: "fm-btn-itemdetails-admin", icon: "admin_panel_settings", title: "Item Details: show field IDs", action: "toggleItemDetailsAdmin" });
+        container.insertBefore(itemDetailsBtn, container.firstChild);
+      } else if (itemDetailsBtn.parentNode === container && itemDetailsBtn !== container.firstChild) {
+        container.insertBefore(itemDetailsBtn, container.firstChild);
+      }
+    } else {
+      var adminBtn = document.getElementById("fm-btn-itemdetails-admin");
+      if (adminBtn) adminBtn.remove();
+    }
+  } else {
+    var itemDetailsBtnEl = document.getElementById("fm-btn-itemdetails-admin");
+    if (itemDetailsBtnEl) itemDetailsBtnEl.remove();
+  }
   ensureButton("fm-btn-ws", { id: "fm-btn-ws", icon: "settings", title: "Workspace Settings", action: "openWorkspace" });
   ensureButton("fm-btn-scripts", { id: "fm-btn-scripts", icon: "code", title: "Scripts", action: "openScripts" });
   ensureButton("fm-btn-roles", { id: "fm-btn-roles", icon: "group", title: "Roles", action: "openRoles" });
   if (!FM.isAdminUi()) {
     ensureButton("fm-btn-workflow", { id: "fm-btn-workflow", icon: "schema", title: "Workflow Editor", action: "openWorkflow" });
-    ensureButton("fm-btn-itemdetails-admin", { id: "fm-btn-itemdetails-admin", icon: "admin_panel_settings", title: "Item Details: show field IDs", action: "toggleItemDetailsAdmin" });
     FM.updateWorkflowButtonState();
     FM.updateItemDetailsAdminButtonState();
   } else {
     const wf = document.getElementById("fm-btn-workflow");
     if (wf) wf.remove();
-    const adminBtn = document.getElementById("fm-btn-itemdetails-admin");
-    if (adminBtn) adminBtn.remove();
   }
 };
 
