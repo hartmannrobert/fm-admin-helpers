@@ -307,6 +307,42 @@
       return Array.from(root.querySelectorAll("div.fieldIdentifier[id$='divField']"));
     }
 
+    /** All section containers under root (including inside matrices). */
+    function getAllSections(root) {
+      if (!root) return [];
+      return Array.from(root.querySelectorAll('div.sectionIdentifier[id$="divSection"]'));
+    }
+
+    /** Hide sections that have no visible fields; show all sections when filter is empty. */
+    function applySectionVisibilityForFilter(queryRaw) {
+      const root = getRoot();
+      if (!root) return;
+      const q = (queryRaw || "").trim().toLowerCase();
+      const sections = getAllSections(root);
+
+      if (!q) {
+        sections.forEach((section) => {
+          if (section.getAttribute("data-fm-filter-hidden") === "1") {
+            section.style.display = "";
+            section.removeAttribute("data-fm-filter-hidden");
+          }
+        });
+        return;
+      }
+
+      sections.forEach((section) => {
+        const fieldDivs = section.querySelectorAll("div.fieldIdentifier[id$='divField']");
+        const visibleCount = Array.from(fieldDivs).filter((el) => el.style.display !== "none").length;
+        if (visibleCount === 0) {
+          section.style.display = "none";
+          section.setAttribute("data-fm-filter-hidden", "1");
+        } else {
+          section.style.display = "";
+          section.removeAttribute("data-fm-filter-hidden");
+        }
+      });
+    }
+
     function getFieldIdAndName(fieldDiv) {
       const rowSpan = fieldDiv.querySelector(":scope > span.fieldIdentifier") || fieldDiv.querySelector("span.fieldIdentifier");
       if (!rowSpan) return { id: "", name: "" };
@@ -410,6 +446,7 @@
         const match = !q || hay.includes(q);
         f.style.display = match ? "" : "none";
       }
+      applySectionVisibilityForFilter(queryRaw);
       clearHighlights();
       highlightMatches(queryRaw);
       lastQuery = (queryRaw || "").trim();
