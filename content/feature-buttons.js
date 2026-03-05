@@ -287,7 +287,6 @@ FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
       a.href = item.url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.title = item.title;
       a.className = "fm-ws-quicklinks-popup-link";
       var icon = document.createElement("span");
       icon.className = "material-icons fm-ws-quicklinks-popup-icon";
