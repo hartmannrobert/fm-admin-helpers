@@ -106,20 +106,18 @@ After pulling updates or modifying the source code:
 ### Shortcut Buttons
 
 - **Settings Button**
-  - Reacts on the context. When in a workspace, it goes to either Item Details, Grid or BOM settings, depending on which tab you are on.
-- **Script and Role Button**
-  - Always navigates to the given administration setting
-- **Workflow Button**
+  - Reacts on the context. When you are not in a workspace, it leads to the general workspace manager page. If you are in a workspace, it opens up a submenu that contains shortcut links to the given workspace manager settings for this workspace.
 
-  - Is only available when in a workspace and opens the workflow editor for the given workspace in a new tab.
-
-<p align="center">
+  <p align="center">
     <img
-        src="images/Shortcut-Buttons.png"
+        src="images/Shortcut-Buttons-Menu.png"
         width="600"
         style="border:1px solid #d0d7de; border-radius:6px;"
     />
-</p>
+  </p>
+
+- **Script and Role Button**
+  - Always navigates to the given administration setting
 
 - **Item Details Admin Mode Button**
 
