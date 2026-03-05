@@ -16,8 +16,8 @@
 
   function isOnWorkspaceGridTab() {
     return location.href.includes("section=setuphome") &&
-           location.href.includes("tab=workspaces") &&
-           location.href.includes("item=grid");
+      location.href.includes("tab=workspaces") &&
+      location.href.includes("item=grid");
   }
 
   function isOnWorkspaceItemDetailsTab() {
@@ -52,7 +52,7 @@
 
   // ------------------ Field ID + proxy buttons ------------------
   function moveButtonsInFrontOfFieldId(itemSpan, fieldIdSpan) {
-    if (!itemSpan || !fieldIdSpan) return;
+    if (!itemSpan) return;
     const lc = document.getElementById("layoutContainer");
     if (!lc || !lc.contains(itemSpan)) return; // prevent proxying outside layoutContainer
 
@@ -60,17 +60,18 @@
     if (!container) return;
 
     const nativeDelete = container.querySelector(":scope > img.deleteButton");
-    const nativeClone  = container.querySelector(":scope > img.cloneIcon");
-    const nativeEdit   = container.querySelector(":scope > img.editIcon");
+    const nativeClone = container.querySelector(":scope > img.cloneIcon");
+    const nativeEdit = container.querySelector(":scope > img.editIcon");
 
     if (!nativeEdit && !nativeClone && !nativeDelete) return;
 
+    const insertBefore = fieldIdSpan ?? itemSpan.firstChild;
     let proxy = itemSpan.querySelector(":scope > .fm-field-icons");
     if (!proxy) {
       proxy = document.createElement("span");
       proxy.className = "fm-field-icons";
       proxy.setAttribute("data-fm-proxy-icons", "1");
-      itemSpan.insertBefore(proxy, fieldIdSpan);
+      itemSpan.insertBefore(proxy, insertBefore);
     } else {
       proxy.setAttribute("data-fm-proxy-icons", "1");
     }
@@ -101,9 +102,9 @@
     }
 
     const desired = [
-      { key: "edit",   el: nativeEdit,   src: "images/icons/edit_16.png",      cls: "editIcon" },
-      { key: "clone",  el: nativeClone,  src: "images/icons/copy_file_16.png", cls: "cloneIcon" },
-      { key: "delete", el: nativeDelete, src: "images/buttons/delete_16.png",  cls: "deleteButton" },
+      { key: "edit", el: nativeEdit, src: "images/icons/edit_16.png", cls: "editIcon" },
+      { key: "clone", el: nativeClone, src: "images/icons/copy_file_16.png", cls: "cloneIcon" },
+      { key: "delete", el: nativeDelete, src: "images/buttons/delete_16.png", cls: "deleteButton" },
     ];
 
     // remove old proxies not desired
@@ -120,10 +121,12 @@
 
   function enhanceFieldIdentifiersOnce(root = document) {
     if (!isOnFieldIdTargetPage()) return;
+    const showFieldId = FM.isEnabled("fieldIdShowFieldId");
+    const showIcons = FM.isEnabled("fieldIdShowIcons");
     const items = safeQueryAll("span.fieldIdentifier", root);
     for (const item of items) {
       let fieldIdSpan = item.querySelector(":scope > .fm-field-id");
-      if (!fieldIdSpan) {
+      if (showFieldId && !fieldIdSpan) {
         const currentID = (item.id || "").replace("null", "");
         if (!currentID) continue;
         fieldIdSpan = document.createElement("span");
@@ -138,7 +141,7 @@
         });
         item.insertBefore(fieldIdSpan, item.firstChild);
       }
-      moveButtonsInFrontOfFieldId(item, fieldIdSpan);
+      if (showIcons) moveButtonsInFrontOfFieldId(item, fieldIdSpan || null);
     }
   }
 
@@ -150,20 +153,6 @@
     const href = location.href || "";
     return FM_FIELDID_TARGETS.some((t) => href.includes(t));
   }
-
-  // inject CSS once
-  (function injectFieldIdCssOnce() {
-    if (document.getElementById("fm-fieldid-css")) return;
-    const style = document.createElement("style");
-    style.id = "fm-fieldid-css";
-    style.textContent = `
-      .fm-field-icons { display: inline-flex; gap: 4px; margin-right: 4px; vertical-align: middle; }
-      .fm-field-icons img { vertical-align: middle; cursor: pointer; }
-      .fm-field-id { margin-right: 6px; cursor: pointer; }
-      .fm-native-icon-hidden { visibility: hidden !important; }
-    `;
-    document.documentElement.appendChild(style);
-  })();
 
   window.FM.runFieldIdFeature = function () {
     enhanceFieldIdentifiersOnce(document);
@@ -308,8 +297,8 @@
     function getRoot() { return document.getElementById("layoutContainer"); }
     function findCancelButton() {
       return safeQuery('#setuptoolsbuttons input.submitinput.cancel[name="cancelbutton"]') ||
-             safeQuery("#setuptoolsbuttons input.submitinput.cancel") ||
-             safeQuery('input.submitinput.cancel[value="Cancel"]');
+        safeQuery("#setuptoolsbuttons input.submitinput.cancel") ||
+        safeQuery('input.submitinput.cancel[value="Cancel"]');
     }
 
     function getAllFieldDivs() {

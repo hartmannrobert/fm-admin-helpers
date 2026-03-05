@@ -79,6 +79,8 @@
 .fm-field-id {
   cursor: copy;
   user-select: none;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .fm-field-id:hover {
@@ -150,28 +152,70 @@
    --------------------------- */
 .fm-field-icons {
   display: inline-flex;
+  align-items: center;
   gap: 2px;
   margin-right: 0;
   vertical-align: middle;
+  padding: 0;
 }
 
 .fm-field-icons img {
+  display: block;
+  width: 24px;
+  height: 16px;
   margin: 0;
   padding: 0;
-  line-height: 1;
   vertical-align: middle;
+  object-fit: contain;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 1;
+  border-radius: 1px;
 }
 
 #layoutContainer .fm-field-icons {
-  margin-right: 2px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  gap: 2px;
+  line-height: 1;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
 }
 
+/* Override host .fieldIdentifier img; horizontal padding only so row stays 23px */
 #layoutContainer .fm-field-icons img {
+  cursor: pointer;
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  margin-top: -3px;
+  padding: 0 6px !important;
+  line-height: 1;
+  vertical-align: middle;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 3px;
+  box-sizing: content-box;
+}
+
+#layoutContainer .fm-field-icons img:hover {
+  background-color: #C9C9C9 !important;
+  box-shadow: 0 1px 0 0 #9b9b9b !important;
   cursor: pointer;
 }
 
 #layoutContainer .fm-field-id {
   margin-right: 2px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.9em;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 #layoutContainer .fm-native-icon-hidden {

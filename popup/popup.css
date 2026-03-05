@@ -37,6 +37,12 @@
     font-size: 13px;
   }
   
+  .hint {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    opacity: 0.8;
+  }
+
   .divider {
     height: 1px;
     margin: 10px 0;
