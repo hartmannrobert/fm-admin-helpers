@@ -701,4 +701,16 @@ window.FM = window.FM || {};
       console.warn("[FM] workspaceCompact failed", e);
     }
   };
+
+  /** Returns array of { url, icon, title } for workspace admin quicklinks (used by feature-buttons popup). */
+  window.FM.getWorkspaceQuicklinks = function (workspaceId) {
+    const wid = String(workspaceId || "").trim();
+    if (!wid) return [];
+    const urls = getAllCompactTargets(wid);
+    return LINK_DEFS.filter(function (d) {
+      return urls[d.key];
+    }).map(function (d) {
+      return { url: urls[d.key], icon: d.icon, title: d.title };
+    });
+  };
 })();

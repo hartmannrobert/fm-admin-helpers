@@ -4,6 +4,13 @@ FM.isAdminUi = function () {
   return location.href.includes("autodeskplm360.net/admin");
 };
 
+/** Extract workspace ID from current URL when on workspace items (e.g. /plm/workspaces/57/items). Returns null if not on that pattern. */
+FM.getWorkspaceIdFromItemsUrl = function (url) {
+  if (typeof url !== "string") return null;
+  var m = url.match(/\/plm\/workspaces\/(\d+)\/items/);
+  return m ? m[1] : null;
+};
+
 FM.getOrCreateButtonsContainer = function () {
   let container = document.getElementById("fm-shortcuts");
   if (container) return container;
@@ -227,6 +234,93 @@ FM.updateItemDetailsAdminButtonState = function () {
 
 FM._fmPointerHandler = null;
 
+FM._fmQuicklinksPopupClose = function (popup, onClose) {
+  if (!popup || !popup.parentNode) return;
+  popup.parentNode.removeChild(popup);
+  document.removeEventListener("click", onClose, true);
+  document.removeEventListener("scroll", onClose, true);
+};
+
+/** Shows a popup below the given button with workspace settings quicklinks. Uses FM.getWorkspaceQuicklinks(workspaceId). */
+FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
+  var existing = document.getElementById("fm-ws-quicklinks-popup");
+  if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+  var workspaceId = FM.getWorkspaceIdFromItemsUrl(location.href);
+  if (!workspaceId) return;
+
+  var links = typeof FM.getWorkspaceQuicklinks === "function" ? FM.getWorkspaceQuicklinks(workspaceId) : [];
+  var rect = anchorButton.getBoundingClientRect();
+
+  var popup = document.createElement("div");
+  popup.id = "fm-ws-quicklinks-popup";
+  popup.className = "fm-ws-quicklinks-popup";
+
+  var header = document.createElement("div");
+  header.className = "fm-ws-quicklinks-popup-header";
+  var closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "fm-ws-quicklinks-popup-close";
+  closeBtn.title = "Close";
+  closeBtn.setAttribute("aria-label", "Close");
+  var closeIcon = document.createElement("span");
+  closeIcon.className = "material-icons";
+  closeIcon.textContent = "close";
+  closeBtn.appendChild(closeIcon);
+  header.appendChild(closeBtn);
+  var headerTitle = document.createElement("span");
+  headerTitle.className = "fm-ws-quicklinks-popup-title";
+  headerTitle.textContent = "Workspace " + workspaceId + " settings";
+  header.appendChild(headerTitle);
+
+  var list = document.createElement("div");
+  list.className = "fm-ws-quicklinks-popup-list";
+
+  if (links.length === 0) {
+    var empty = document.createElement("p");
+    empty.className = "fm-ws-quicklinks-popup-empty";
+    empty.textContent = "Quicklinks not available.";
+    list.appendChild(empty);
+  } else {
+    links.forEach(function (item) {
+      var a = document.createElement("a");
+      a.href = item.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.title = item.title;
+      a.className = "fm-ws-quicklinks-popup-link";
+      var icon = document.createElement("span");
+      icon.className = "material-icons fm-ws-quicklinks-popup-icon";
+      icon.textContent = item.icon;
+      a.appendChild(icon);
+      a.appendChild(document.createTextNode(item.title));
+      list.appendChild(a);
+    });
+  }
+
+  popup.appendChild(list);
+
+  popup.style.left = rect.left + "px";
+  popup.style.top = (rect.bottom + 4) + "px";
+
+  document.body.appendChild(popup);
+
+  var closeHandler = function (e) {
+    if (!e || !e.target) return;
+    if (popup.contains(e.target) || anchorButton.contains(e.target)) return;
+    FM._fmQuicklinksPopupClose(popup, closeHandler);
+  };
+
+  closeBtn.addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    FM._fmQuicklinksPopupClose(popup, closeHandler);
+  });
+
+  document.addEventListener("click", closeHandler, true);
+  document.addEventListener("scroll", closeHandler, true);
+};
+
 FM.setupShortcutsDelegation = function () {
   const container = FM.getOrCreateButtonsContainer();
   if (!container) return;
@@ -240,18 +334,11 @@ FM.setupShortcutsDelegation = function () {
     evt.preventDefault();
     const action = btn.getAttribute("data-fm-action");
     switch (action) {
-      case "openWorkspace":
-        window.open(FM.buildWorkspaceAdminUrl(location.href), "_blank", "noopener,noreferrer");
-        break;
       case "openScripts":
         window.open(FM.buildScriptsUrl(), "_blank", "noopener,noreferrer");
         break;
       case "openRoles":
         window.open(FM.buildRolesUrl(), "_blank", "noopener,noreferrer");
-        break;
-      case "openWorkflow":
-        if (!FM.isWorkspaceContext(location.href)) return;
-        window.open(FM.buildWorkflowUrl(location.href), "_blank", "noopener,noreferrer");
         break;
       case "toggleItemDetailsAdmin":
         if (!FM.isOnFrontendItemDetailsPage(location.href)) return;
@@ -263,6 +350,13 @@ FM.setupShortcutsDelegation = function () {
           FM.unapplyItemDetailsAdminMode();
         }
         FM.updateItemDetailsAdminButtonState();
+        break;
+      case "openWorkspaceQuicklinks":
+        if (FM.isWorkspaceContext(location.href)) {
+          FM.showWorkspaceQuicklinksPopup(btn);
+        } else {
+          window.open(FM.buildWorkspaceAdminUrl(location.href), "_blank", "noopener,noreferrer");
+        }
         break;
       default:
     }
@@ -320,6 +414,13 @@ FM.ensureButtonsPresent = function () {
   }
   var onItemDetailsPage = FM.isOnFrontendItemDetailsPage(location.href);
   if (!FM.isAdminUi()) {
+    var quicklinksBtn = document.getElementById("fm-btn-ws-quicklinks");
+    if (!quicklinksBtn) {
+      quicklinksBtn = FM.createIconButton({ id: "fm-btn-ws-quicklinks", icon: "settings", title: "Workspace settings", action: "openWorkspaceQuicklinks" });
+      container.insertBefore(quicklinksBtn, container.firstChild);
+    } else if (quicklinksBtn.parentNode === container && quicklinksBtn !== container.firstChild) {
+      container.insertBefore(quicklinksBtn, container.firstChild);
+    }
     if (onItemDetailsPage) {
       var itemDetailsBtn = document.getElementById("fm-btn-itemdetails-admin");
       if (!itemDetailsBtn) {
@@ -335,17 +436,13 @@ FM.ensureButtonsPresent = function () {
   } else {
     var itemDetailsBtnEl = document.getElementById("fm-btn-itemdetails-admin");
     if (itemDetailsBtnEl) itemDetailsBtnEl.remove();
+    var wsQlBtnEl = document.getElementById("fm-btn-ws-quicklinks");
+    if (wsQlBtnEl) wsQlBtnEl.remove();
   }
-  ensureButton("fm-btn-ws", { id: "fm-btn-ws", icon: "settings", title: "Workspace Settings", action: "openWorkspace" });
   ensureButton("fm-btn-scripts", { id: "fm-btn-scripts", icon: "code", title: "Scripts", action: "openScripts" });
   ensureButton("fm-btn-roles", { id: "fm-btn-roles", icon: "group", title: "Roles", action: "openRoles" });
   if (!FM.isAdminUi()) {
-    ensureButton("fm-btn-workflow", { id: "fm-btn-workflow", icon: "schema", title: "Workflow Editor", action: "openWorkflow" });
-    FM.updateWorkflowButtonState();
     FM.updateItemDetailsAdminButtonState();
-  } else {
-    const wf = document.getElementById("fm-btn-workflow");
-    if (wf) wf.remove();
   }
 };
 
