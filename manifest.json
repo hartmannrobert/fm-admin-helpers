@@ -30,6 +30,7 @@
         "content/utils.js",
         "content/script-snippets.js",
         "content/feature-buttons.js",
+        "content/feature-admin-titles.js",
         "content/feature-fieldid.js",
         "content/feature-scripts.js",
         "content/feature-security.js",
