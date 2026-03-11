@@ -6,20 +6,6 @@
 /* ---------------------------
    1. Base — typography / fonts
    --------------------------- */
-.material-symbols-outlined {
-  display: inline-block;
-  font-family: "Material Symbols Outlined";
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: normal;
-  line-height: 1;
-  text-transform: none;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
-}
 
 /* ---------------------------
    2. Layout — main containers
@@ -735,10 +721,6 @@
   line-height: 1.6;
 }
 
-#fm-admin-search::placeholder {
-  color: #64748b;
-}
-
 /* ---------------------------
    6. Field icons (base + layout overrides)
    --------------------------- */
@@ -851,22 +833,6 @@
   pointer-events: none;
 }
 
-#fm-move-all-right {
-  display: flex !important;
-  justify-content: center !important;
-  width: 100% !important;
-  margin: 0 0 6px 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  cursor: pointer !important;
-}
-
-#fm-move-all-right .roundButton {
-  opacity: 0.9;
-  transform: scale(0.85);
-}
-
 /* ---------------------------
    8. Expand / collapse section buttons
    --------------------------- */
@@ -954,32 +920,6 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
   color: #2a566f !important;
 }
 
-a.fm-open-script-newtab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-right: 6px;
-  vertical-align: middle;
-  text-decoration: none !important;
-  opacity: 0.9;
-}
-
-a.fm-open-script-newtab:hover {
-  opacity: 1;
-}
-
-a.fm-open-script-newtab .material-icons {
-  font-size: 16px;
-  line-height: 16px;
-}
-
-a.fm-open-script-newtab .fm-fallback {
-  font-size: 13px;
-  line-height: 16px;
-}
-
 /* ---------------------------
    10. Scripts (table, grid, toggle)
    --------------------------- */
@@ -1037,10 +977,6 @@ a.fm-open-script-newtab .fm-fallback {
   white-space: nowrap !important;
   visibility: hidden !important;
   pointer-events: none !important;
-}
-
-.tableContainer td.fm-script-name-hover {
-  text-decoration: underline;
 }
 
 /* Contained toggle button (label + pill), matches master.css button style */
@@ -1471,12 +1407,6 @@ a.fm-open-script-newtab .fm-fallback {
   background: #fff;
 }
 
-.fm-ws-quicklinks-popup-divider {
-  height: 1px;
-  margin: 6px 14px;
-  background: rgba(106, 123, 139, 0.25);
-}
-
 @media (min-width: 520px) {
   .fm-ws-quicklinks-popup {
     min-width: 344px;
@@ -1485,10 +1415,6 @@ a.fm-open-script-newtab .fm-fallback {
 
   .fm-ws-quicklinks-popup-list {
     grid-template-columns: 1fr 1fr;
-  }
-
-  .fm-ws-quicklinks-popup-divider {
-    grid-column: 1 / -1;
   }
 }
 
