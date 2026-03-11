@@ -507,6 +507,83 @@ FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
   document.addEventListener("scroll", closeHandler, true);
 };
 
+/** Ensures the Admin Shortcuts dropdown when in a workspace; fills menu immediately so it's ready when opened. Rebuilds menu only when workspace changes. */
+FM.ensureAdminShortcutsDropdown = function (container, insertAfterLi) {
+  var workspaceId = FM.getWorkspaceIdFromAdminUrl(location.href);
+  if (!workspaceId || !container || !insertAfterLi) return null;
+
+  var existing = document.getElementById("fm-admin-shortcuts-dropdown");
+  var li = existing ? existing.closest("li") : null;
+
+  if (!li) {
+    li = document.createElement("li");
+    li.className = "drop_down nav_item with_separator fm-shortcut-item";
+    li.setAttribute("tabindex", "0");
+    var span = document.createElement("span");
+    span.id = "fm-admin-shortcuts-dropdown";
+    span.className = "menu_title";
+    span.textContent = "Admin Shortcuts";
+    li.appendChild(span);
+    var ul = document.createElement("ul");
+    li.appendChild(ul);
+    container.insertBefore(li, insertAfterLi.nextSibling);
+
+    span.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var parent = li.parentElement;
+      var prev = li.previousElementSibling;
+      if (parent && prev) FM.ensureAdminShortcutsDropdown(parent, prev);
+      li.classList.toggle("fm-dropdown-open");
+    });
+    if (!FM._fmAdminShortcutsCloseBound) {
+      FM._fmAdminShortcutsCloseBound = true;
+      document.addEventListener("click", function (e) {
+        var openLi = document.querySelector("li.fm-shortcut-item.fm-dropdown-open");
+        if (openLi && !openLi.contains(e.target)) openLi.classList.remove("fm-dropdown-open");
+      });
+    }
+  }
+
+  var ul = li.querySelector("ul");
+  if (!ul) return li;
+
+  /* Only rebuild menu when workspace changed; otherwise the dropdown is re-rendered every tick and disappears on hover/click */
+  var lastWorkspaceId = li.getAttribute("data-fm-workspace-id");
+  if (lastWorkspaceId === (workspaceId || "")) return li;
+  li.setAttribute("data-fm-workspace-id", workspaceId || "");
+
+  ul.innerHTML = "";
+
+  function addMenuItem(href, label, title) {
+    var itemLi = document.createElement("li");
+    itemLi.className = "menuitem";
+    var a = document.createElement("a");
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = label;
+    if (title) a.title = title;
+    itemLi.appendChild(a);
+    ul.appendChild(itemLi);
+  }
+
+  addMenuItem(FM.buildWorkspaceItemsUrl(workspaceId), "Open Workspace", "Go to workspace");
+  addMenuItem(FM.buildWorkspaceAddItemUrl(workspaceId), "Create New Item", "Create new dataset");
+
+  var dividerLi = document.createElement("li");
+  dividerLi.className = "fm-admin-shortcuts-divider";
+  dividerLi.setAttribute("role", "separator");
+  ul.appendChild(dividerLi);
+
+  var workspaceLinks = typeof FM.getWorkspaceQuicklinks === "function" ? FM.getWorkspaceQuicklinks(workspaceId) : [];
+  workspaceLinks.forEach(function (item) {
+    addMenuItem(item.url, item.title, item.title);
+  });
+
+  return li;
+};
+
 FM.setupShortcutsDelegation = function () {
   const container = FM.getOrCreateButtonsContainer();
   if (FM._fmPointerHandler) {
@@ -700,13 +777,10 @@ FM.ensureButtonsPresent = function () {
     after = ensureShortcutLi("fm-btn-roles", { label: "Roles", title: "Roles", action: "openRoles" }, after) || document.getElementById("fm-btn-roles").closest("li");
     var inWorkspaceAdmin = !!FM.getWorkspaceIdFromAdminUrl(location.href);
     if (inWorkspaceAdmin) {
-      after = ensureShortcutLi("fm-btn-workspace-items", { label: "Open Workspace", title: "Go to workspace", action: "openWorkspaceItems" }, after) || document.getElementById("fm-btn-workspace-items").closest("li");
-      ensureShortcutLi("fm-btn-workspace-add-item", { label: "Create New Item", title: "Create new dataset", action: "openWorkspaceAddItem" }, after);
+      after = FM.ensureAdminShortcutsDropdown(container, after) || (document.getElementById("fm-admin-shortcuts-dropdown") && document.getElementById("fm-admin-shortcuts-dropdown").closest("li"));
     } else {
-      var workspaceItemsLink = document.getElementById("fm-btn-workspace-items");
-      if (workspaceItemsLink && workspaceItemsLink.closest("li")) workspaceItemsLink.closest("li").remove();
-      var addItemLinkEl = document.getElementById("fm-btn-workspace-add-item");
-      if (addItemLinkEl && addItemLinkEl.closest("li")) addItemLinkEl.closest("li").remove();
+      var adminShortcutsLi = document.getElementById("fm-admin-shortcuts-dropdown") && document.getElementById("fm-admin-shortcuts-dropdown").closest("li");
+      if (adminShortcutsLi && adminShortcutsLi.parentNode) adminShortcutsLi.remove();
     }
   } else {
     var nav = document.getElementById("global_navigation");
