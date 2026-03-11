@@ -603,7 +603,22 @@ FM.ensureAdminShortcutsDropdown = function (container, insertAfterLi) {
   var span = li.querySelector("#fm-admin-shortcuts-dropdown");
   if (span) {
     var workspaceName = typeof FM.getWorkspaceNameFromDom === "function" ? FM.getWorkspaceNameFromDom() : "";
-    span.textContent = workspaceName ? workspaceName + " Shortcuts" : "Admin Shortcuts";
+    if (workspaceName) {
+      span.textContent = workspaceName + " Shortcuts";
+      li.style.visibility = "";
+    } else {
+      span.textContent = "Admin Shortcuts";
+      var retried = li.getAttribute("data-fm-shortcuts-label-retried") === "1";
+      if (workspaceId && !retried) {
+        li.style.visibility = "hidden";
+        li.setAttribute("data-fm-shortcuts-label-retried", "1");
+        setTimeout(function () {
+          if (FM.ensurePlacement) FM.ensurePlacement();
+        }, 80);
+      } else {
+        li.style.visibility = "";
+      }
+    }
   }
 
   return li;
