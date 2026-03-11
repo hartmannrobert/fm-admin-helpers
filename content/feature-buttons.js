@@ -507,7 +507,72 @@ FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
   document.addEventListener("scroll", closeHandler, true);
 };
 
-/** Ensures the Admin Shortcuts dropdown when in a workspace; fills menu immediately so it's ready when opened. Rebuilds menu only when workspace changes. */
+/** Shows Admin Shortcuts as a body-level popup (same behaviour as apps quicklinks: click to open, click outside to close). */
+FM.showAdminShortcutsPopup = function (anchorElement) {
+  var existing = document.getElementById("fm-admin-shortcuts-popup");
+  if (existing && existing.parentNode) {
+    var handler = existing._fmCloseHandler;
+    if (handler) {
+      document.removeEventListener("click", handler, true);
+      document.removeEventListener("scroll", handler, true);
+    }
+    existing.parentNode.removeChild(existing);
+    var li = anchorElement && anchorElement.closest ? anchorElement.closest("li.fm-shortcut-item") : null;
+    if (li) li.classList.remove("fm-admin-shortcuts-popup-open");
+    return;
+  }
+
+  var workspaceId = FM.getWorkspaceIdFromAdminUrl(location.href);
+  if (!workspaceId) return;
+
+  var rect = anchorElement.getBoundingClientRect();
+
+  var popup = document.createElement("div");
+  popup.id = "fm-admin-shortcuts-popup";
+  popup.className = "fm-admin-shortcuts-popup";
+
+  function addLink(href, label, title, linkClass) {
+    var a = document.createElement("a");
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.className = "fm-admin-shortcuts-popup-link" + (linkClass ? " " + linkClass : "");
+    a.textContent = label;
+    if (title) a.title = title;
+    popup.appendChild(a);
+  }
+
+  addLink(FM.buildWorkspaceItemsUrl(workspaceId), "Open Workspace", "Go to workspace");
+  addLink(FM.buildWorkspaceAddItemUrl(workspaceId), "Create New Item", "Create new dataset");
+
+  var workspaceLinks = typeof FM.getWorkspaceQuicklinks === "function" ? FM.getWorkspaceQuicklinks(workspaceId) : [];
+  workspaceLinks.forEach(function (item, index) {
+    addLink(item.url, item.title, item.title, index === 0 ? "fm-admin-shortcuts-first-link" : null);
+  });
+
+  document.body.appendChild(popup);
+
+  var popupRect = popup.getBoundingClientRect();
+  var gap = 8;
+  popup.style.left = Math.max(gap, rect.left) + "px";
+  popup.style.top = (rect.bottom + gap) + "px";
+
+  var li = anchorElement.closest("li.fm-shortcut-item");
+  if (li) li.classList.add("fm-admin-shortcuts-popup-open");
+
+  var closeHandler = function (e) {
+    if (!e || !e.target) return;
+    if (popup.contains(e.target) || (anchorElement && anchorElement.contains(e.target))) return;
+    FM._fmQuicklinksPopupClose(popup, closeHandler);
+    if (li) li.classList.remove("fm-admin-shortcuts-popup-open");
+  };
+  popup._fmCloseHandler = closeHandler;
+
+  document.addEventListener("click", closeHandler, true);
+  document.addEventListener("scroll", closeHandler, true);
+};
+
+/** Ensures the Admin Shortcuts trigger in the nav (click opens popup, same behaviour as apps icon). Label = workspace name + " Shortcuts" from #itemdetails.workspacerow .rowbody h4. */
 FM.ensureAdminShortcutsDropdown = function (container, insertAfterLi) {
   var workspaceId = FM.getWorkspaceIdFromAdminUrl(location.href);
   if (!workspaceId || !container || !insertAfterLi) return null;
@@ -522,10 +587,7 @@ FM.ensureAdminShortcutsDropdown = function (container, insertAfterLi) {
     var span = document.createElement("span");
     span.id = "fm-admin-shortcuts-dropdown";
     span.className = "menu_title";
-    span.textContent = "Admin Shortcuts";
     li.appendChild(span);
-    var ul = document.createElement("ul");
-    li.appendChild(ul);
     container.insertBefore(li, insertAfterLi.nextSibling);
 
     span.addEventListener("click", function (e) {
@@ -534,52 +596,15 @@ FM.ensureAdminShortcutsDropdown = function (container, insertAfterLi) {
       var parent = li.parentElement;
       var prev = li.previousElementSibling;
       if (parent && prev) FM.ensureAdminShortcutsDropdown(parent, prev);
-      li.classList.toggle("fm-dropdown-open");
+      FM.showAdminShortcutsPopup(span);
     });
-    if (!FM._fmAdminShortcutsCloseBound) {
-      FM._fmAdminShortcutsCloseBound = true;
-      document.addEventListener("click", function (e) {
-        var openLi = document.querySelector("li.fm-shortcut-item.fm-dropdown-open");
-        if (openLi && !openLi.contains(e.target)) openLi.classList.remove("fm-dropdown-open");
-      });
-    }
   }
 
-  var ul = li.querySelector("ul");
-  if (!ul) return li;
-
-  /* Only rebuild menu when workspace changed; otherwise the dropdown is re-rendered every tick and disappears on hover/click */
-  var lastWorkspaceId = li.getAttribute("data-fm-workspace-id");
-  if (lastWorkspaceId === (workspaceId || "")) return li;
-  li.setAttribute("data-fm-workspace-id", workspaceId || "");
-
-  ul.innerHTML = "";
-
-  function addMenuItem(href, label, title) {
-    var itemLi = document.createElement("li");
-    itemLi.className = "menuitem";
-    var a = document.createElement("a");
-    a.href = href;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.textContent = label;
-    if (title) a.title = title;
-    itemLi.appendChild(a);
-    ul.appendChild(itemLi);
+  var span = li.querySelector("#fm-admin-shortcuts-dropdown");
+  if (span) {
+    var workspaceName = typeof FM.getWorkspaceNameFromDom === "function" ? FM.getWorkspaceNameFromDom() : "";
+    span.textContent = workspaceName ? workspaceName + " Shortcuts" : "Admin Shortcuts";
   }
-
-  addMenuItem(FM.buildWorkspaceItemsUrl(workspaceId), "Open Workspace", "Go to workspace");
-  addMenuItem(FM.buildWorkspaceAddItemUrl(workspaceId), "Create New Item", "Create new dataset");
-
-  var dividerLi = document.createElement("li");
-  dividerLi.className = "fm-admin-shortcuts-divider";
-  dividerLi.setAttribute("role", "separator");
-  ul.appendChild(dividerLi);
-
-  var workspaceLinks = typeof FM.getWorkspaceQuicklinks === "function" ? FM.getWorkspaceQuicklinks(workspaceId) : [];
-  workspaceLinks.forEach(function (item) {
-    addMenuItem(item.url, item.title, item.title);
-  });
 
   return li;
 };

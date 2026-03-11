@@ -245,8 +245,9 @@
   text-decoration: none;
 }
 
-/* Admin Shortcuts dropdown: trigger (span.menu_title) matches nav style; ul is dropdown panel */
+/* Admin Shortcuts dropdown: trigger (span.menu_title) matches nav style; same short divider as .fm-shortcut-link (between Roles and this) */
 #global_navigation li.fm-shortcut-item.drop_down span.menu_title {
+  position: relative;
   display: block;
   font: 12px Myriad, Helvetica, Tahoma, Arial, clean, sans-serif;
   font-family: Arial, sans-serif;
@@ -263,7 +264,25 @@
   transition: background 0.1s;
 }
 
-#global_navigation li.fm-shortcut-item.drop_down span.menu_title:hover {
+#global_navigation li.fm-shortcut-item.drop_down span.menu_title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: #5D5D5D;
+  pointer-events: none;
+}
+
+/* Hover; open state (popup visible) uses .fm-admin-shortcuts-popup-open below */
+#global_navigation li.fm-shortcut-item.drop_down:not(.fm-admin-shortcuts-popup-open) span.menu_title:hover {
+  background: #101010;
+  color: #d0d8e0;
+}
+
+/* Trigger highlighted while popup is open (same as apps quicklinks behaviour) */
+#global_navigation li.fm-shortcut-item.drop_down.fm-admin-shortcuts-popup-open span.menu_title {
   background: #101010;
   color: #d0d8e0;
 }
@@ -281,34 +300,27 @@
   position: relative;
 }
 
-#global_navigation li.fm-shortcut-item.drop_down > ul {
-  display: none;
-  position: absolute;
-  left: 0;
-  top: 100%;
+/* Admin Shortcuts popup (body-level, same behaviour as apps quicklinks: click outside to close) */
+.fm-admin-shortcuts-popup {
+  position: fixed;
+  z-index: 100000;
   min-width: 200px;
   max-height: 80vh;
   overflow-y: auto;
   margin: 0;
-  padding: 0;
+  padding: 4px 0;
   list-style: none;
   background: #2d2d2d;
   border: 1px solid #3d3d3d;
   border-radius: 2px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 10000;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
 }
 
-#global_navigation li.fm-shortcut-item.drop_down.fm-dropdown-open > ul {
-  display: block;
-}
-
-#global_navigation li.fm-shortcut-item.drop_down > ul .menuitem a {
+.fm-admin-shortcuts-popup .fm-admin-shortcuts-popup-link {
   display: block;
   padding: 8px 14px;
-  font: 12px Myriad, Helvetica, Tahoma, Arial, clean, sans-serif;
-  font-family: Arial, sans-serif;
-  font-size: 1em;
   color: #d0d8e0;
   text-decoration: none;
   background: transparent;
@@ -316,19 +328,15 @@
   transition: background 0.1s;
 }
 
-#global_navigation li.fm-shortcut-item.drop_down > ul .menuitem a:hover {
+.fm-admin-shortcuts-popup .fm-admin-shortcuts-popup-link:hover {
   background: #101010;
   color: #d0d8e0;
 }
 
-/* Divider between Open Workspace/Create New Item and workspace admin links */
-#global_navigation li.fm-shortcut-item.drop_down > ul .fm-admin-shortcuts-divider {
-  height: 0;
-  margin: 6px 10px;
-  padding: 0;
-  list-style: none;
-  border-bottom: 1px solid #5D5D5D;
-  pointer-events: none;
+.fm-admin-shortcuts-popup .fm-admin-shortcuts-popup-link.fm-admin-shortcuts-first-link {
+  border-top: 2px solid #5D5D5D;
+  margin-top: 6px;
+  padding-top: 14px;
 }
 
 /* Admin shortcuts: legacy button form (when not list) */

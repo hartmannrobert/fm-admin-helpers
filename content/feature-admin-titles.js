@@ -100,4 +100,5 @@
   }
 
   FM.applyAdminTabTitle = applyAdminTabTitle;
+  FM.getWorkspaceNameFromDom = getWorkspaceNameFromDom;
 })();
