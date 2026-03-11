@@ -55,7 +55,6 @@ function mainTick() {
   FM.safeRun("workspaceFilter", () => FM.runWorkspacesSearchFeature?.());
   FM.safeRun("picklistsActions", () => FM.runPicklistsTick?.());
 
-  FM.safeRun("securityWindow", () => FM.injectAdminUsersPaneCSS?.());
   FM.safeRun("securityMoveAllButton", () => FM.ensureBulkMoveButtonsInCenter?.());
 
   FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());

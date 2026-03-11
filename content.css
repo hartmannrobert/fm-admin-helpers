@@ -1,18 +1,186 @@
+/* ==========================================================================
+   content.css — FM Admin Helpers
+   Order: Base → Layout → Components (by feature) → Table overrides → Panes
+   ========================================================================== */
+
 /* ---------------------------
-   Base button (main UI default)
+   1. Base — typography / fonts
    --------------------------- */
+.material-symbols-outlined {
+  display: inline-block;
+  font-family: "Material Symbols Outlined";
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------
+   2. Layout — main containers
+   --------------------------- */
+
+/* Shortcuts container (buttons wrapper) */
+#fm-shortcuts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+/* Admin UI header: scoped container */
+#global_navigation #fm-shortcuts {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+/* Invisible placeholder for admin shortcut slot (keeps search bar position stable when admin shortcut is absent) */
+.fm-shortcuts-admin-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Reserve fixed size only in header so search bar doesn’t shift when admin shortcut is absent */
+#fm-shortcuts.fm-shortcuts-in-header .fm-shortcuts-admin-slot {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.fm-shortcuts-admin-slot:empty {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#fm-shortcuts.fm-shortcuts-in-header .fm-shortcuts-admin-slot:empty {
+  width: 24px;
+  min-width: 24px;
+}
+
+/* Header placement: after search, before alerts — align with other header icons (bell, help, moon) */
+#fm-shortcuts.fm-shortcuts-in-header {
+  margin-right: -6px;
+  gap: 18px;
+}
+
+#fm-shortcuts.fm-shortcuts-in-header::after {
+  content: "";
+  display: inline-block;
+  width: 1px;
+  height: 16px;
+  background: #808080;
+  align-self: center;
+  margin-left: -6px;
+}
+
+#fm-shortcuts.fm-shortcuts-in-header .fm-btn {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 2px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #808080;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#fm-shortcuts.fm-shortcuts-in-header #fm-btn-activity-quicklinks {
+  padding-left: 18px;
+}
+
+#fm-shortcuts.fm-shortcuts-in-header .fm-btn:hover,
+#fm-shortcuts.fm-shortcuts-in-header .fm-btn:focus,
+#fm-shortcuts.fm-shortcuts-in-header .fm-btn:active {
+  background: transparent;
+  color: #606060;
+}
+
+#fm-shortcuts.fm-shortcuts-in-header .fm-btn .material-icons {
+  color: #808080;
+  font-size: 20px;
+  line-height: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+#fm-shortcuts.fm-shortcuts-in-header .fm-btn:hover .material-icons,
+#fm-shortcuts.fm-shortcuts-in-header .fm-btn:focus .material-icons,
+#fm-shortcuts.fm-shortcuts-in-header .fm-btn:active .material-icons {
+  color: #606060;
+}
+
+/* Bulk buttons wrapper — ensure it does not clip the new row */
+.roundButtonsWrapperWithDescription {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Scripts: simplified grid view */
+#print_body.fm-scripts-simple-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 46px 1fr;
+  gap: 10px;
+}
+
+#print_body.fm-scripts-simple-grid #fm-scripts-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  grid-column: 1 / 5;
+  height: 46px;
+  box-sizing: border-box;
+}
+
+#print_body.fm-scripts-simple-grid .itemsectionmenu {
+  grid-column: 1 / 5;
+}
+
+/* Admin Users panes */
+#leftPane,
+#rightPane {
+  height: 500px !important;
+  max-height: 500px !important;
+  min-height: 500px !important;
+  overflow: auto !important;
+}
+
+/* ---------------------------
+   3. Shortcuts & header buttons
+   --------------------------- */
+
 #fm-shortcuts .fm-btn {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  padding: 4px 8px;
   border: 1px solid #d9d9d9;
   border-radius: 4px;
-  padding: 4px 8px;
   background: #d9d9d9;
   color: #666666b3;
-  cursor: pointer;
   line-height: 1;
   text-decoration: none;
+  cursor: pointer;
 }
 
 #fm-shortcuts .fm-btn:hover,
@@ -26,8 +194,13 @@
 }
 
 #fm-shortcuts .fm-btn .material-icons {
-  font-size: 18px;
-  line-height: 18px;
+  font-size: 22px;
+  line-height: 22px;
+}
+
+#fm-shortcuts .fm-btn .fm-btn-label {
+  white-space: nowrap;
+  font-size: inherit;
 }
 
 #fm-shortcuts .fm-btn.disabled {
@@ -35,63 +208,394 @@
   cursor: not-allowed;
 }
 
-/* Shared hover: main nav and bulk buttons */
 .fm-btn:hover .material-icons,
 .fm-bulk-btn:hover .material-icons {
   color: #000;
 }
 
-/* ---------------------------
-   Admin UI header: scoped container
-   Buttons live next to the admin <li>. Transparent background, inherit nav color.
-   --------------------------- */
-#global_navigation #fm-shortcuts {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 8px;
+/* Admin shortcuts: one li per shortcut, with separator (matches Reports, Tools, Administration) */
+#global_navigation li.fm-shortcut-item.with_separator {
+  margin-left: 0;
 }
 
-#global_navigation #fm-shortcuts .fm-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border-radius: 4px;
-  background: transparent;
-  border: none;
-  box-shadow: none !important;
-  background-image: none !important;
-  color: inherit;
+/* Divider: shorter line, color #5D5D5D to match other dividers */
+#global_navigation li.fm-shortcut-item .fm-shortcut-link {
+  position: relative;
+  font: 12px Myriad, Helvetica, Tahoma, Arial, clean, sans-serif;
+  font-family: Arial, sans-serif;
+  font-size: 1em;
+  line-height: 1.5em;
+  color: #d0d8e0;
+  margin: 0;
+  padding: 3px 3px 3px 10px;
   cursor: pointer;
+  visibility: visible;
+  display: block;
+  vertical-align: middle;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  background-image: none !important;
+  box-shadow: none !important;
+  text-decoration: none;
+  -webkit-transition: background 0.1s;
+  transition: background 0.1s;
+}
+
+#global_navigation li.fm-shortcut-item .fm-shortcut-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: #5D5D5D;
+  pointer-events: none;
+}
+
+#global_navigation li.fm-shortcut-item .fm-shortcut-link:hover {
+  background: #101010;
+  color: #d0d8e0;
+  text-decoration: none;
+}
+
+/* Admin shortcuts: legacy button form (when not list) */
+#global_navigation #fm-shortcuts .fm-btn {
+  font: 12px Myriad, Helvetica, Tahoma, Arial, clean, sans-serif;
+  font-family: Arial, sans-serif;
+  font-size: 1em;
+  line-height: 1.5em;
+  color: #d0d8e0;
+  margin: 0;
+  padding: 3px 10px 3px 0;
+  list-style: none;
+  cursor: pointer;
+  visibility: visible;
+  display: table-cell;
+  position: relative;
+  vertical-align: middle;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-transition: background 0.1s;
+  transition: background 0.1s;
 }
 
 #global_navigation #fm-shortcuts .fm-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: #101010;
+}
+
+#global_navigation #fm-shortcuts .fm-btn .material-icons+.fm-btn-label {
+  margin-left: 2px;
+}
+
+#global_navigation #fm-shortcuts .fm-btn .fm-btn-label {
+  font: inherit;
+  font-family: inherit;
+  color: inherit;
 }
 
 #global_navigation #fm-shortcuts .material-icons {
-  font-size: 16px;
-  line-height: 16px;
+  font-size: 1em;
+  line-height: inherit;
+  color: inherit;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-mode-on {
+  background: #4675A8;
+  border-color: #4675A8;
+  color: #fff;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-mode-on .material-icons {
+  color: inherit;
+}
+
+/* Admin mode pill toggle (label + track + thumb) */
+#fm-shortcuts .fm-btn.fm-admin-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: #333;
+  cursor: pointer;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-toggle:hover:not(.disabled) {
+  background: transparent;
+  color: #000;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-toggle .fm-admin-toggle-label {
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-toggle .fm-admin-toggle-pill {
+  position: relative;
+  display: inline-block;
+  width: 28px;
+  height: 16px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-toggle .fm-admin-toggle-track {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: -1px;
+  bottom: -2px;
+  border-radius: 8px;
+  background: #9e9e9e;
+  transition: background 0.2s ease;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-toggle.fm-admin-mode-on .fm-admin-toggle-track {
+  background: #0896D7;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-toggle .fm-admin-toggle-check {
+  display: none;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-toggle .fm-admin-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: none;
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+#fm-shortcuts .fm-btn.fm-admin-toggle.fm-admin-mode-on .fm-admin-toggle-thumb {
+  transform: translateX(12px);
+}
+
+#fm-shortcuts .fm-btn.fm-admin-toggle.disabled .fm-admin-toggle-label,
+#fm-shortcuts .fm-btn.fm-admin-toggle.disabled .fm-admin-toggle-pill {
+  opacity: 0.5;
+}
+
+/* Admin toggle inside item details command bar (same styles as in #fm-shortcuts) */
+#command-bar-react .fm-btn.fm-admin-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: #333;
+  cursor: pointer;
+}
+
+#command-bar-react .fm-btn.fm-admin-toggle:hover:not(.disabled) {
+  background: transparent;
+  color: #000;
+}
+
+#command-bar-react .fm-btn.fm-admin-toggle .fm-admin-toggle-label {
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+#command-bar-react .fm-btn.fm-admin-toggle .fm-admin-toggle-pill {
+  position: relative;
+  display: inline-block;
+  width: 28px;
+  height: 16px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+#command-bar-react .fm-btn.fm-admin-toggle .fm-admin-toggle-track {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: -1px;
+  bottom: -2px;
+  border-radius: 8px;
+  background: #9e9e9e;
+  transition: background 0.2s ease;
+}
+
+#command-bar-react .fm-btn.fm-admin-toggle.fm-admin-mode-on .fm-admin-toggle-track {
+  background: #0896D7;
+}
+
+#command-bar-react .fm-btn.fm-admin-toggle .fm-admin-toggle-check {
+  display: none;
+}
+
+#command-bar-react .fm-btn.fm-admin-toggle .fm-admin-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: none;
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+#command-bar-react .fm-btn.fm-admin-toggle.fm-admin-mode-on .fm-admin-toggle-thumb {
+  transform: translateX(12px);
+}
+
+#command-bar-react .fm-btn.fm-admin-toggle.disabled .fm-admin-toggle-label,
+#command-bar-react .fm-btn.fm-admin-toggle.disabled .fm-admin-toggle-pill {
+  opacity: 0.5;
+}
+
+/* Item viewer actions: bordered box at start of itemviewer-wrapper-buttons (quicklinks | toggle) */
+#fm-itemviewer-actions {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  min-height: 34px;
+  border: 1px solid #BCBCBC;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-right: 8px;
+  flex-shrink: 0;
+  transition: box-shadow 0.2s ease;
+}
+
+#fm-itemviewer-actions:hover {
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1), 1px 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+#fm-itemviewer-actions .fm-itemviewer-actions-part {
+  display: flex;
+  align-items: center;
+}
+
+#fm-itemviewer-actions .fm-itemviewer-actions-toggle {
+  padding: 2px 8px;
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: #3D3D3D;
+  cursor: pointer;
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle:hover:not(.disabled) {
+  background: transparent;
+  color: #3D3D3D;
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle .fm-admin-toggle-label {
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: nowrap;
+  color: #3D3D3D;
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle .fm-admin-toggle-pill {
+  position: relative;
+  display: inline-block;
+  width: 28px;
+  height: 16px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle .fm-admin-toggle-track {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: -1px;
+  bottom: -2px;
+  border-radius: 8px;
+  background: #9e9e9e;
+  transition: background 0.2s ease;
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle.fm-admin-mode-on .fm-admin-toggle-track {
+  background: #0896D7;
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle .fm-admin-toggle-check {
+  display: none;
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle .fm-admin-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: none;
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle.fm-admin-mode-on .fm-admin-toggle-thumb {
+  transform: translateX(12px);
+}
+
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle.disabled .fm-admin-toggle-label,
+#fm-itemviewer-actions .fm-btn.fm-admin-toggle.disabled .fm-admin-toggle-pill {
+  opacity: 0.5;
+}
+
+/* Global nav: admin toggle */
+#global_navigation #fm-shortcuts .fm-btn.fm-admin-toggle {
+  color: inherit;
+}
+
+#global_navigation #fm-shortcuts .fm-btn.fm-admin-toggle:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+}
+
+#global_navigation #fm-shortcuts .fm-btn.fm-admin-toggle .fm-admin-toggle-label {
   color: inherit;
 }
 
 /* ---------------------------
-   Field ID & workspace ID badge
+   4. Field ID & workspace ID badge
    --------------------------- */
+
 .fm-field-id,
 .fm-ws-id-badge {
   color: #4675A8;
-  font-weight: 600;
   padding: 0 7px 0 3px;
+  font-weight: 600;
   opacity: 0.95;
 }
 
 .fm-field-id {
-  cursor: copy;
-  user-select: none;
   line-height: 1;
   vertical-align: middle;
+  cursor: copy;
+  user-select: none;
 }
 
 .fm-field-id:hover {
@@ -103,21 +607,20 @@
   user-select: text;
 }
 
-/* ---------------------------
-   Item Details ADMIN mode (frontend): field ID next to collapsed value
-   --------------------------- */
+/* Item Details ADMIN mode: field ID next to collapsed value */
 .fm-item-detail-field-id {
   display: inline-block;
-  vertical-align: middle;
+  padding: 0 6px;
+  margin-top: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
   line-height: 1.4;
   color: #4675A8;
   font-weight: 600;
-  padding: 0 6px;
+  white-space: nowrap;
+  vertical-align: middle;
   cursor: copy;
   user-select: all;
-  white-space: nowrap;
-  font-family: monospace;
-  font-size: 0.9em;
 }
 
 .fm-item-detail-field-id:hover {
@@ -125,33 +628,25 @@
 }
 
 .plm-matrix .fm-item-detail-field-id {
+  margin-top: 0;
   vertical-align: middle;
 }
 
-#fm-shortcuts .fm-btn.fm-admin-mode-on {
-  background: #4675A8;
-  color: #fff;
-  border-color: #4675A8;
-}
-
-#fm-shortcuts .fm-btn.fm-admin-mode-on .material-icons {
-  color: inherit;
-}
-
 /* ---------------------------
-   Search inputs
+   5. Search inputs
    --------------------------- */
+
 #fm-search-security,
 #fm-search-script,
 .fm-search-input {
-  padding: 3px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
   margin: 10px 0;
-  line-height: 1.6;
-  font-size: 100%;
+  padding: 3px 12px;
   min-width: 120px;
   max-width: 50vw;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 100%;
+  line-height: 1.6;
 }
 
 #fm-admin-search::placeholder {
@@ -159,15 +654,16 @@
 }
 
 /* ---------------------------
-   Field icons (base + layout container overrides)
+   6. Field icons (base + layout overrides)
    --------------------------- */
+
 .fm-field-icons {
   display: inline-flex;
   align-items: center;
   gap: 2px;
   margin-right: 0;
-  vertical-align: middle;
   padding: 0;
+  vertical-align: middle;
 }
 
 .fm-field-icons img {
@@ -176,41 +672,38 @@
   height: 16px;
   margin: 0;
   padding: 0;
-  vertical-align: middle;
-  object-fit: contain;
   border: none;
-  background: transparent;
-  cursor: pointer;
-  line-height: 1;
   border-radius: 1px;
+  background: transparent;
+  line-height: 1;
+  object-fit: contain;
+  cursor: pointer;
 }
 
 #layoutContainer .fm-field-icons {
-  margin-right: 6px;
-  flex-shrink: 0;
-  gap: 2px;
-  line-height: 1;
-  vertical-align: middle;
   display: inline-flex;
   align-items: center;
+  gap: 2px;
+  margin-right: 6px;
+  line-height: 1;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
-/* Override host .fieldIdentifier img; horizontal padding only so row stays 23px */
 #layoutContainer .fm-field-icons img {
-  cursor: pointer;
   display: block;
   width: 16px;
   height: 16px;
   margin: 0;
   margin-top: -3px;
   padding: 0 6px !important;
-  line-height: 1;
-  vertical-align: middle;
   border: none !important;
+  border-radius: 3px;
   background: transparent !important;
   box-shadow: none !important;
-  border-radius: 3px;
   box-sizing: content-box;
+  line-height: 1;
+  cursor: pointer;
 }
 
 #layoutContainer .fm-field-icons img:hover {
@@ -230,24 +723,23 @@
 }
 
 #layoutContainer .fm-native-icon-hidden {
-  visibility: hidden !important;
   width: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
+  visibility: hidden !important;
   pointer-events: none !important;
 }
 
-/* ---------------------------
-   Bulk buttons & round wrapper
-   --------------------------- */
-.roundButtonsWrapperWithDescription {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  height: auto;
-  overflow: visible;
+/* Field match (active cycle highlight) */
+#layoutContainer div.fieldIdentifier.fm-field-match-active {
+  border-radius: 4px;
+  outline: 2px solid rgba(37, 99, 235, 0.55);
+  outline-offset: -1px;
 }
+
+/* ---------------------------
+   7. Bulk buttons
+   --------------------------- */
 
 .fm-bulk-buttons {
   display: flex;
@@ -256,11 +748,11 @@
 }
 
 .fm-bulk-btn {
-  background: transparent;
-  border: 0;
   padding: 2px;
-  cursor: pointer;
+  border: 0;
+  background: transparent;
   line-height: 1;
+  cursor: pointer;
 }
 
 .fm-bulk-btn .material-icons {
@@ -273,27 +765,26 @@
   pointer-events: none;
 }
 
-/* ---------------------------
-   Material Symbols
-   --------------------------- */
-.material-symbols-outlined {
-  font-family: "Material Symbols Outlined";
-  font-weight: 400;
-  font-style: normal;
-  font-size: 18px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
+#fm-move-all-right {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+  margin: 0 0 6px 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  cursor: pointer !important;
+}
+
+#fm-move-all-right .roundButton {
+  opacity: 0.9;
+  transform: scale(0.85);
 }
 
 /* ---------------------------
-   Expand / collapse section buttons
+   8. Expand / collapse section buttons
    --------------------------- */
+
 #fm-collapse-sections-btn,
 #fm-expand-sections-btn {
   display: inline-flex;
@@ -302,12 +793,12 @@
   height: 27px;
   min-width: 28px;
   padding: 0 8px;
-  box-sizing: border-box;
   border: 1px solid #C9C9C9;
   border-radius: 3px;
   background: #EAEAEA;
-  cursor: pointer;
+  box-sizing: border-box;
   box-shadow: 0 1px 0 0 rgba(204, 204, 204, 0.5);
+  cursor: pointer;
 }
 
 #fm-collapse-sections-btn:hover,
@@ -317,9 +808,9 @@
 
 #fm-collapse-sections-btn .material-icons,
 #fm-expand-sections-btn .material-icons {
+  display: block;
   font-size: 20px;
   line-height: 1;
-  display: block;
 }
 
 #setupbuttons>span:last-child {
@@ -328,17 +819,9 @@
 }
 
 /* ---------------------------
-   Field match (active cycle highlight)
+   9. Open-in-new-tab (table cell & script link)
    --------------------------- */
-#layoutContainer div.fieldIdentifier.fm-field-match-active {
-  outline: 2px solid rgba(37, 99, 235, 0.55);
-  outline-offset: -1px;
-  border-radius: 4px;
-}
 
-/* ---------------------------
-   Open-in-new-tab button (table cell)
-   --------------------------- */
 td .fm-open-newtab-wrap {
   display: flex;
   align-items: center;
@@ -357,12 +840,12 @@ td .fm-open-newtab-btn {
   flex: 0 0 auto;
   margin: 0 6px 0 10px;
   padding: 0;
-  background: transparent;
   border: 0;
-  cursor: pointer;
-  vertical-align: middle;
+  background: transparent;
   font: inherit;
   line-height: 1 !important;
+  vertical-align: middle;
+  cursor: pointer;
 }
 
 td .fm-open-newtab-btn:disabled {
@@ -371,23 +854,20 @@ td .fm-open-newtab-btn:disabled {
 }
 
 td .fm-open-newtab-btn .fm-open-newtab-icon.material-icons {
-  font-size: 16px !important;
-  line-height: 16px !important;
-  height: 16px;
   width: 16px;
+  height: 16px;
+  font-size: 16px !important;
+  font-weight: normal !important;
+  line-height: 16px !important;
+  letter-spacing: normal !important;
   color: #3c7392 !important;
   vertical-align: middle;
-  font-weight: normal !important;
-  letter-spacing: normal !important;
 }
 
 td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
   color: #2a566f !important;
 }
 
-/* ---------------------------
-   Scripts: Edit in new tab link
-   --------------------------- */
 a.fm-open-script-newtab {
   display: inline-flex;
   align-items: center;
@@ -414,6 +894,39 @@ a.fm-open-script-newtab .fm-fallback {
   line-height: 16px;
 }
 
+/* ---------------------------
+   10. Scripts (table, grid, toggle)
+   --------------------------- */
+
+/* Script name cell is clickable (opens in new tab) — style as link */
+.tableContainer[data-fm-scripts-table="1"] td.fm-script-name-link,
+.tableContainer[data-fm-scripts-table="1"] td.fm-script-name-link b {
+  color: #5780ae !important;
+  font-weight: normal !important;
+}
+
+.tableContainer[data-fm-scripts-table="1"] td.fm-script-name-link:hover {
+  color: #5780ae !important;
+  text-decoration: underline;
+}
+
+/* Library script links in #section-includes (script form): open in new tab, blue */
+#section-includes .fm-library-script-link {
+  color: #5780ae !important;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#section-includes .fm-library-script-link:hover {
+  color: #5780ae !important;
+  text-decoration: underline;
+}
+
+/* Do not show Grid View toggle in the whereused dialog */
+#whereused-dialog .fm-scripts-grid-toggle-btn {
+  display: none !important;
+}
+
 .tableContainer table td.fm-action-cell {
   white-space: nowrap !important;
 }
@@ -423,32 +936,9 @@ a.fm-open-script-newtab .fm-fallback {
   width: 300px !important;
   min-width: 300px !important;
   max-width: 300px !important;
-  white-space: nowrap !important;
   overflow: hidden !important;
+  white-space: nowrap !important;
   text-overflow: ellipsis !important;
-}
-
-/* ---------------------------
-   Scripts: Simplified grid view
-   --------------------------- */
-#print_body.fm-scripts-simple-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 46px 1fr;
-  gap: 10px;
-}
-
-#print_body.fm-scripts-simple-grid #fm-scripts-topbar {
-  grid-column: 1 / 5;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 46px;
-  box-sizing: border-box;
-}
-
-#print_body.fm-scripts-simple-grid .itemsectionmenu {
-  grid-column: 1 / 5;
 }
 
 #print_body.fm-scripts-simple-grid .tableContainer table thead tr>th:nth-child(3),
@@ -467,47 +957,138 @@ a.fm-open-script-newtab .fm-fallback {
   text-decoration: underline;
 }
 
-/* Grid toggle icon button */
-.itemsectionmenu .fm-scripts-grid-toggle-btn {
+/* Contained toggle button (label + pill), matches master.css button style */
+.fm-toggle-btn-contained {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  margin-left: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 0;
-  background: transparent;
+  gap: 6px;
+  height: 27.19px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  margin-left: 7px;
+  margin-right: 7px;
+  background: #eaeaea;
+  vertical-align: middle;
   cursor: pointer;
   user-select: none;
-  vertical-align: middle;
+  color: #303030;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow: hidden;
+  outline: none !important;
+  box-shadow: 0 1px 0 0 rgba(204, 204, 204, 0.5);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+    background-color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+    transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+    opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+.fm-toggle-btn-contained:hover {
+  background: #ddd;
+  color: #303030;
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-active {
-  background: rgba(60, 115, 146, 0.12);
+.fm-toggle-btn-contained .fm-toggle-label {
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: inherit;
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn .material-icons {
-  font-size: 22px;
-  line-height: 1;
-  color: #666;
+/* Round edges for the pill when inside the contained button */
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill,
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-track,
+.fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill,
+.fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-track {
+  border-radius: 10px;
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-active .material-icons {
-  color: #3c7392;
+/* Contained button: toggle 2px smaller overall (36×18 pill, 12×12 thumb) */
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill,
+.fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill {
+  width: 36px;
+  height: 18px;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-thumb,
+.fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-thumb {
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained.fm-active .fm-toggle-thumb,
+.fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained.fm-active .fm-toggle-thumb {
+  transform: translateX(20px);
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained {
+  margin-left: 10px;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-pill,
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-track {
+  border: none;
+  box-shadow: none;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-pill {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 3px;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-track {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: -1px;
+  bottom: -1px;
+  border-radius: 3px;
+  background: #9e9e9e;
+  transition: background 0.2s ease;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-active .fm-toggle-track {
+  background: #0896D7;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: none;
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-active .fm-toggle-thumb {
+  transform: translateX(18px);
 }
 
 /* ---------------------------
-   Workspace: compact list, pills, toggle
+   11. Workspace (compact list, pills, toggle, quicklinks)
    --------------------------- */
+
 .fm-ws-namewrap {
   display: inline-block;
   width: 420px;
-  white-space: nowrap;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
   vertical-align: middle;
 }
@@ -527,15 +1108,17 @@ a.fm-open-script-newtab .fm-fallback {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 24px;
+  width: 34px;
+  height: 22px;
   margin-left: 4px;
-  box-sizing: border-box;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
-  text-decoration: none;
+  border: none;
+  border-radius: 11px;
   color: #3c7396;
+  text-decoration: none !important;
+  border-bottom: none !important;
   vertical-align: middle;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
 }
 
 .fm-ws-pill-icon.material-icons {
@@ -545,71 +1128,160 @@ a.fm-open-script-newtab .fm-fallback {
 
 .fm-ws-pill:hover {
   background-color: #3c7396;
-  border-color: #3c7396;
   color: #ffffff;
+  box-shadow: 0 0 0 1px #3c7396;
   cursor: pointer;
+  text-decoration: none !important;
+  border-bottom: none !important;
 }
 
 .fm-ws-pill:hover .fm-ws-pill-icon {
   color: #ffffff;
 }
 
-.fm-ws-compact-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-left: 8px;
-  padding: 0;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 6px;
+.fm-ws-pill .fm-ws-pill-icon,
+.fm-ws-pill:hover .fm-ws-pill-icon {
+  text-decoration: none !important;
+}
+
+.fm-ws-compact-toggle-btn.fm-pill-toggle .fm-toggle-pill,
+.fm-ws-compact-toggle-btn.fm-pill-toggle .fm-toggle-track {
+  border: none;
+  box-shadow: none;
+}
+
+.fm-ws-compact-toggle-btn.fm-pill-toggle .fm-toggle-pill {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.fm-ws-compact-toggle-btn.fm-pill-toggle .fm-toggle-track {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: -1px;
+  bottom: -1px;
+  border-radius: 10px;
+  background: #9e9e9e;
+  transition: background 0.2s ease;
+}
+
+.fm-ws-compact-toggle-btn.fm-pill-toggle.fm-active .fm-toggle-track {
+  background: #0896D7;
+}
+
+.fm-ws-compact-toggle-btn.fm-pill-toggle .fm-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
   background: #fff;
-  cursor: pointer;
-  box-sizing: border-box;
-  vertical-align: middle;
-  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: none;
+  transition: transform 0.2s ease;
+  pointer-events: none;
 }
 
-.fm-ws-compact-toggle-btn .material-icons {
-  font-size: 18px;
-  color: #3c7396;
+.fm-ws-compact-toggle-btn.fm-pill-toggle.fm-active .fm-toggle-thumb {
+  transform: translateX(18px);
 }
 
-.fm-ws-compact-toggle-btn:hover {
-  background-color: rgba(60, 115, 150, 0.08);
-  border-color: rgba(60, 115, 150, 0.4);
-}
-
-.fm-ws-compact-toggle-btn.active {
-  background-color: #3c7396;
-  border-color: #3c7396;
-}
-
-.fm-ws-compact-toggle-btn.active .material-icons {
-  color: #ffffff;
-}
-
-.fm-ws-compact-toggle-btn:focus {
+.fm-ws-compact-toggle-btn.fm-pill-toggle:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(60, 115, 150, 0.35);
+  box-shadow: none;
 }
 
 #fm-search-workspaces {
   vertical-align: middle;
 }
 
-/* ---------------------------
-   Workspace quicklinks popup (items tab)
-   Matches Workspaces-panel style: light blue header, gray list items, right chevrons.
-   --------------------------- */
+/* Remove bottom border that can appear under the compact toggle row */
+#fm-search-workspaces+.fm-ws-compact-toggle-btn.fm-pill-toggle {
+  box-shadow: none;
+}
+
+/* Settings shortcut button: compact 16x16 */
+#fm-shortcuts #fm-btn-ws-quicklinks,
+#global_navigation #fm-shortcuts #fm-btn-ws-quicklinks {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#fm-shortcuts #fm-btn-ws-quicklinks .material-icons,
+#global_navigation #fm-shortcuts #fm-btn-ws-quicklinks .material-icons {
+  font-size: 20px;
+  line-height: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Shared: current/active link highlight in quicklinks popups (settings + admin) */
+.fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link.fm-quicklinks-popup-link-active {
+  background: #CEE9F8;
+  color: #333 !important;
+}
+
+.fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link.fm-quicklinks-popup-link-active .fm-ws-quicklinks-popup-icon {
+  color: #333 !important;
+}
+
+/* Activity quicklinks button in itemviewer bar */
+.fm-itemviewer-activity-quicklinks {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.fm-itemviewer-activity-quicklinks .fm-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #BCBCBC;
+  border-radius: 3px;
+  box-shadow: none;
+  color: #3D3D3D;
+}
+
+.fm-itemviewer-activity-quicklinks .fm-btn:hover {
+  background: transparent;
+  border-color: #BCBCBC;
+  color: #3D3D3D;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1), 1px 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.fm-itemviewer-activity-quicklinks .fm-btn .material-icons {
+  font-size: 20px;
+  color: #3D3D3D;
+}
+
+/* Workspace quicklinks popup (items tab) */
 .fm-ws-quicklinks-popup {
   position: fixed;
   z-index: 100000;
-  min-width: 260px;
-  max-width: 360px;
+  min-width: 284px;
+  max-width: 384px;
   max-height: 80vh;
-  overflow: auto;
+  overflow: visible;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
@@ -617,20 +1289,68 @@ a.fm-open-script-newtab .fm-fallback {
   font-size: 14px;
 }
 
+/* Caret connecting popup to the shortcut menu button (popup opens below, shifted left) */
+.fm-ws-quicklinks-popup::before {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: -10px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #ffffff;
+  filter: drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.06));
+}
+
+/* Settings shortcut popup: align caret with 24px gear button center (12px from right) */
+#fm-settings-shortcuts-popup.fm-ws-quicklinks-popup::before {
+  right: 12px;
+}
+
+/* Settings shortcuts: two columns, border radius, right column narrower */
+#fm-settings-shortcuts-popup.fm-ws-quicklinks-popup {
+  min-width: 320px;
+  max-width: 420px;
+  border-radius: 2px;
+}
+
+.fm-settings-shortcuts-popup-columns {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  padding: 6px 0;
+}
+
+#fm-settings-shortcuts-popup .fm-settings-shortcuts-popup-col {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  padding: 0;
+}
+
+#fm-settings-shortcuts-popup .fm-settings-shortcuts-popup-col:first-child {
+  flex: 1;
+}
+
+#fm-settings-shortcuts-popup .fm-settings-shortcuts-popup-col:last-child {
+  flex: 0 1 120px;
+}
+
 .fm-ws-quicklinks-popup-header {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 12px 14px;
-  background: #EBF5F8;
-  border-radius: 8px 8px 0 0;
   border-bottom: 1px solid rgba(106, 123, 139, 0.2);
+  border-radius: 8px 8px 0 0;
+  background: #EBF5F8;
 }
 
 .fm-ws-quicklinks-popup-title {
   flex: 1;
-  font-weight: 600;
   font-size: 15px;
+  font-weight: 600;
   color: #6A7B8B;
 }
 
@@ -659,47 +1379,252 @@ a.fm-open-script-newtab .fm-fallback {
 }
 
 .fm-ws-quicklinks-popup-list {
+  display: grid;
+  grid-template-columns: 1fr;
   padding: 6px 0;
   background: #fff;
 }
 
-#fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link {
+.fm-ws-quicklinks-popup-divider {
+  height: 1px;
+  margin: 6px 14px;
+  background: rgba(106, 123, 139, 0.25);
+}
+
+@media (min-width: 520px) {
+  .fm-ws-quicklinks-popup {
+    min-width: 344px;
+    max-width: 444px;
+  }
+
+  .fm-ws-quicklinks-popup-list {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .fm-ws-quicklinks-popup-divider {
+    grid-column: 1 / -1;
+  }
+}
+
+.fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
+  overflow: hidden;
+  font-size: 14px;
   color: #6A7B8B !important;
   text-decoration: none;
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 14px;
 }
 
-#fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:hover,
-#fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:focus,
-#fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:active {
+.fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:hover,
+.fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:focus,
+.fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:active {
   text-decoration: none;
 }
 
-#fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:hover {
+.fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:hover {
   background: #CEE9F8;
   color: #808080 !important;
 }
 
-#fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:hover .fm-ws-quicklinks-popup-icon {
+.fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:hover .fm-ws-quicklinks-popup-icon {
   color: #808080;
 }
 
-#fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-icon {
+.fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-icon {
   font-size: 18px;
-  flex-shrink: 0;
   color: #6A7B8B !important;
+  flex-shrink: 0;
 }
 
 .fm-ws-quicklinks-popup-empty {
   margin: 0;
   padding: 14px;
-  color: #6A7B8B;
   font-size: 13px;
+  color: #6A7B8B;
+}
+
+/* ---------------------------
+   Script editor: Insert snippet button + submenu + preview
+   --------------------------- */
+.fm-snippets-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+/* Button in Code label cell: below "Code" in the unused whitespace */
+td.fieldName .fm-snippets-wrap {
+  display: block;
+  margin-bottom: 0;
+  margin-top: 8px;
+}
+
+.fm-snippets-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid #bdbdbd;
+  border-radius: 4px;
+  background: #f5f5f5;
+  color: #333;
+  cursor: pointer;
+}
+
+.fm-snippets-btn:hover {
+  background: #eee;
+  border-color: #9e9e9e;
+}
+
+.fm-snippets-dropdown {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-width: 420px;
+  max-width: 720px;
+  background: #fff;
+  border: 1px solid #bdbdbd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.fm-snippets-dropdown[hidden] {
+  display: none !important;
+}
+
+.fm-snippets-list {
+  width: 220px;
+  min-width: 220px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.fm-snippets-search-wrap {
+  flex-shrink: 0;
+  padding: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.fm-snippets-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #bdbdbd;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.fm-snippets-search:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.fm-snippets-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.fm-snippets-no-matches {
+  padding: 12px 10px;
+  font-size: 12px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.fm-snippets-no-matches[hidden] {
+  display: none !important;
+}
+
+.fm-snippets-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fm-snippets-item:hover {
+  background: #e3f2fd;
+}
+
+.fm-snippets-item:last-child {
+  border-bottom: none;
+}
+
+.fm-snippets-item-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+}
+
+.fm-snippets-item-desc {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.3;
+}
+
+.fm-snippets-preview {
+  flex: 1;
+  min-width: 280px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fm-snippets-preview-title {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  background: #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.fm-snippets-preview-code {
+  flex: 1;
+  margin: 0;
+  padding: 10px;
+  font-size: 12px;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  line-height: 1.4;
+  color: #333;
+  background: #fff;
+  overflow: auto;
+  white-space: pre;
+}
+
+/* ---------------------------
+   12. Table overrides (dividers)
+   --------------------------- */
+
+/* Picklists: divider after Delete column (col 4) */
+.tableContainer table tr>th:nth-child(4),
+.tableContainer table tr>td:nth-child(4) {
+  border-right: 1px solid #bdbdbd !important;
+}
+
+/* Security Roles/Groups: divider after Manage (col 3) */
+#itembody-2 table tr>th:nth-child(3),
+#itembody-2 table tr>td:nth-child(3) {
+  border-right: 1px solid #bdbdbd !important;
+}
+
+#itembody-2 table tr>th:nth-child(4),
+#itembody-2 table tr>td:nth-child(4) {
+  border-left: 0 !important;
 }

@@ -645,14 +645,23 @@ window.FM = window.FM || {};
     const btn = document.createElement("button");
     btn.type = "button";
     btn.id = "fm-ws-compact-toggle";
-    btn.className = "fm-ws-compact-toggle-btn";
-    btn.title = "Toggle Compact List";
+    btn.className = "fm-ws-compact-toggle-btn fm-pill-toggle fm-toggle-btn-contained";
+    btn.title = "Compact View";
 
-    const icon = document.createElement("span");
-    icon.className = "material-icons";
-    icon.textContent = "token";
+    const labelEl = document.createElement("span");
+    labelEl.className = "fm-toggle-label";
+    labelEl.textContent = "Compact List";
+    btn.appendChild(labelEl);
 
-    btn.appendChild(icon);
+    const pillEl = document.createElement("span");
+    pillEl.className = "fm-toggle-pill";
+    const trackEl = document.createElement("span");
+    trackEl.className = "fm-toggle-track";
+    pillEl.appendChild(trackEl);
+    const thumbEl = document.createElement("span");
+    thumbEl.className = "fm-toggle-thumb";
+    pillEl.appendChild(thumbEl);
+    btn.appendChild(pillEl);
 
     btn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -660,7 +669,7 @@ window.FM = window.FM || {};
       const next = !readCompactState();
       writeCompactState(next);
 
-      btn.classList.toggle("active", next);
+      btn.classList.toggle("fm-active", next);
 
       applyCompactMode(root, next);
       window.FM.runWorkspacesSearchFeature?.();
@@ -668,7 +677,7 @@ window.FM = window.FM || {};
 
     // initial state styling
     if (readCompactState()) {
-      btn.classList.add("active");
+      btn.classList.add("fm-active");
     }
 
     searchInput.insertAdjacentElement("afterend", btn);

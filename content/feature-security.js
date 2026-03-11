@@ -233,27 +233,6 @@ function applySecurityColgroupWidths(tableEl, tab) {
   }
 }
 
-function ensureSecurityDividerAfterManage() {
-  if (document.getElementById("fm-security-manage-divider-style")) return;
-
-  const style = document.createElement("style");
-  style.id = "fm-security-manage-divider-style";
-  style.textContent = `
-    /* Roles/Groups security table: divider after Manage (col 3) */
-    #itembody-2 table tr > th:nth-child(3),
-    #itembody-2 table tr > td:nth-child(3) {
-      border-right: 1px solid #bdbdbd !important;
-    }
-
-    /* Avoid double border on next col */
-    #itembody-2 table tr > th:nth-child(4),
-    #itembody-2 table tr > td:nth-child(4) {
-      border-left: 0 !important;
-    }
-  `;
-  document.head.appendChild(style);
-}
-
 // Main operation
 function moveModifyManageAfterName(tableEl, tab) {
   // Prevent collisions with other scripts
@@ -296,55 +275,12 @@ FM.runSecurityRolesGroupsLayoutTick = function () {
 
   // 2) Enforce colgroup widths (after move)
   applySecurityColgroupWidths(tableEl, tab);
-  ensureSecurityDividerAfterManage();
 };
 
 
 
 
 // ############ ############ ############ ############ ############
-
-FM.injectAdminUsersPaneCSS = function () {
-  if (document.getElementById("fm-adminusers-panes-css")) return;
-
-  const style = document.createElement("style");
-  style.id = "fm-adminusers-panes-css";
-  style.textContent = `
-    #leftPane,
-    #rightPane {
-      height: 500px !important;
-      max-height: 500px !important;
-      min-height: 500px !important;
-      overflow: auto !important;
-    }
-
-    /* Bulk move button above the arrows */
-    #fm-move-all-right {
-      display: flex !important;
-      justify-content: center !important;
-      width: 100% !important;
-      margin: 0 0 6px 0 !important;
-      padding: 0 !important;
-      background: transparent !important;
-      border: 0 !important;
-      cursor: pointer !important;
-    }
-
-    #fm-move-all-right .roundButton {
-      transform: scale(0.85);
-      opacity: 0.9;
-    }
-
-    /* Ensure wrapper does not clip the new row */
-    .roundButtonsWrapperWithDescription {
-      height: auto !important;
-      overflow: visible !important;
-    }
-  `;
-  document.head.appendChild(style);
-};
-
-
 
 
 

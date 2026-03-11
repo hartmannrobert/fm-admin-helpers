@@ -1,7 +1,8 @@
 window.FM = window.FM || {};
 
 FM.isAdminUi = function () {
-  return location.href.includes("autodeskplm360.net/admin");
+  var href = location.href || "";
+  return href.includes("autodeskplm360.net/admin") || href.includes("autodeskplm360.net/script.form?ID");
 };
 
 /** Extract workspace ID from current URL when on workspace items (e.g. /plm/workspaces/57/items). Returns null if not on that pattern. */
@@ -12,26 +13,39 @@ FM.getWorkspaceIdFromItemsUrl = function (url) {
 };
 
 FM.getOrCreateButtonsContainer = function () {
-  let container = document.getElementById("fm-shortcuts");
-  if (container) return container;
+  if (FM.isAdminUi()) {
+    var nav = document.getElementById("global_navigation");
+    var adminLi = nav && nav.querySelector("li.drop_down.nav_item.with_separator.systemlink-admin");
+    return adminLi ? adminLi.parentElement : null;
+  }
+  var container = document.getElementById("fm-shortcuts");
+  if (container) {
+    if (!document.getElementById("fm-shortcuts-admin-slot")) {
+      var slot = document.createElement("div");
+      slot.id = "fm-shortcuts-admin-slot";
+      slot.className = "fm-shortcuts-admin-slot";
+      container.insertBefore(slot, container.firstChild);
+    }
+    return container;
+  }
   container = document.createElement("div");
   container.id = "fm-shortcuts";
-  container.style.display = "inline-flex";
-  container.style.alignItems = "center";
-  container.style.gap = "6px";
-  container.style.marginRight = "10px";
-  container.style.verticalAlign = "middle";
   container.setAttribute("data-fm-managed", "1");
+  var adminSlot = document.createElement("div");
+  adminSlot.id = "fm-shortcuts-admin-slot";
+  adminSlot.className = "fm-shortcuts-admin-slot";
+  container.appendChild(adminSlot);
   return container;
 };
 
-FM.insertContainerBeforeHeaderRight = function (container) {
-  const right = document.getElementById("fusion-header-search");
-  if (!right) return false;
-  const parent = right.parentElement;
+/** Insert container after fusion-header-search and before fusion-header-alerts. */
+FM.insertContainerAfterHeaderSearch = function (container) {
+  const searchEl = document.getElementById("fusion-header-search");
+  if (!searchEl) return false;
+  const parent = searchEl.parentElement;
   if (!parent) return false;
   if (container.parentElement !== parent) {
-    parent.insertBefore(container, right);
+    parent.insertBefore(container, searchEl.nextSibling);
   }
   return true;
 };
@@ -56,15 +70,62 @@ FM.createIconButton = function ({ id, icon, label, title, action }) {
   btn.title = title || "";
   btn.tabIndex = 0;
   btn.setAttribute("data-fm-action", action || "");
-  const iconEl = document.createElement("span");
-  iconEl.className = "material-icons";
-  iconEl.textContent = icon;
-  btn.appendChild(iconEl);
+  if (icon) {
+    const iconEl = document.createElement("span");
+    iconEl.className = "material-icons";
+    iconEl.textContent = icon;
+    btn.appendChild(iconEl);
+  }
   if (label) {
     const labelEl = document.createElement("span");
+    labelEl.className = "fm-btn-label";
     labelEl.textContent = label;
     btn.appendChild(labelEl);
   }
+  return btn;
+};
+
+/** Create an li > a shortcut link for admin nav (one li per shortcut, with separator). */
+FM.createShortcutLi = function ({ id, label, title, action }) {
+  var li = document.createElement("li");
+  li.className = "nav_item with_separator fm-shortcut-item";
+  var a = document.createElement("a");
+  a.id = id;
+  a.className = "fm-shortcut-link";
+  a.href = "#";
+  a.setAttribute("data-fm-action", action || "");
+  a.title = title || "";
+  a.textContent = label || "";
+  li.appendChild(a);
+  return li;
+};
+
+FM.createAdminModeToggle = function () {
+  var btn = document.createElement("button");
+  btn.id = "fm-btn-itemdetails-admin";
+  btn.className = "fm-btn fm-admin-toggle";
+  btn.type = "button";
+  btn.title = "Toggle FieldID";
+  btn.tabIndex = 0;
+  btn.setAttribute("data-fm-action", "toggleItemDetailsAdmin");
+  var labelEl = document.createElement("span");
+  labelEl.className = "fm-admin-toggle-label";
+  labelEl.textContent = "Toggle FieldID";
+  btn.appendChild(labelEl);
+  var pillEl = document.createElement("span");
+  pillEl.className = "fm-admin-toggle-pill";
+  var trackEl = document.createElement("span");
+  trackEl.className = "fm-admin-toggle-track";
+  var checkEl = document.createElement("span");
+  checkEl.className = "fm-admin-toggle-check material-icons";
+  checkEl.setAttribute("aria-hidden", "true");
+  checkEl.textContent = "check";
+  trackEl.appendChild(checkEl);
+  pillEl.appendChild(trackEl);
+  var thumbEl = document.createElement("span");
+  thumbEl.className = "fm-admin-toggle-thumb";
+  pillEl.appendChild(thumbEl);
+  btn.appendChild(pillEl);
   return btn;
 };
 
@@ -95,6 +156,60 @@ FM.buildScriptsUrl = function () {
 FM.buildRolesUrl = function () {
   const tenant = FM.tenantNameFromLocation();
   return "https://" + tenant + ".autodeskplm360.net/admin#section=adminusers&tab=roles";
+};
+
+FM.buildUsersUrl = function () {
+  const tenant = FM.tenantNameFromLocation();
+  return "https://" + tenant + ".autodeskplm360.net/admin#section=adminusers&tab=users";
+};
+
+FM.buildGroupsUrl = function () {
+  const tenant = FM.tenantNameFromLocation();
+  return "https://" + tenant + ".autodeskplm360.net/admin#section=adminusers&tab=groups";
+};
+
+FM.buildGeneralSettingsUrl = function () {
+  const tenant = FM.tenantNameFromLocation();
+  return "https://" + tenant + ".autodeskplm360.net/plm/admin/system-configuration/general-settings";
+};
+
+/** Always returns the generic Workspace Manager URL (no context-based deep link). */
+FM.buildWorkspaceManagerUrl = function () {
+  const tenant = FM.tenantNameFromLocation();
+  return "https://" + tenant + ".autodeskplm360.net/admin#section=setuphome&tab=workspaces";
+};
+
+/**
+ * Extract workspace ID from current URL when on admin workspace settings
+ * (e.g. admin#section=setuphome&tab=workspaces&item=grid&params={"workspaceID":"81",...}).
+ * Returns null if not on that pattern or params lack workspaceID.
+ */
+FM.getWorkspaceIdFromAdminUrl = function (url) {
+  if (typeof url !== "string") return null;
+  const hash = url.indexOf("#") >= 0 ? url.slice(url.indexOf("#") + 1) : "";
+  if (!hash.includes("section=setuphome") || !hash.includes("tab=workspaces") || !hash.includes("params=")) return null;
+  const paramsMatch = hash.match(/params=([^&]+)/);
+  if (!paramsMatch || !paramsMatch[1]) return null;
+  try {
+    const decoded = decodeURIComponent(paramsMatch[1]);
+    const obj = JSON.parse(decoded);
+    const id = obj && (obj.workspaceID !== undefined) ? String(obj.workspaceID) : null;
+    return id || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+/** Build URL to workspace items (e.g. /plm/workspaces/81/items). workspaceId must be a string. */
+FM.buildWorkspaceItemsUrl = function (workspaceId) {
+  const tenant = FM.tenantNameFromLocation();
+  return "https://" + tenant + ".autodeskplm360.net/plm/workspaces/" + encodeURIComponent(String(workspaceId)) + "/items";
+};
+
+/** Build URL to add a new dataset in a workspace (/plm/workspaces/{id}/items/addItem?view=full). */
+FM.buildWorkspaceAddItemUrl = function (workspaceId) {
+  const tenant = FM.tenantNameFromLocation();
+  return "https://" + tenant + ".autodeskplm360.net/plm/workspaces/" + encodeURIComponent(String(workspaceId)) + "/items/addItem?view=full";
 };
 
 FM.buildWorkflowUrl = function (currentUrl) {
@@ -128,7 +243,7 @@ FM.getItemDetailsAdminMode = function () {
 FM.setItemDetailsAdminMode = function (on) {
   try {
     sessionStorage.setItem(ITEM_DETAILS_ADMIN_STORAGE_KEY, on ? "1" : "0");
-  } catch (e) {}
+  } catch (e) { }
 };
 
 /** Extract field ID from row-key or cell-key (e.g. "...57.1.NUMBER" -> "NUMBER"). */
@@ -225,11 +340,10 @@ FM.updateItemDetailsAdminButtonState = function () {
   var btn = document.getElementById("fm-btn-itemdetails-admin");
   if (!btn) return;
   var onPage = FM.isOnFrontendItemDetailsPage(location.href);
+  var adminOn = onPage && FM.getItemDetailsAdminMode();
   btn.classList.toggle("disabled", !onPage);
-  btn.classList.toggle("fm-admin-mode-on", onPage && FM.getItemDetailsAdminMode());
-  btn.title = onPage
-    ? (FM.getItemDetailsAdminMode() ? "Item Details: ADMIN mode (hide values, show field IDs) – click to turn off" : "Item Details: show field IDs for copying – click to turn on")
-    : "Only on Item Details page";
+  btn.classList.toggle("fm-admin-mode-on", adminOn);
+  btn.title = onPage ? "Toggle FieldID" : "Only on Item Details page";
 };
 
 FM._fmPointerHandler = null;
@@ -241,48 +355,120 @@ FM._fmQuicklinksPopupClose = function (popup, onClose) {
   document.removeEventListener("scroll", onClose, true);
 };
 
-/** Shows a popup below the given button with workspace settings quicklinks. Uses FM.getWorkspaceQuicklinks(workspaceId). */
+/** Returns which settings shortcut is current based on location (e.g. "general-settings", "workspaces", "scripts", "users", "groups", "roles"). */
+FM.getCurrentSettingsShortcut = function () {
+  var href = location.href;
+  if (href.indexOf("/plm/admin/system-configuration/general-settings") >= 0) return "general-settings";
+  if (!href.includes("autodeskplm360.net/admin")) return null;
+  var hash = href.indexOf("#") >= 0 ? href.slice(href.indexOf("#") + 1) : "";
+  if (hash.indexOf("section=setuphome") >= 0 && hash.indexOf("tab=workspaces") >= 0) return "workspaces";
+  if (hash.indexOf("section=setuphome") >= 0 && hash.indexOf("tab=scripts") >= 0) return "scripts";
+  if (hash.indexOf("section=adminusers") >= 0 && hash.indexOf("tab=users") >= 0) return "users";
+  if (hash.indexOf("section=adminusers") >= 0 && hash.indexOf("tab=groups") >= 0) return "groups";
+  if (hash.indexOf("section=adminusers") >= 0 && hash.indexOf("tab=roles") >= 0) return "roles";
+  return null;
+};
+
+/** Shows the settings shortcuts popup below the anchor (two columns: left = General Settings, Workspace Manager, Scripts; right = Users, Groups, Roles). */
+FM.showSettingsShortcutsPopup = function (anchorButton) {
+  var current = FM.getCurrentSettingsShortcut();
+  function addIconLink(parent, url, iconName, title, description, linkKey) {
+    var a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.className = "fm-ws-quicklinks-popup-link";
+    if (linkKey && linkKey === current) a.classList.add("fm-quicklinks-popup-link-active");
+    a.title = title;
+    var icon = document.createElement("span");
+    icon.className = "material-icons fm-ws-quicklinks-popup-icon";
+    icon.textContent = iconName;
+    icon.setAttribute("aria-hidden", "true");
+    a.appendChild(icon);
+    a.appendChild(document.createTextNode(description || title));
+    parent.appendChild(a);
+  }
+  var existing = document.getElementById("fm-settings-shortcuts-popup");
+  if (existing && existing.parentNode) {
+    var handler = existing._fmCloseHandler;
+    if (handler) {
+      document.removeEventListener("click", handler, true);
+      document.removeEventListener("scroll", handler, true);
+    }
+    existing.parentNode.removeChild(existing);
+    return;
+  }
+
+  var rect = anchorButton.getBoundingClientRect();
+
+  var popup = document.createElement("div");
+  popup.id = "fm-settings-shortcuts-popup";
+  popup.className = "fm-ws-quicklinks-popup";
+
+  var wrapper = document.createElement("div");
+  wrapper.className = "fm-settings-shortcuts-popup-columns";
+
+  var listLeft = document.createElement("div");
+  listLeft.className = "fm-ws-quicklinks-popup-list fm-settings-shortcuts-popup-col";
+  addIconLink(listLeft, FM.buildGeneralSettingsUrl(), "build", "General Settings", "General Settings", "general-settings");
+  addIconLink(listLeft, FM.buildWorkspaceManagerUrl(), "workspaces", "Workspace Manager", "Workspace Manager", "workspaces");
+  addIconLink(listLeft, FM.buildScriptsUrl(), "code", "Scripts", "Scripts", "scripts");
+
+  var listRight = document.createElement("div");
+  listRight.className = "fm-ws-quicklinks-popup-list fm-settings-shortcuts-popup-col";
+  addIconLink(listRight, FM.buildUsersUrl(), "account_circle", "Users", "Users", "users");
+  addIconLink(listRight, FM.buildGroupsUrl(), "groups", "Groups", "Groups", "groups");
+  addIconLink(listRight, FM.buildRolesUrl(), "lock_person", "Roles", "Roles", "roles");
+
+  wrapper.appendChild(listLeft);
+  wrapper.appendChild(listRight);
+  popup.appendChild(wrapper);
+
+  document.body.appendChild(popup);
+
+  var popupRect = popup.getBoundingClientRect();
+  var gap = 8;
+  popup.style.left = Math.max(gap, rect.left + rect.width - popupRect.width + 10) + "px";
+  popup.style.top = (rect.bottom + gap) + "px";
+
+  var closeHandler = function (e) {
+    if (!e || !e.target) return;
+    if (popup.contains(e.target) || anchorButton.contains(e.target)) return;
+    FM._fmQuicklinksPopupClose(popup, closeHandler);
+  };
+  popup._fmCloseHandler = closeHandler;
+
+  document.addEventListener("click", closeHandler, true);
+  document.addEventListener("scroll", closeHandler, true);
+};
+
+/** Shows the workspace quicklinks popup (only workspace-specific links). Clicking the button again closes it. */
 FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
   var existing = document.getElementById("fm-ws-quicklinks-popup");
-  if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+  if (existing && existing.parentNode) {
+    var handler = existing._fmCloseHandler;
+    if (handler) {
+      document.removeEventListener("click", handler, true);
+      document.removeEventListener("scroll", handler, true);
+    }
+    existing.parentNode.removeChild(existing);
+    return;
+  }
 
   var workspaceId = FM.getWorkspaceIdFromItemsUrl(location.href);
-  if (!workspaceId) return;
-
-  var links = typeof FM.getWorkspaceQuicklinks === "function" ? FM.getWorkspaceQuicklinks(workspaceId) : [];
+  var inWorkspace = !!workspaceId;
+  var workspaceLinks = inWorkspace && typeof FM.getWorkspaceQuicklinks === "function" ? FM.getWorkspaceQuicklinks(workspaceId) : [];
   var rect = anchorButton.getBoundingClientRect();
 
   var popup = document.createElement("div");
   popup.id = "fm-ws-quicklinks-popup";
   popup.className = "fm-ws-quicklinks-popup";
 
-  var header = document.createElement("div");
-  header.className = "fm-ws-quicklinks-popup-header";
-  var closeBtn = document.createElement("button");
-  closeBtn.type = "button";
-  closeBtn.className = "fm-ws-quicklinks-popup-close";
-  closeBtn.title = "Close";
-  closeBtn.setAttribute("aria-label", "Close");
-  var closeIcon = document.createElement("span");
-  closeIcon.className = "material-icons";
-  closeIcon.textContent = "close";
-  closeBtn.appendChild(closeIcon);
-  header.appendChild(closeBtn);
-  var headerTitle = document.createElement("span");
-  headerTitle.className = "fm-ws-quicklinks-popup-title";
-  headerTitle.textContent = "Workspace " + workspaceId + " settings";
-  header.appendChild(headerTitle);
-
   var list = document.createElement("div");
   list.className = "fm-ws-quicklinks-popup-list";
 
-  if (links.length === 0) {
-    var empty = document.createElement("p");
-    empty.className = "fm-ws-quicklinks-popup-empty";
-    empty.textContent = "Quicklinks not available.";
-    list.appendChild(empty);
-  } else {
-    links.forEach(function (item) {
+  if (workspaceLinks.length > 0) {
+    workspaceLinks.forEach(function (item) {
       var a = document.createElement("a");
       a.href = item.url;
       a.target = "_blank";
@@ -295,26 +481,27 @@ FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
       a.appendChild(document.createTextNode(item.title));
       list.appendChild(a);
     });
+  } else {
+    var emptyEl = document.createElement("p");
+    emptyEl.className = "fm-ws-quicklinks-popup-empty";
+    emptyEl.textContent = inWorkspace ? "No quicklinks for this workspace" : "Open a workspace to see quicklinks";
+    list.appendChild(emptyEl);
   }
 
   popup.appendChild(list);
 
-  popup.style.left = rect.left + "px";
-  popup.style.top = (rect.bottom + 4) + "px";
-
   document.body.appendChild(popup);
+
+  var popupRect = popup.getBoundingClientRect();
+  popup.style.left = (rect.right - popupRect.width + 16) + "px";
+  popup.style.top = (rect.bottom + 8) + "px";
 
   var closeHandler = function (e) {
     if (!e || !e.target) return;
     if (popup.contains(e.target) || anchorButton.contains(e.target)) return;
     FM._fmQuicklinksPopupClose(popup, closeHandler);
   };
-
-  closeBtn.addEventListener("click", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    FM._fmQuicklinksPopupClose(popup, closeHandler);
-  });
+  popup._fmCloseHandler = closeHandler;
 
   document.addEventListener("click", closeHandler, true);
   document.addEventListener("scroll", closeHandler, true);
@@ -322,22 +509,37 @@ FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
 
 FM.setupShortcutsDelegation = function () {
   const container = FM.getOrCreateButtonsContainer();
-  if (!container) return;
   if (FM._fmPointerHandler) {
-    container.removeEventListener("pointerdown", FM._fmPointerHandler);
+    document.removeEventListener("pointerdown", FM._fmPointerHandler, true);
   }
   FM._fmPointerHandler = function (evt) {
-    const btn = evt.target.closest && evt.target.closest(".fm-btn");
-    if (!btn || !container.contains(btn)) return;
+    var actionEl = (evt.target.closest && evt.target.closest(".fm-btn")) || (evt.target.closest && evt.target.closest("[data-fm-action]"));
+    if (!actionEl || !actionEl.getAttribute("data-fm-action")) return;
+    var inShortcuts = container && container.contains(actionEl);
+    var inCommandBar = document.getElementById("command-bar-react") && document.getElementById("command-bar-react").contains(actionEl);
+    var wrapperBtnsEl = document.getElementById("itemviewer-wrapper-buttons");
+    var inItemviewerBar = wrapperBtnsEl && wrapperBtnsEl.contains(actionEl);
+    if (!inShortcuts && !inCommandBar && !inItemviewerBar) return;
     evt.stopPropagation();
     evt.preventDefault();
-    const action = btn.getAttribute("data-fm-action");
+    const action = actionEl.getAttribute("data-fm-action");
     switch (action) {
+      case "openWorkspaceManager":
+        window.open(FM.buildWorkspaceManagerUrl(), "_blank", "noopener,noreferrer");
+        break;
       case "openScripts":
         window.open(FM.buildScriptsUrl(), "_blank", "noopener,noreferrer");
         break;
       case "openRoles":
         window.open(FM.buildRolesUrl(), "_blank", "noopener,noreferrer");
+        break;
+      case "openWorkspaceItems":
+        var wsId = FM.getWorkspaceIdFromAdminUrl(location.href);
+        if (wsId) window.open(FM.buildWorkspaceItemsUrl(wsId), "_blank", "noopener,noreferrer");
+        break;
+      case "openWorkspaceAddItem":
+        var wsIdAdd = FM.getWorkspaceIdFromAdminUrl(location.href);
+        if (wsIdAdd) window.open(FM.buildWorkspaceAddItemUrl(wsIdAdd), "_blank", "noopener,noreferrer");
         break;
       case "toggleItemDetailsAdmin":
         if (!FM.isOnFrontendItemDetailsPage(location.href)) return;
@@ -350,17 +552,16 @@ FM.setupShortcutsDelegation = function () {
         }
         FM.updateItemDetailsAdminButtonState();
         break;
+      case "openSettingsShortcuts":
+        FM.showSettingsShortcutsPopup(actionEl);
+        break;
       case "openWorkspaceQuicklinks":
-        if (FM.isWorkspaceContext(location.href)) {
-          FM.showWorkspaceQuicklinksPopup(btn);
-        } else {
-          window.open(FM.buildWorkspaceAdminUrl(location.href), "_blank", "noopener,noreferrer");
-        }
+        FM.showWorkspaceQuicklinksPopup(actionEl);
         break;
       default:
     }
   };
-  container.addEventListener("pointerdown", FM._fmPointerHandler, { passive: false });
+  document.addEventListener("pointerdown", FM._fmPointerHandler, { capture: true, passive: false });
   if (!FM._fmCopyFieldIdBound) {
     FM._fmCopyFieldIdBound = true;
     document.addEventListener("click", function (evt) {
@@ -372,7 +573,7 @@ FM.setupShortcutsDelegation = function () {
         navigator.clipboard.writeText(text).then(function () {
           el.setAttribute("title", "Copied!");
           setTimeout(function () { el.setAttribute("title", "Click to copy field ID"); }, 1500);
-        }).catch(function () {});
+        }).catch(function () { });
       }
     }, true);
   }
@@ -381,30 +582,29 @@ FM.setupShortcutsDelegation = function () {
 FM.ensurePlacement = function () {
   const container = FM.getOrCreateButtonsContainer();
   if (FM.isAdminUi()) {
-    const nav = document.getElementById("global_navigation");
-    const adminLi = nav && nav.querySelector("li.drop_down.nav_item.with_separator.systemlink-admin");
-    if (nav && adminLi) {
-      const parent = adminLi.parentElement || nav;
-      if (container.parentElement !== parent || container.previousSibling !== adminLi) {
-        parent.insertBefore(container, adminLi.nextSibling);
-      }
-      return true;
-    }
+    if (container) return true;
+    return false;
   }
-  const right = document.getElementById("fusion-header-search");
-  if (right) {
-    const parent = right.parentElement;
-    if (container.parentElement !== parent || container.nextSibling !== right) {
-      parent.insertBefore(container, right);
+  if (!container) return false;
+  const searchEl = document.getElementById("fusion-header-search");
+  if (searchEl) {
+    const parent = searchEl.parentElement;
+    var nextSib = searchEl.nextSibling;
+    if (container.parentElement !== parent || container.previousSibling !== searchEl) {
+      parent.insertBefore(container, nextSib);
+    }
+    if (!container.classList.contains("fm-shortcuts-in-header")) {
+      container.classList.add("fm-shortcuts-in-header");
     }
     return true;
   }
+  container.classList.remove("fm-shortcuts-in-header");
   return false;
 };
 
 FM.ensureButtonsPresent = function () {
   const container = FM.getOrCreateButtonsContainer();
-  if (!container.parentElement) return;
+  if (!container || !container.parentElement) return;
   function ensureButton(id, props) {
     if (!document.getElementById(id)) {
       const btn = FM.createIconButton(props);
@@ -413,34 +613,106 @@ FM.ensureButtonsPresent = function () {
   }
   var onItemDetailsPage = FM.isOnFrontendItemDetailsPage(location.href);
   if (!FM.isAdminUi()) {
-    var quicklinksBtn = document.getElementById("fm-btn-ws-quicklinks");
-    if (!quicklinksBtn) {
-      quicklinksBtn = FM.createIconButton({ id: "fm-btn-ws-quicklinks", icon: "settings", title: "Workspace settings", action: "openWorkspaceQuicklinks" });
-      container.insertBefore(quicklinksBtn, container.firstChild);
-    } else if (quicklinksBtn.parentNode === container && quicklinksBtn !== container.firstChild) {
-      container.insertBefore(quicklinksBtn, container.firstChild);
+    var adminSlot = document.getElementById("fm-shortcuts-admin-slot");
+    if (!adminSlot) {
+      adminSlot = document.createElement("div");
+      adminSlot.id = "fm-shortcuts-admin-slot";
+      adminSlot.className = "fm-shortcuts-admin-slot";
+      container.insertBefore(adminSlot, container.firstChild);
     }
-    if (onItemDetailsPage) {
-      var itemDetailsBtn = document.getElementById("fm-btn-itemdetails-admin");
-      if (!itemDetailsBtn) {
-        itemDetailsBtn = FM.createIconButton({ id: "fm-btn-itemdetails-admin", icon: "admin_panel_settings", title: "Item Details: show field IDs", action: "toggleItemDetailsAdmin" });
-        container.insertBefore(itemDetailsBtn, container.firstChild);
-      } else if (itemDetailsBtn.parentNode === container && itemDetailsBtn !== container.firstChild) {
-        container.insertBefore(itemDetailsBtn, container.firstChild);
+    var wrapperBtns = document.getElementById("itemviewer-wrapper-buttons");
+    var inWorkspaceView = !!FM.getWorkspaceIdFromItemsUrl(location.href);
+    var showAdminShortcut = wrapperBtns || inWorkspaceView;
+    var activityBtn = document.getElementById("fm-btn-activity-quicklinks");
+    if (showAdminShortcut) {
+      if (!activityBtn) {
+        activityBtn = FM.createIconButton({ id: "fm-btn-activity-quicklinks", icon: "apps", title: "Admin shortcuts", action: "openWorkspaceQuicklinks" });
+      }
+      if (activityBtn.parentNode !== adminSlot) {
+        adminSlot.appendChild(activityBtn);
+      }
+    } else {
+      if (activityBtn && activityBtn.parentNode) activityBtn.parentNode.removeChild(activityBtn);
+    }
+    var settingsBtn = document.getElementById("fm-btn-ws-quicklinks");
+    var insertAfterSlot = adminSlot.nextSibling;
+    if (!settingsBtn) {
+      settingsBtn = FM.createIconButton({ id: "fm-btn-ws-quicklinks", icon: "settings", title: "Settings shortcuts", action: "openSettingsShortcuts" });
+      container.insertBefore(settingsBtn, insertAfterSlot);
+    } else if (settingsBtn.parentNode !== container || settingsBtn.previousSibling !== adminSlot) {
+      container.insertBefore(settingsBtn, insertAfterSlot);
+    }
+    var wrapper = document.getElementById("fm-itemviewer-actions");
+    var activityWrapper = document.getElementById("fm-itemviewer-activity-quicklinks");
+    if (wrapperBtns) {
+      if (onItemDetailsPage) {
+        if (!wrapper) {
+          wrapper = document.createElement("div");
+          wrapper.id = "fm-itemviewer-actions";
+          wrapper.className = "fm-itemviewer-actions";
+          var partToggle = document.createElement("div");
+          partToggle.className = "fm-itemviewer-actions-part fm-itemviewer-actions-toggle";
+          wrapper.appendChild(partToggle);
+        }
+        var partToggleEl = wrapper.querySelector(".fm-itemviewer-actions-toggle");
+        var itemDetailsBtn = document.getElementById("fm-btn-itemdetails-admin");
+        if (!itemDetailsBtn) {
+          itemDetailsBtn = FM.createAdminModeToggle();
+        }
+        if (itemDetailsBtn.parentNode !== partToggleEl) {
+          partToggleEl.appendChild(itemDetailsBtn);
+        }
+        if (wrapper.parentNode !== wrapperBtns || wrapper !== wrapperBtns.firstChild) {
+          wrapperBtns.insertBefore(wrapper, wrapperBtns.firstChild);
+        }
+      } else {
+        var adminBtn = document.getElementById("fm-btn-itemdetails-admin");
+        if (adminBtn) adminBtn.remove();
+        if (wrapper && wrapper.parentNode) wrapper.remove();
       }
     } else {
       var adminBtn = document.getElementById("fm-btn-itemdetails-admin");
       if (adminBtn) adminBtn.remove();
+      if (wrapper && wrapper.parentNode) wrapper.remove();
+      if (activityWrapper && activityWrapper.parentNode) activityWrapper.remove();
     }
   } else {
     var itemDetailsBtnEl = document.getElementById("fm-btn-itemdetails-admin");
     if (itemDetailsBtnEl) itemDetailsBtnEl.remove();
     var wsQlBtnEl = document.getElementById("fm-btn-ws-quicklinks");
     if (wsQlBtnEl) wsQlBtnEl.remove();
+    var activityBtnEl = document.getElementById("fm-btn-activity-quicklinks");
+    if (activityBtnEl && activityBtnEl.parentNode) activityBtnEl.parentNode.remove();
   }
-  ensureButton("fm-btn-scripts", { id: "fm-btn-scripts", icon: "code", title: "Scripts", action: "openScripts" });
-  ensureButton("fm-btn-roles", { id: "fm-btn-roles", icon: "group", title: "Roles", action: "openRoles" });
-  if (!FM.isAdminUi()) {
+  if (FM.isAdminUi()) {
+    var adminLi = container.querySelector("li.drop_down.nav_item.with_separator.systemlink-admin");
+    if (!adminLi) return;
+    function ensureShortcutLi(id, props, insertAfter) {
+      var existing = document.getElementById(id);
+      if (existing) return existing.closest("li") || null;
+      var li = FM.createShortcutLi({ id: id, label: props.label, title: props.title, action: props.action });
+      container.insertBefore(li, insertAfter ? insertAfter.nextSibling : null);
+      return li;
+    }
+    var after = adminLi;
+    after = ensureShortcutLi("fm-btn-workspace-manager", { label: "Workspace Manager", title: "Workspace Manager", action: "openWorkspaceManager" }, after) || document.getElementById("fm-btn-workspace-manager").closest("li");
+    after = ensureShortcutLi("fm-btn-scripts", { label: "Scripts", title: "Scripts", action: "openScripts" }, after) || document.getElementById("fm-btn-scripts").closest("li");
+    after = ensureShortcutLi("fm-btn-roles", { label: "Roles", title: "Roles", action: "openRoles" }, after) || document.getElementById("fm-btn-roles").closest("li");
+    var inWorkspaceAdmin = !!FM.getWorkspaceIdFromAdminUrl(location.href);
+    if (inWorkspaceAdmin) {
+      after = ensureShortcutLi("fm-btn-workspace-items", { label: "Open Workspace", title: "Go to workspace", action: "openWorkspaceItems" }, after) || document.getElementById("fm-btn-workspace-items").closest("li");
+      ensureShortcutLi("fm-btn-workspace-add-item", { label: "Create New Item", title: "Create new dataset", action: "openWorkspaceAddItem" }, after);
+    } else {
+      var workspaceItemsLink = document.getElementById("fm-btn-workspace-items");
+      if (workspaceItemsLink && workspaceItemsLink.closest("li")) workspaceItemsLink.closest("li").remove();
+      var addItemLinkEl = document.getElementById("fm-btn-workspace-add-item");
+      if (addItemLinkEl && addItemLinkEl.closest("li")) addItemLinkEl.closest("li").remove();
+    }
+  } else {
+    var nav = document.getElementById("global_navigation");
+    if (nav) {
+      nav.querySelectorAll("li.fm-shortcut-item").forEach(function (li) { li.remove(); });
+    }
     FM.updateItemDetailsAdminButtonState();
   }
 };
@@ -451,7 +723,7 @@ FM.initShortcuts = function () {
   FM.ensureButtonsPresent();
   FM.setupShortcutsDelegation();
   if (FM._shortcutsObserver) {
-    try { FM._shortcutsObserver.disconnect(); } catch (e) {}
+    try { FM._shortcutsObserver.disconnect(); } catch (e) { }
   }
   FM._shortcutsObserverTimer = null;
   FM._shortcutsObserver = new MutationObserver(function () {
@@ -466,10 +738,11 @@ FM.initShortcuts = function () {
   if (nav) observeTargets.push(nav);
   const headerRight = document.getElementById("fusion-header-right") || (document.getElementById("fusion-header-search") && document.getElementById("fusion-header-search").parentElement);
   if (headerRight) observeTargets.push(headerRight);
+  if (document.body) observeTargets.push(document.body);
   observeTargets.forEach(function (t) {
     try {
       FM._shortcutsObserver.observe(t, { childList: true, subtree: true });
-    } catch (e) {}
+    } catch (e) { }
   });
   window.addEventListener("popstate", function () { setTimeout(function () { FM.ensurePlacement(); FM.ensureButtonsPresent(); }, 80); });
   window.addEventListener("hashchange", function () { setTimeout(function () { FM.ensurePlacement(); FM.ensureButtonsPresent(); }, 80); });

@@ -47,6 +47,23 @@
       return href.includes("tab=scripts") || hash.includes("tab=scripts");
     }
 
+    function isOnScriptFormPage() {
+      const href = String(location.href || "");
+      return href.includes("autodeskplm360.net") &&
+        href.includes("script.form") &&
+        /\bID=\d+/.test(href);
+    }
+
+    function setScriptFormPageTitle() {
+      if (!isOnScriptFormPage()) return;
+      const nameEl = document.getElementById("uniqueName");
+      if (!nameEl) return;
+      const name = (nameEl.value !== undefined ? nameEl.value : nameEl.textContent || "").toString().trim();
+      if (!name) return;
+      const targetDoc = window.top && window.top.document ? window.top.document : document;
+      targetDoc.title = name;
+    }
+
     function isScriptsGridEnabled() {
       return localStorage.getItem(LS_KEY) === "1";
     }
@@ -68,20 +85,38 @@
       btn.setAttribute("aria-pressed", enabled ? "true" : "false");
     }
 
-    // Toggle button insertion (idempotent)
+    // Toggle button insertion (idempotent) — skip .itemsectionmenu inside whereused dialog
     function ensureToggleOnce() {
-      const menu = document.querySelector(".itemsectionmenu");
+      const menus = document.querySelectorAll(".itemsectionmenu");
+      let menu = null;
+      for (let i = 0; i < menus.length; i++) {
+        if (!menus[i].closest("#whereused-dialog")) {
+          menu = menus[i];
+          break;
+        }
+      }
       if (!menu) return;
       if (menu.querySelector(`.${BTN_CLASS}`)) return;
 
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = BTN_CLASS;
+      btn.className = BTN_CLASS + " fm-pill-toggle fm-toggle-btn-contained";
+      btn.title = "Grid View";
 
-      const icon = document.createElement("span");
-      icon.className = "material-icons";
-      icon.textContent = "calendar_view_week";
-      btn.appendChild(icon);
+      const labelEl = document.createElement("span");
+      labelEl.className = "fm-toggle-label";
+      labelEl.textContent = "Grid View";
+      btn.appendChild(labelEl);
+
+      const pillEl = document.createElement("span");
+      pillEl.className = "fm-toggle-pill";
+      const trackEl = document.createElement("span");
+      trackEl.className = "fm-toggle-track";
+      pillEl.appendChild(trackEl);
+      const thumbEl = document.createElement("span");
+      thumbEl.className = "fm-toggle-thumb";
+      pillEl.appendChild(thumbEl);
+      btn.appendChild(pillEl);
 
       btn.addEventListener("click", (ev) => {
         ev.preventDefault();
@@ -225,6 +260,453 @@
       theadRow.appendChild(mk("", ""));
     }
 
+    // Form script field: Fusion Lifecycle uses <textarea id="code" name="code"> (hidden) with full content.
+    function getCodeTextarea(doc) {
+      var ta = doc.getElementById("code") || doc.querySelector('textarea[name="code"]');
+      return ta && ta.tagName === "TEXTAREA" ? ta : null;
+    }
+
+    // Get script editor content: prefer live Ace editor (current edits), then textarea/scroll fallbacks.
+    // ace-capture.js (world: MAIN) can expose full content via custom events when the page's Ace is captured.
+    function getScriptEditorContent() {
+      const doc = document;
+      const aceEditors = doc.querySelectorAll(".ace_editor");
+
+      function getFromMainWorldAce() {
+        return new Promise(function (resolve) {
+          var timeout = setTimeout(function () { resolve(null); }, 800);
+          doc.addEventListener("fm-ace-content", function onContent(ev) {
+            clearTimeout(timeout);
+            doc.removeEventListener("fm-ace-content", onContent);
+            resolve(typeof ev.detail === "string" ? ev.detail : null);
+          }, { once: true });
+          doc.dispatchEvent(new CustomEvent("fm-ace-get-content"));
+        });
+      }
+
+      function getFromSession(session) {
+        if (!session || typeof session.getLength !== "function" || typeof session.getLine !== "function") return null;
+        try {
+          const len = session.getLength();
+          const parts = [];
+          for (let r = 0; r < len; r += 1) parts.push(session.getLine(r) || "");
+          return parts.join("\n");
+        } catch (e) { /* ignore */ }
+        return null;
+      }
+
+      function getFromEditor(editor) {
+        if (!editor) return null;
+        try {
+          if (typeof editor.getValue === "function") return editor.getValue();
+          const session = editor.session || (typeof editor.getSession === "function" ? editor.getSession() : null);
+          if (session) {
+            if (typeof session.getValue === "function") return session.getValue();
+            if (session.getDocument && typeof session.getDocument === "function") {
+              const docObj = session.getDocument();
+              if (docObj && typeof docObj.getValue === "function") return docObj.getValue();
+              if (docObj && typeof docObj.getAllLines === "function") {
+                var newline = (typeof docObj.getNewLineCharacter === "function" ? docObj.getNewLineCharacter() : undefined) || "\n";
+                return docObj.getAllLines().join(newline);
+              }
+            }
+            const fromSession = getFromSession(session);
+            if (fromSession !== null) return fromSession;
+          }
+        } catch (e) { /* ignore */ }
+        return null;
+      }
+
+      function findEditorFromElement(el) {
+        if (el.env && el.env.editor) return el.env.editor;
+        try {
+          if (typeof window.ace !== "undefined") return window.ace.edit(el.id || el);
+        } catch (e) { /* ignore */ }
+        var keys = [];
+        try {
+          for (var k in el) { if (Object.prototype.hasOwnProperty.call(el, k)) keys.push(k); }
+        } catch (e) { return null; }
+        for (var j = 0; j < keys.length; j += 1) {
+          var val = el[keys[j]];
+          if (val && typeof val === "object" && typeof val.getValue === "function" && (val.session || (typeof val.getSession === "function" && val.getSession()))) return val;
+        }
+        return null;
+      }
+
+      function runFallbacks() {
+        for (let i = 0; i < aceEditors.length; i += 1) {
+          const editor = findEditorFromElement(aceEditors[i]);
+          if (editor) {
+            const out = getFromEditor(editor);
+            if (typeof out === "string") return Promise.resolve(out);
+          }
+        }
+        var globalNames = ["aceEditor", "editor", "scriptEditor", "codeEditor"];
+        for (var g = 0; g < globalNames.length; g += 1) {
+          try {
+            var w = typeof window !== "undefined" ? window : null;
+            if (w && w[globalNames[g]]) {
+              const out = getFromEditor(w[globalNames[g]]);
+              if (typeof out === "string") return Promise.resolve(out);
+            }
+          } catch (e) { /* ignore */ }
+        }
+        if (typeof _plm !== "undefined" && _plm.callFunc) {
+          try {
+            const hostContent = _plm.callFunc("scriptEditor", "getValue") || _plm.callFunc("scriptEditor", "getContent");
+            if (typeof hostContent === "string" && hostContent.length > 0) return Promise.resolve(hostContent);
+          } catch (e) { /* ignore */ }
+        }
+        var codeTa = getCodeTextarea(doc);
+        if (codeTa) {
+          var val = (codeTa.value || "").trim();
+          if (val.length > 0) return Promise.resolve(val);
+        }
+        return Promise.resolve("");
+      }
+
+      return getFromMainWorldAce().then(function (mainWorldContent) {
+        if (typeof mainWorldContent === "string" && mainWorldContent.length > 0) return mainWorldContent;
+        return runFallbacks();
+      });
+    }
+
+    // If we landed on script.form without ID after a Copy & Save, redirect to script.form?ID=... (restore URL)
+    function restoreScriptFormUrlAfterSave() {
+      const href = String(location.href || "");
+      const pathname = String(location.pathname || "");
+      if (!pathname.includes("script.form") || /\bID=\d+/.test(href)) return;
+      try {
+        const stored = sessionStorage.getItem("fmScriptFormIdAfterSave");
+        if (!stored) return;
+        sessionStorage.removeItem("fmScriptFormIdAfterSave");
+        const base = location.origin + pathname;
+        location.replace(base + "?ID=" + stored);
+      } catch (e) { /* ignore */ }
+    }
+
+    // Get Ace scroll/cursor state from main world (ace-capture.js) for restore-after-save.
+    function getAceEditorState() {
+      const doc = document;
+      return new Promise(function (resolve) {
+        const timeout = setTimeout(function () { resolve(null); }, 500);
+        doc.addEventListener("fm-ace-state", function onState(ev) {
+          clearTimeout(timeout);
+          doc.removeEventListener("fm-ace-state", onState);
+          resolve(ev.detail && typeof ev.detail === "object" ? ev.detail : null);
+        }, { once: true });
+        doc.dispatchEvent(new CustomEvent("fm-ace-get-state"));
+      });
+    }
+
+    // Restore Ace scroll/cursor after reload (Copy & Save). Tries a few times so Ace is ready.
+    function restoreAceEditorState() {
+      const href = String(location.href || "");
+      const idMatch = href.match(/script\.form\?ID=(\d+)/i) || href.match(/[?&]ID=(\d+)/i);
+      const scriptId = idMatch ? idMatch[1] : null;
+      if (!scriptId) return;
+      let raw;
+      try {
+        raw = sessionStorage.getItem("fmAceRestoreState_" + scriptId);
+      } catch (e) { return; }
+      if (!raw) return;
+      let state;
+      try {
+        state = JSON.parse(raw);
+      } catch (e) { return; }
+      if (!state || typeof state !== "object") return;
+
+      const doc = document;
+      function tryRestore() {
+        doc.dispatchEvent(new CustomEvent("fm-ace-set-state", { detail: state }));
+      }
+      function clearStored() {
+        try { sessionStorage.removeItem("fmAceRestoreState_" + scriptId); } catch (e) {}
+      }
+      doc.addEventListener("fm-ace-state-restored", function onRestored() {
+        doc.removeEventListener("fm-ace-state-restored", onRestored);
+        clearStored();
+      }, { once: true });
+      const delays = [400, 900, 1600];
+      delays.forEach(function (ms) {
+        setTimeout(tryRestore, ms);
+      });
+      setTimeout(clearStored, 2500);
+    }
+
+    // Script form page: add "Copy & Save" button in itemdisplayoptions — copy script to clipboard, then save
+    function ensureCopySaveButton() {
+      restoreScriptFormUrlAfterSave();
+      if (!isOnScriptFormPage()) return;
+      restoreAceEditorState();
+      const container = document.getElementById("itemdisplayoptions") || document.querySelector(".itemdisplayoptions");
+      if (!container) return;
+      if (document.getElementById("fm-copy-save-script-btn")) return;
+      const saveBtn = document.getElementById("savebutton");
+      const btn = document.createElement("button");
+      btn.id = "fm-copy-save-script-btn";
+      btn.type = "button";
+      btn.className = "submitinput fm-copy-save-script";
+      btn.name = "fmCopySaveBtn";
+      btn.textContent = "Copy to Clipboard and Save";
+      btn.title = "Copy script to clipboard and save";
+      btn.addEventListener("click", function () {
+        const href = String(location.href || "");
+        const idMatch = href.match(/script\.form\?ID=(\d+)/i) || href.match(/[?&]ID=(\d+)/i);
+        const scriptId = idMatch ? idMatch[1] : null;
+        if (scriptId) {
+          try { sessionStorage.setItem("fmScriptFormIdAfterSave", scriptId); } catch (e) { /* ignore */ }
+        }
+        function triggerSave() {
+          if (typeof _plm !== "undefined" && _plm.callFunc) _plm.callFunc("scriptEditor", "save");
+          else if (saveBtn) saveBtn.click();
+        }
+        Promise.all([getAceEditorState(), getScriptEditorContent()]).then(function (results) {
+          const state = results[0];
+          const text = results[1];
+          if (state && scriptId) {
+            try { sessionStorage.setItem("fmAceRestoreState_" + scriptId, JSON.stringify(state)); } catch (e) { /* ignore */ }
+          }
+          if (typeof navigator.clipboard !== "undefined" && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(triggerSave, triggerSave);
+          } else {
+            triggerSave();
+          }
+        }).catch(function () { triggerSave(); });
+      });
+      if (saveBtn && saveBtn.parentNode === container) {
+        container.insertBefore(btn, saveBtn);
+      } else {
+        container.appendChild(btn);
+      }
+    }
+
+    // Script form page: find the table row that contains the "Code" label (td.fieldName with "Code")
+    function findCodeRow(doc) {
+      const byId = doc.getElementById("section-code");
+      if (byId) return byId;
+      const rows = utils.bySelectorAll("tr", doc);
+      for (let i = 0; i < rows.length; i++) {
+        const fd = rows[i].querySelector("td.fieldName");
+        if (!fd) continue;
+        const strong = fd.querySelector("strong");
+        const text = (strong ? strong.textContent : fd.textContent || "").trim();
+        if (utils.normalize(text) === "code") return rows[i];
+      }
+      return null;
+    }
+
+    // Script form page: Insert snippet button + submenu + hover preview (in label cell, left of "Code")
+    function ensureSnippetsButton() {
+      if (!isOnScriptFormPage()) return;
+      const snippets = window.FM && Array.isArray(window.FM.scriptSnippets) ? window.FM.scriptSnippets : [];
+      if (snippets.length === 0) return;
+
+      const codeRow = findCodeRow(document);
+      if (!codeRow) return;
+      if (codeRow.querySelector(".fm-snippets-wrap")) return;
+
+      const nameCell = codeRow.querySelector("td.fieldName");
+      if (!nameCell) return;
+
+      const wrap = document.createElement("div");
+      wrap.className = "fm-snippets-wrap";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "fm-snippets-btn";
+      btn.textContent = "Insert snippet";
+      btn.title = "Insert a snippet from the library";
+
+      const dropdown = document.createElement("div");
+      dropdown.className = "fm-snippets-dropdown";
+      dropdown.setAttribute("hidden", "");
+
+      const listEl = document.createElement("div");
+      listEl.className = "fm-snippets-list";
+
+      const searchWrap = document.createElement("div");
+      searchWrap.className = "fm-snippets-search-wrap";
+      const searchInput = document.createElement("input");
+      searchInput.type = "text";
+      searchInput.className = "fm-snippets-search";
+      searchInput.placeholder = "Search snippets…";
+      searchInput.autocomplete = "off";
+      searchWrap.appendChild(searchInput);
+      listEl.appendChild(searchWrap);
+
+      const listScroll = document.createElement("div");
+      listScroll.className = "fm-snippets-list-scroll";
+
+      const noMatchesEl = document.createElement("div");
+      noMatchesEl.className = "fm-snippets-no-matches";
+      noMatchesEl.textContent = "No matching snippets";
+      noMatchesEl.setAttribute("hidden", "");
+
+      const previewEl = document.createElement("div");
+      previewEl.className = "fm-snippets-preview";
+      const previewTitle = document.createElement("div");
+      previewTitle.className = "fm-snippets-preview-title";
+      previewTitle.textContent = "Preview";
+      const previewCode = document.createElement("pre");
+      previewCode.className = "fm-snippets-preview-code";
+      previewEl.appendChild(previewTitle);
+      previewEl.appendChild(previewCode);
+
+      let hoverTimer = null;
+      let currentPreviewId = null;
+
+      function setPreview(snippet) {
+        currentPreviewId = snippet ? snippet.id : null;
+        previewCode.textContent = snippet ? snippet.code : "";
+        previewTitle.textContent = snippet ? snippet.name : "Preview";
+      }
+
+      function getFirstVisibleSnippet() {
+        const items = listScroll.querySelectorAll(".fm-snippets-item");
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].style.display !== "none") return snippets[Number(items[i].dataset.snippetIndex)];
+        }
+        return null;
+      }
+
+      function applySearch() {
+        const q = (searchInput.value || "").trim().toLowerCase();
+        let visibleCount = 0;
+        const items = listScroll.querySelectorAll(".fm-snippets-item");
+        for (let i = 0; i < items.length; i++) {
+          const s = snippets[Number(items[i].dataset.snippetIndex)];
+          const name = (s && s.name ? s.name : "").toLowerCase();
+          const desc = (s && s.description ? s.description : "").toLowerCase();
+          const match = q === "" || name.indexOf(q) !== -1 || desc.indexOf(q) !== -1;
+          items[i].style.display = match ? "" : "none";
+          if (match) visibleCount += 1;
+        }
+        if (visibleCount === 0) {
+          noMatchesEl.removeAttribute("hidden");
+          setPreview(null);
+        } else {
+          noMatchesEl.setAttribute("hidden", "");
+          const first = getFirstVisibleSnippet();
+          let currentStillVisible = false;
+          listScroll.querySelectorAll(".fm-snippets-item").forEach(function (el) {
+            if (el.style.display !== "none" && snippets[Number(el.dataset.snippetIndex)].id === currentPreviewId) currentStillVisible = true;
+          });
+          if (!currentStillVisible) setPreview(first);
+        }
+      }
+
+      function openDropdown() {
+        dropdown.removeAttribute("hidden");
+        searchInput.value = "";
+        applySearch();
+        setPreview(snippets[0] || null);
+        searchInput.focus();
+      }
+
+      function closeDropdown() {
+        dropdown.setAttribute("hidden", "");
+      }
+
+      function insertSnippet(snippet) {
+        if (!snippet || typeof snippet.code !== "string") return;
+        document.dispatchEvent(new CustomEvent("fm-ace-insert-text", { detail: snippet.code }));
+        closeDropdown();
+      }
+
+      for (let i = 0; i < snippets.length; i++) {
+        const s = snippets[i];
+        const item = document.createElement("div");
+        item.className = "fm-snippets-item";
+        item.dataset.snippetId = s.id || String(i);
+        item.dataset.snippetIndex = String(i);
+
+        const nameEl = document.createElement("span");
+        nameEl.className = "fm-snippets-item-name";
+        nameEl.textContent = s.name || "Snippet";
+        const descEl = document.createElement("span");
+        descEl.className = "fm-snippets-item-desc";
+        descEl.textContent = (s.description || "").trim() || s.name || "";
+
+        item.appendChild(nameEl);
+        item.appendChild(descEl);
+
+        item.addEventListener("mouseenter", function () {
+          window.clearTimeout(hoverTimer);
+          hoverTimer = window.setTimeout(function () { setPreview(s); }, 150);
+        });
+        item.addEventListener("mouseleave", function () {
+          window.clearTimeout(hoverTimer);
+          hoverTimer = null;
+        });
+        item.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          insertSnippet(s);
+        });
+
+        listScroll.appendChild(item);
+      }
+
+      listEl.appendChild(noMatchesEl);
+      listEl.appendChild(listScroll);
+
+      searchInput.addEventListener("input", applySearch);
+      searchInput.addEventListener("keydown", function (ev) {
+        ev.stopPropagation();
+      });
+
+      dropdown.appendChild(listEl);
+      dropdown.appendChild(previewEl);
+
+      btn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (dropdown.hasAttribute("hidden")) openDropdown(); else closeDropdown();
+      });
+
+      wrap.appendChild(btn);
+      wrap.appendChild(dropdown);
+
+      document.addEventListener("click", function outside(ev) {
+        if (dropdown.hasAttribute("hidden")) return;
+        if (wrap.contains(ev.target)) return;
+        closeDropdown();
+      });
+
+      nameCell.appendChild(wrap);
+    }
+
+    // On script form page: make library script names in #section-includes clickable (open in new tab, color #5780AE)
+    function ensureLibraryScriptLinksOpenInNewTab() {
+      if (!isOnScriptFormPage()) return;
+      const row = document.getElementById("section-includes");
+      if (!row) return;
+      const td = row.querySelector("td.fieldValue");
+      if (!td) return;
+      const list = td.querySelector("ul.includedScripts");
+      if (!list) return;
+      const items = list.querySelectorAll("li.library-link");
+      for (const li of items) {
+        if (li.dataset.fmLibraryLinkDone === "1") continue;
+        const input = li.querySelector('input[name="dependsOnScripts"]');
+        if (!input) continue;
+        const scriptId = String(input.value || "").trim();
+        if (!scriptId) continue;
+        const span = li.querySelector("span[onclick*='openFile']");
+        if (!span) continue;
+        const scriptName = (span.textContent || "").trim();
+        const a = document.createElement("a");
+        a.href = `/script.form?ID=${encodeURIComponent(scriptId)}`;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.className = "fm-library-script-link";
+        a.textContent = scriptName;
+        span.replaceWith(a);
+        li.dataset.fmLibraryLinkDone = "1";
+      }
+    }
+
     function ensureScriptNameOpensInNewTab(tableContainerEl) {
       const rows = tableContainerEl.querySelectorAll("tbody tr");
       for (const row of rows) {
@@ -240,16 +722,21 @@
           row.querySelector("td");
         if (!nameCell) continue;
 
+        nameCell.classList.add("fm-script-name-link");
         nameCell.style.cursor = "pointer";
+        function openScriptInNewTab() {
+          window.open(`/script.form?ID=${scriptId}`, "_blank", "noopener,noreferrer");
+        }
         nameCell.addEventListener("click", (ev) => {
           if (ev.defaultPrevented) return;
-          if (ev.button !== 0) return;
-          if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
           const interactive = ev.target?.closest?.("a, button, input, textarea, select, label");
           if (interactive) return;
+          if (ev.button === 2) return;
+          if (ev.button === 0 && (ev.shiftKey || ev.altKey)) return;
+          if (ev.button !== 0 && ev.button !== 1) return;
           ev.preventDefault();
           ev.stopPropagation();
-          window.open(`/script.form?ID=${scriptId}`, "_blank", "noopener,noreferrer");
+          openScriptInNewTab();
         });
 
         row.dataset.fmNameNewtab = "1";
@@ -373,7 +860,10 @@
     // Expose tick functions
     return {
       tick: function () {
-        // convenience single-call that groups script features
+        setScriptFormPageTitle();
+        ensureCopySaveButton();
+        ensureSnippetsButton();
+        ensureLibraryScriptLinksOpenInNewTab();
         tickSimpleGridView();
         tickEnhancements();
         tickSearchField();
@@ -538,19 +1028,6 @@
       anchor.insertAdjacentElement("afterend", descTh);
     }
 
-    function ensurePicklistsGridDividerAfterDelete() {
-      if (document.getElementById("fm-picklists-divider-style")) return;
-      const style = document.createElement("style");
-      style.id = "fm-picklists-divider-style";
-      style.textContent = `
-        .tableContainer table tr > th:nth-child(4),
-        .tableContainer table tr > td:nth-child(4) {
-          border-right: 1px solid #bdbdbd !important;
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
     function runReorder() {
       if (!isOnPicklistsPage()) return;
       const tableEl = getPicklistTableEl();
@@ -581,7 +1058,6 @@
       for (const r of rows) moveCells(r, lastIndexes, 0);
 
       tableEl.dataset.fmPicklistsReordered = "1";
-      ensurePicklistsGridDividerAfterDelete();
     }
 
     // Public tick combining both search and reorder

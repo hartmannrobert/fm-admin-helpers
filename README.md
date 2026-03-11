@@ -105,31 +105,51 @@ After pulling updates or modifying the source code:
 
 ### Shortcut Buttons
 
-- **Settings Button**
-  - Reacts on the context. When you are not in a workspace, it leads to the general workspace manager page. If you are in a workspace, it opens up a submenu that contains shortcut links to the given workspace manager settings for this workspace.
+- **Admin Shortcuts**
+  - This shortcut reacts on the context of the workspace the user is in and only is visible when within a workspace. If the user is in a workspace it displays the quick links to the workspace manager settings for this given workspace and opens them in a new tab. 
 
   <p align="center">
     <img
-        src="images/Shortcut-Buttons-Menu.png"
+        src="images/Admin-Shortcut.png"
         width="600"
         style="border:1px solid #d0d7de; border-radius:6px;"
     />
   </p>
 
-- **Script and Role Button**
-  - Always navigates to the given administration setting
 
-- **Item Details Admin Mode Button**
+- **Settings Shortcut**
+  - Clicking the settings shortcuts button opens up a sub-menu that allows the user to jump the most used areas of the administration. These are the general settings, the workspace manager, scripts and the security settings with users, groups and roles. 
 
-  - Is only available when in a workspace and on the item details tab. It replaces the values of all visible fields with their given unique FieldID with the option to copy the value to the clipboard. 
-
-<p align="center">
+  <p align="center">
     <img
-        src="images/Item-Details-FieldID.png"
+        src="images/Settings-Shortcut.png"
         width="600"
         style="border:1px solid #d0d7de; border-radius:6px;"
     />
-</p>
+  </p>
+
+- **Field ID Toggle**
+  - When the user is within the item details tab, a toggle appears that if activated, replaces the field values with their given unique FieldID and also adds the option to copy the given FieldID to the clipboard when clicking on it. 
+
+  <p align="center">
+    <img
+        src="images/FieldID-Toggle.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+  </p>
+
+- **Administration Shortcut**
+  - When in the admin UI, the user has the option to jump to the workspace manager, scripts or the roles easily. In addition, when the user is in sub section of the workspace manager, like the item details, two more buttons will appear. The first one opens up the given workspace with the overview of the items within. The second button would open up the create new item dialogue, as long as the user has the permission to do so. 
+
+  <p align="center">
+    <img
+        src="images/Admin-UI-Shortcuts.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+  </p>
+
 
 ### Workspace Manager Improvements
 
@@ -139,14 +159,6 @@ After pulling updates or modifying the source code:
 
   - Display Workspace ID for easier copy possibility
   - Quicklink Buttons to open the given setting in a new tab
-
-<p align="center">
-    <img
-        src="images/Workspace-Manager-Filter.png"
-        width="600"
-        style="border:1px solid #d0d7de; border-radius:6px;"
-    />
-</p>
 
 - **Expert Mode**
   - Moves the most important settings into the header of the workspace for easy access
@@ -240,6 +252,7 @@ After pulling updates or modifying the source code:
           style="border:1px solid #d0d7de; border-radius:6px;"
       />
   </p>
+
 
 ---
 
