@@ -20,7 +20,6 @@ Special thanks to **Patrick Flügge**, who originally created the first features
 - [Safety and Supportability](#safety-and-supportability)
 - [Disclaimer](#disclaimer)
 
-
 ---
 
 ## Overview
@@ -106,7 +105,8 @@ After pulling updates or modifying the source code:
 ### Shortcut Buttons
 
 - **Admin Shortcuts**
-  - This shortcut reacts on the context of the workspace the user is in and only is visible when within a workspace. If the user is in a workspace it displays the quick links to the workspace manager settings for this given workspace and opens them in a new tab. 
+
+  - This shortcut reacts on the context of the workspace the user is in and only is visible when within a workspace. If the user is in a workspace it displays the quick links to the workspace manager settings for this given workspace and opens them in a new tab.
 
   <p align="center">
     <img
@@ -116,9 +116,9 @@ After pulling updates or modifying the source code:
     />
   </p>
 
-
 - **Settings Shortcut**
-  - Clicking the settings shortcuts button opens up a sub-menu that allows the user to jump the most used areas of the administration. These are the general settings, the workspace manager, scripts and the security settings with users, groups and roles. 
+
+  - Clicking the settings shortcuts button opens up a sub-menu that allows the user to jump the most used areas of the administration. These are the general settings, the workspace manager, scripts and the security settings with users, groups and roles.
 
   <p align="center">
     <img
@@ -129,7 +129,8 @@ After pulling updates or modifying the source code:
   </p>
 
 - **Field ID Toggle**
-  - When the user is within the item details tab, a toggle appears that if activated, replaces the field values with their given unique FieldID and also adds the option to copy the given FieldID to the clipboard when clicking on it. 
+
+  - When the user is within the item details tab, a toggle appears that if activated, replaces the field values with their given unique FieldID and also adds the option to copy the given FieldID to the clipboard when clicking on it.
 
   <p align="center">
     <img
@@ -139,8 +140,9 @@ After pulling updates or modifying the source code:
     />
   </p>
 
-- **Administration Shortcut**
-  - When in the admin UI, the user has the option to jump to the workspace manager, scripts or the roles easily. In addition, when the user is in sub section of the workspace manager, like the item details, two more buttons will appear. The first one opens up the given workspace with the overview of the items within. The second button would open up the create new item dialogue, as long as the user has the permission to do so. 
+- **Administration Shortcuts**
+
+  - When in the admin UI, the user has the option to jump to the workspace manager, scripts or the roles easily. In addition, when the user is in sub section of the workspace manager, like the item details, a new menu option will appear. This dropdown contains the regular Admin Shortcuts that are known from the frontend, as well as two more options. One for adding a new item to the workspace, in case the user wants to test out the creation dialogue, and another option that opens up the workspace view.
 
   <p align="center">
     <img
@@ -149,7 +151,6 @@ After pulling updates or modifying the source code:
         style="border:1px solid #d0d7de; border-radius:6px;"
     />
   </p>
-
 
 ### Workspace Manager Improvements
 
@@ -160,7 +161,7 @@ After pulling updates or modifying the source code:
   - Display Workspace ID for easier copy possibility
   - Quicklink Buttons to open the given setting in a new tab
 
-- **Expert Mode**
+- **Compact List Mode**
   - Moves the most important settings into the header of the workspace for easy access
   - Disables the auto-expand when 2 or less hits on filtering the workspace
 
@@ -231,7 +232,7 @@ After pulling updates or modifying the source code:
 - **Layout Optimization**
   - Put Action scripts to the top as they are the most used
   - Move the action columns further to the front for better usability
-  - Click on the script name to open it in a new tab
+  - **Click on the script name to open it in a new tab**
 
 <p align="center">
     <img
@@ -241,18 +242,30 @@ After pulling updates or modifying the source code:
     />
 </p>
 
-- **Script Grid Mode**
+- **Script Editor**
+  - Added _Copy to Clipboard and Save_ Button to prevent mistakes from happening
+  - After saving with the new button, the script editor jumps back to the position it was at before
+  - Added the option to open Library Scripts directly from within the script editor by simply clicking on it
 
-  - Switches between a list of all scripts and a grid layout
+  <p align="center">
+    <img
+        src="images/Script-Editor-Enhancement.png"
+        width="600"
+        style="border:1px solid #d0d7de; border-radius:6px;"
+    />
+</p>
 
+### Other Improvements
+
+- **Change Tab Names within Administration for better overview**
+  - Applies to Scripts, Workspace Manager and Security Settings
     <p align="center">
       <img
-          src="images/Script-Grid-View.png"
+          src="images/Tab-Names.png"
           width="600"
           style="border:1px solid #d0d7de; border-radius:6px;"
       />
   </p>
-
 
 ---
 
