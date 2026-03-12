@@ -1,20 +1,22 @@
 // bootstrap.js
 window.FM = window.FM || {};
 
-FM.config = FM.config || {
-  enabledButtons: true,
-  enabledOther: true
-};
+// Do not assume enabled before we receive config from storage (avoids new-tab
+// showing "active" when user had unchecked the control center).
+const CONFIG_DEFAULTS = { enabledButtons: true, enabledOther: true };
+FM.config = FM.config ?? null;
 
 window.addEventListener("message", (ev) => {
   if (ev.source !== window) return;
   const msg = ev.data;
   if (!msg || msg.type !== "FM_CONFIG") return;
-  FM.config = { ...FM.config, ...(msg.payload || {}) };
+  FM.config = { ...CONFIG_DEFAULTS, ...(msg.payload || {}) };
+  window.dispatchEvent(new CustomEvent("FM_CONFIG_APPLIED"));
 });
 
 FM.isEnabled = function (key) {
-  return FM.config?.[key] !== false; // default true unless explicitly false
+  if (FM.config === null) return false;
+  return FM.config[key] !== false;
 };
 
 FM.safeRun = FM.safeRun || function (name, fn) {
@@ -108,4 +110,9 @@ function mainTick() {
   });
 
   mo.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("FM_CONFIG_APPLIED", () => {
+    dirty = true;
+    schedule();
+  });
 })();
