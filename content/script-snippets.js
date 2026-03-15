@@ -7,18 +7,45 @@
 (function () {
   window.FM = window.FM || {};
   window.FM.scriptSnippets = [
+    /* --- Basics: loops and conditionals --- */
     {
-      id: "return-true",
-      name: "Return true",
-      description: "Return true from a condition/validation script",
-      code: "returnValue(true);\n"
+      id: "for-loop",
+      name: "For loop",
+      description: "Sample for loop over array length (e.g. item.grid)",
+      code: "for (var i = 0; i < item.grid.length; i++) {\n  var row = item.grid[i];\n  // your code here\n}\n"
     },
     {
-      id: "return-false",
-      name: "Return false",
-      description: "Return false from a condition/validation script",
-      code: "returnValue(false);\n"
+      id: "for-loop-reverse",
+      name: "For loop (reverse)",
+      description: "Loop backwards (e.g. when removing items from grid)",
+      code: "for (var i = item.grid.length - 1; i >= 0; i--) {\n  var row = item.grid[i];\n  // your code here\n}\n"
     },
+    {
+      id: "if-else",
+      name: "If / else check",
+      description: "Simple if-else block",
+      code: "if (condition) {\n  // when true\n} else {\n  // when false\n}\n"
+    },
+    {
+      id: "comment-block",
+      name: "Comment block",
+      description: "Multi-line comment block",
+      code: "/*\n * Description\n */\n"
+    },
+    /* --- Sequencer --- */
+    {
+      id: "sequencer",
+      name: "Sequencer",
+      description: "Get next value from a sequencer (e.g. for item numbers)",
+      code: "var seq = Sequencer.get('SEQUENCER_NAME');\nvar next = seq.nextValue();\n"
+    },
+    {
+      id: "set-item-number",
+      name: "Set item number (sequencer)",
+      description: "Generate and set item number using Sequencer (skip if already set)",
+      code: "if (item.NUMBER !== null) return;\nvar seq = Sequencer.get('Items');\nvar next = seq.nextValue();\nvar number = prefixItemNumber + ('00000000' + next).slice(-8);\nitem.NUMBER = number;\n"
+    },
+    /* --- Condition / validation --- */
     {
       id: "status-check",
       name: "Status check",
@@ -38,16 +65,10 @@
       code: "if (item.FIELD_ID === 'VALUE') {\n  returnValue(true);\n} else {\n  returnValue(false);\n}\n"
     },
     {
-      id: "multi-select-contains",
-      name: "Multi-select contains",
-      description: "Check if a multi-select field contains a value",
-      code: "if (item.FIELD_ID && item.FIELD_ID.indexOf('OPTION_VALUE') !== -1) {\n  returnValue(true);\n} else {\n  returnValue(false);\n}\n"
-    },
-    {
-      id: "linked-item-field",
-      name: "Linked item field",
-      description: "Access a field on a linked item",
-      code: "var value = item.LINKED_FIELD_ID && item.LINKED_FIELD_ID.NESTED_FIELD_ID ? item.LINKED_FIELD_ID.NESTED_FIELD_ID : null;\nreturnValue(value);\n"
+      id: "validation-msg-array",
+      name: "Validation with message array",
+      description: "Collect error messages and return pass/fail",
+      code: "var msg = [];\n// msg.push('Error description');\nreturnValue(msg.length === 0);\n"
     },
     {
       id: "try-catch-return",
@@ -55,47 +76,114 @@
       description: "Safe block with returnValue in try and false on error",
       code: "try {\n  // your logic here\n  returnValue(true);\n} catch (e) {\n  returnValue(false);\n}\n"
     },
+    /* --- User --- */
     {
-      id: "comment-block",
-      name: "Comment block",
-      description: "Multi-line comment block",
-      code: "/*\n * Description\n */\n"
+      id: "get-user-name",
+      name: "Get current user name",
+      description: "Get current user display name (lastName, firstName)",
+      code: "function getUserName() {\n  var usr = Security.loadUser(userID);\n  return usr.lastName + ', ' + usr.firstName;\n}\n"
     },
     {
-      id: "get-current-user",
-      name: "Get current user",
-      description: "Get current user ID (when available in context)",
-      code: "var userId = _plm && _plm.callFunc ? _plm.callFunc('getCurrentUserID') : null;\n"
+      id: "security-load-user",
+      name: "Security.loadUser",
+      description: "Load user by ID",
+      code: "var usr = Security.loadUser(userID);\n"
+    },
+    /* --- Item --- */
+    {
+      id: "set-dms-id",
+      name: "Store DMS ID in field",
+      description: "Store current item dmsID in a field",
+      code: "item.DMS_ID = dmsID;\n"
     },
     {
-      id: "call-func",
-      name: "Call PLM function",
-      description: "Call a Fusion Manage API function via _plm.callFunc",
-      code: "var result = _plm && _plm.callFunc ? _plm.callFunc('methodName', 'arg') : null;\n"
+      id: "create-item",
+      name: "Create new item",
+      description: "Create a new item in a workspace",
+      code: "var newItem = createItem('WS_WORKSPACE_ID');\n"
     },
     {
-      id: "simple-condition",
-      name: "Simple condition template",
-      description: "Template for a condition script with one check",
-      code: "if (item.SOME_FIELD === 'EXPECTED') {\n  returnValue(true);\n}\nreturnValue(false);\n"
+      id: "load-item",
+      name: "Load item by dmsID",
+      description: "Load an item by its dmsID",
+      code: "var elemItem = loadItem(dmsID);\n"
+    },
+    /* --- Workflow --- */
+    {
+      id: "perform-workflow-transition",
+      name: "Perform workflow transition",
+      description: "Execute workflow transition by custom ID",
+      code: "item.performWorkflowTransitionByCustomID('CUSTOM_TRANSITION_ID', 'Comment');\n"
+    },
+    /* --- Grid --- */
+    {
+      id: "add-to-grid",
+      name: "Add row to parent grid",
+      description: "Add a row to parent's grid and set link to current item",
+      code: "if (parent !== null) {\n  var row = parent.grid.addRow();\n  row.COLUMN_LINK = item;\n  row.WORKFLOW_STATUS = item.descriptor.workflowState;\n}\n"
     },
     {
-      id: "validation-with-message",
-      name: "Validation with message",
-      description: "Validation that can set an error message",
-      code: "if (!item.REQUIRED_FIELD || String(item.REQUIRED_FIELD).trim() === '') {\n  returnValue(false);\n  // setErrorMessage('Field is required'); if supported\n} else {\n  returnValue(true);\n}\n"
+      id: "remove-from-grid",
+      name: "Remove current item from parent grid",
+      description: "Remove rows where link column equals current item",
+      code: "if (parent !== null) {\n  var grid = parent.grid;\n  for (var i = grid.length - 1; i >= 0; i--) {\n    if (grid[i].COLUMN_LINK === item) grid[i].remove();\n  }\n}\n"
+    },
+    /* --- Milestones --- */
+    {
+      id: "add-milestone",
+      name: "Add milestone",
+      description: "Add a milestone for a workflow state (optionally skip weekends)",
+      code: "var milestone = item.addMilestone();\nmilestone.setWorkflowState('STATE_NAME');\nmilestone.milestoneType = 'ENTER';\nmilestone.milestoneDate = new Date();\nmilestone.warnThreshold = 0;\nmilestone.progress = 0;\n"
     },
     {
-      id: "compare-dates",
-      name: "Compare dates",
-      description: "Compare two date fields (ISO string comparison)",
-      code: "var d1 = item.DATE_FIELD_1 ? String(item.DATE_FIELD_1) : '';\nvar d2 = item.DATE_FIELD_2 ? String(item.DATE_FIELD_2) : '';\nreturnValue(d1 <= d2);\n"
+      id: "set-milestone-with-date",
+      name: "Set or update milestone (with date, skip weekends)",
+      description: "Find existing milestone by state/event or add new one; skip Sat/Sun",
+      code: "var targetDate = date !== null ? new Date(date) : new Date();\nvar day = targetDate.getDay();\nif (day === 0) targetDate.setDate(targetDate.getDate() + 1);\nelse if (day === 6) targetDate.setDate(targetDate.getDate() + 2);\nvar milestoneIndex = -1;\nfor (var i = 0; i < item.milestones.length; i++) {\n  if (item.milestones[i].workflowStateName === 'STATE_NAME' && item.milestones[i].milestoneType === 'ENTER') {\n    milestoneIndex = i;\n    break;\n  }\n}\nif (milestoneIndex === -1) {\n  var milestone = item.addMilestone();\n  milestone.setWorkflowState('STATE_NAME');\n  milestone.milestoneType = 'ENTER';\n  milestone.milestoneDate = targetDate;\n  milestone.warnThreshold = 0;\n  milestone.progress = 0;\n} else {\n  item.milestones[milestoneIndex].milestoneDate = targetDate;\n}\n"
     },
     {
-      id: "empty-check",
-      name: "Empty / null check",
-      description: "Return true if value is non-empty",
-      code: "var val = item.FIELD_ID;\nvar ok = val !== null && val !== undefined && String(val).trim() !== '';\nreturnValue(ok);\n"
+      id: "remove-milestone",
+      name: "Remove milestone(s)",
+      description: "Remove milestones by workflow state name (or all if name is null)",
+      code: "for (var i = item.milestones.length - 1; i >= 0; i--) {\n  if (name === null || item.milestones[i].workflowStateName === name) {\n    item.milestones.splice(i, 1);\n  }\n}\n"
+    },
+    /* --- Relationships --- */
+    {
+      id: "add-relationship",
+      name: "Add relationship",
+      description: "Add a related item (Cross-Reference, Uni-Directional or Bi-Directional)",
+      code: "item.relationships.addRelated(relatedItem, 'Cross-Reference', 'Uni-Directional', 'Role or description');\n"
+    },
+    {
+      id: "add-relationship-bidirectional",
+      name: "Add relationship (bi-directional)",
+      description: "Add a bi-directional related item",
+      code: "item.relationships.addRelated(relatedItem, 'Cross-Reference', 'Bi-Directional', 'Role or description');\n"
+    },
+    {
+      id: "remove-relationship",
+      name: "Remove relationship to specific item",
+      description: "Remove relationship(s) where related item matches target",
+      code: "for (var i = item.relationships.length - 1; i >= 0; i--) {\n  if (item.relationships[i].item === targetItem) {\n    item.relationships[i].remove();\n  }\n}\n"
+    },
+    {
+      id: "clear-relationships",
+      name: "Clear all relationships",
+      description: "Remove all relationships from the current item",
+      code: "item.relationships.clear();\n"
+    },
+    /* --- Copy grid from another item (e.g. another workspace) --- */
+    {
+      id: "copy-grid-from-item",
+      name: "Copy grid from another item",
+      description: "Load an item (e.g. by link or loadItem) and copy its grid into current item",
+      code: "var sourceItem = item.SOURCE_FIELD;\nif (sourceItem === null) sourceItem = loadItem(sourceDmsID);\nif (sourceItem !== null) {\n  for (var i = 0; i < sourceItem.grid.length; i++) {\n    var srcRow = sourceItem.grid[i];\n    var row = item.grid.addRow();\n    row.COLUMN_LINK = srcRow.COLUMN_LINK;\n    row.FIELD_A = srcRow.FIELD_A;\n    row.FIELD_B = srcRow.FIELD_B;\n    // copy other columns as needed\n  }\n}\n"
+    },
+    {
+      id: "copy-grid-fields-by-list",
+      name: "Copy grid row fields from source (by field list)",
+      description: "Copy selected fields from source item grid into current item grid",
+      code: "var fieldsToCopy = ['FIELD_A', 'FIELD_B', 'COLUMN_LINK'];\nvar sourceItem = item.SOURCE_FIELD || loadItem(sourceDmsID);\nif (sourceItem !== null) {\n  for (var i = 0; i < sourceItem.grid.length; i++) {\n    var srcRow = sourceItem.grid[i];\n    var row = item.grid.addRow();\n    for (var j = 0; j < fieldsToCopy.length; j++) {\n      var fid = fieldsToCopy[j];\n      if (row[fid] !== undefined && srcRow[fid] !== undefined) row[fid] = srcRow[fid];\n    }\n  }\n}\n"
     }
   ];
 })();
