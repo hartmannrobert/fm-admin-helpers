@@ -134,6 +134,200 @@
     } catch (e) {}
   });
 
+  var savedSnippetCursor = null;
+  var lastInsertedRange = null;
+
+  function getAceRange(editor) {
+    try {
+      if (typeof window.ace !== "undefined" && window.ace.require) return window.ace.require("ace/range").Range;
+    } catch (err) {}
+    try {
+      var ed = editor || getEditor();
+      if (ed && ed.selection && typeof ed.selection.getRange === "function") {
+        var r = ed.selection.getRange();
+        if (r && r.constructor && r.start != null && r.end != null) return r.constructor;
+      }
+    } catch (err) {}
+    return null;
+  }
+
+  function doInsertSnippet(code) {
+    if (typeof code !== "string") return;
+    var editor = getEditor();
+    if (!editor || !editor.session) return;
+    var Range = getAceRange(editor);
+    var startRow, startCol;
+    try {
+      var selRange = editor.selection && typeof editor.selection.getRange === "function" ? editor.selection.getRange() : null;
+      var hasSelection = selRange && selRange.start && selRange.end && (selRange.start.row !== selRange.end.row || selRange.start.column !== selRange.end.column);
+
+      if (Range && hasSelection) {
+        startRow = selRange.start.row;
+        startCol = selRange.start.column;
+        var r = new Range(selRange.start.row, selRange.start.column, selRange.end.row, selRange.end.column);
+        editor.session.replace(r, code);
+      } else if (Range && lastInsertedRange) {
+        startRow = lastInsertedRange.startRow;
+        startCol = lastInsertedRange.startCol;
+        var r = new Range(lastInsertedRange.startRow, lastInsertedRange.startCol, lastInsertedRange.endRow, lastInsertedRange.endCol);
+        editor.session.replace(r, code);
+      } else if (savedSnippetCursor) {
+        startRow = savedSnippetCursor.row;
+        startCol = savedSnippetCursor.column;
+        if (Range) {
+          var r = new Range(startRow, startCol, startRow, startCol);
+          editor.session.replace(r, code);
+        } else {
+          if (typeof editor.insert === "function") editor.insert(code);
+          else if (typeof editor.session.insert === "function") editor.session.insert({ row: startRow, column: startCol }, code);
+        }
+      } else {
+        var pos = editor.getCursorPosition && editor.getCursorPosition();
+        if (!pos) return;
+        startRow = pos.row;
+        startCol = pos.column;
+        if (typeof editor.insert === "function") editor.insert(code);
+        else if (typeof editor.session.insert === "function") editor.session.insert({ row: pos.row, column: pos.column }, code);
+      }
+
+      var lines = code.split("\n");
+      var endRow = startRow + lines.length - 1;
+      var endCol = lines.length === 1 ? startCol + code.length : lines[lines.length - 1].length;
+      lastInsertedRange = { startRow: startRow, startCol: startCol, endRow: endRow, endCol: endCol };
+      savedSnippetCursor = null;
+
+      if (Range && editor.selection) {
+        var sel = new Range(startRow, startCol, endRow, endCol);
+        if (typeof editor.selection.setRange === "function") editor.selection.setRange(sel);
+        else if (typeof editor.selection.setSelectionRange === "function") editor.selection.setSelectionRange(sel);
+      }
+      if (editor.renderer && typeof editor.renderer.scrollCursorIntoView === "function") editor.renderer.scrollCursorIntoView();
+    } catch (e) {}
+  }
+
+  function snippetDropdownOpened() {
+    var editor = getEditor();
+    if (!editor) return;
+    var pos = editor.getCursorPosition && editor.getCursorPosition();
+    if (pos && typeof pos.row === "number") savedSnippetCursor = { row: pos.row, column: typeof pos.column === "number" ? pos.column : 0 };
+    else savedSnippetCursor = null;
+  }
+
+  function snippetDropdownClosed() {
+    savedSnippetCursor = null;
+    lastInsertedRange = null;
+  }
+
+  document.addEventListener("fm-ace-insert-snippet", function (ev) {
+    doInsertSnippet(ev.detail && ev.detail.code);
+  });
+
+  window.addEventListener("message", function (ev) {
+    if (ev.source !== window || !ev.data) return;
+    var t = ev.data.type;
+    if (t === "fm-ace-snippet-dropdown-opened") snippetDropdownOpened();
+    else if (t === "fm-ace-insert-snippet" && typeof ev.data.code === "string") doInsertSnippet(ev.data.code);
+    else if (t === "fm-ace-snippet-dropdown-closed") snippetDropdownClosed();
+  });
+
+  document.addEventListener("fm-ace-set-content", function (ev) {
+    var detail = ev.detail;
+    if (!detail || typeof detail.content !== "string") return;
+    var editor = getEditor();
+    if (!editor || !editor.session) return;
+    try {
+      if (typeof editor.session.setValue === "function") {
+        editor.session.setValue(detail.content);
+      }
+      if (detail.cursor && typeof detail.cursor.row === "number") {
+        var col = typeof detail.cursor.column === "number" && detail.cursor.column >= 0 ? detail.cursor.column : 0;
+        if (typeof editor.moveCursorTo === "function") {
+          editor.moveCursorTo(detail.cursor.row, col);
+        } else if (editor.selection && typeof editor.selection.moveCursorTo === "function") {
+          editor.selection.moveCursorTo(detail.cursor.row, col);
+        }
+      }
+      if (detail.selection && detail.selection.start && detail.selection.end) {
+        var sel = detail.selection;
+        var Range = typeof window.ace !== "undefined" && window.ace.require ? window.ace.require("ace/range").Range : null;
+        if (Range && editor.selection && typeof editor.selection.setSelectionRange === "function") {
+          var r = new Range(
+            sel.start.row, sel.start.column,
+            sel.end.row, sel.end.column
+          );
+          editor.selection.setSelectionRange(r);
+        }
+      }
+      if (editor.renderer && typeof editor.renderer.scrollCursorIntoView === "function") {
+        editor.renderer.scrollCursorIntoView();
+      }
+    } catch (e) {}
+  });
+
+  function getSelection() {
+    var editor = getEditor();
+    if (!editor || !editor.selection) return null;
+    try {
+      var range = typeof editor.selection.getRange === "function" ? editor.selection.getRange() : null;
+      if (!range || !range.start || !range.end) return null;
+      return {
+        start: { row: range.start.row, column: range.start.column },
+        end: { row: range.end.row, column: range.end.column }
+      };
+    } catch (e) {}
+    return null;
+  }
+
+  document.addEventListener("fm-ace-get-selection", function () {
+    document.dispatchEvent(new CustomEvent("fm-ace-selection", { detail: getSelection() }));
+  });
+
+  document.addEventListener("fm-ace-set-selection", function (ev) {
+    var detail = ev.detail;
+    if (!detail || !detail.start || !detail.end) return;
+    var editor = getEditor();
+    if (!editor || !editor.selection) return;
+    try {
+      var Range = typeof window.ace !== "undefined" && window.ace.require ? window.ace.require("ace/range").Range : null;
+      if (!Range || typeof editor.selection.setSelectionRange !== "function") return;
+      var r = new Range(
+        detail.start.row, detail.start.column,
+        detail.end.row, detail.end.column
+      );
+      editor.selection.setSelectionRange(r);
+      if (editor.renderer && typeof editor.renderer.scrollCursorIntoView === "function") {
+        editor.renderer.scrollCursorIntoView();
+      }
+    } catch (e) {}
+  });
+
+  document.addEventListener("fm-ace-replace-range", function (ev) {
+    var detail = ev.detail;
+    if (!detail || !detail.start || !detail.end || typeof detail.text !== "string") return;
+    var editor = getEditor();
+    if (!editor || !editor.session || !editor.selection) return;
+    try {
+      var Range = typeof window.ace !== "undefined" && window.ace.require ? window.ace.require("ace/range").Range : null;
+      if (!Range || typeof editor.session.replace !== "function") return;
+      var r = new Range(
+        detail.start.row, detail.start.column,
+        detail.end.row, detail.end.column
+      );
+      editor.session.replace(r, detail.text);
+      var lines = detail.text.split("\n");
+      var endRow = detail.start.row + lines.length - 1;
+      var endCol = lines.length === 1 ? detail.start.column + detail.text.length : lines[lines.length - 1].length;
+      var r2 = new Range(detail.start.row, detail.start.column, endRow, endCol);
+      if (typeof editor.selection.setSelectionRange === "function") {
+        editor.selection.setSelectionRange(r2);
+      }
+      if (editor.renderer && typeof editor.renderer.scrollCursorIntoView === "function") {
+        editor.renderer.scrollCursorIntoView();
+      }
+      document.dispatchEvent(new CustomEvent("fm-ace-range-replaced", { detail: { start: detail.start, end: { row: endRow, column: endCol } } }));
+    } catch (e) {}
+  });
+
   setTimeout(tryWrapAce, 200);
   setTimeout(tryWrapAce, 1000);
 })();

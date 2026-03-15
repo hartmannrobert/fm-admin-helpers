@@ -496,7 +496,7 @@
       return null;
     }
 
-    // Script form page: Insert snippet button + submenu + hover preview (in label cell, left of "Code")
+    // Script form page: Insert snippet button + dropdown. Click to insert at cursor or replace selection.
     function ensureSnippetsButton() {
       if (!isOnScriptFormPage()) return;
       const snippets = window.FM && Array.isArray(window.FM.scriptSnippets) ? window.FM.scriptSnippets : [];
@@ -516,7 +516,7 @@
       btn.type = "button";
       btn.className = "fm-snippets-btn";
       btn.textContent = "Insert snippet";
-      btn.title = "Insert a snippet from the library";
+      btn.title = "Click to insert at cursor or replace selection";
 
       const dropdown = document.createElement("div");
       dropdown.className = "fm-snippets-dropdown";
@@ -543,33 +543,6 @@
       noMatchesEl.textContent = "No matching snippets";
       noMatchesEl.setAttribute("hidden", "");
 
-      const previewEl = document.createElement("div");
-      previewEl.className = "fm-snippets-preview";
-      const previewTitle = document.createElement("div");
-      previewTitle.className = "fm-snippets-preview-title";
-      previewTitle.textContent = "Preview";
-      const previewCode = document.createElement("pre");
-      previewCode.className = "fm-snippets-preview-code";
-      previewEl.appendChild(previewTitle);
-      previewEl.appendChild(previewCode);
-
-      let hoverTimer = null;
-      let currentPreviewId = null;
-
-      function setPreview(snippet) {
-        currentPreviewId = snippet ? snippet.id : null;
-        previewCode.textContent = snippet ? snippet.code : "";
-        previewTitle.textContent = snippet ? snippet.name : "Preview";
-      }
-
-      function getFirstVisibleSnippet() {
-        const items = listScroll.querySelectorAll(".fm-snippets-item");
-        for (let i = 0; i < items.length; i++) {
-          if (items[i].style.display !== "none") return snippets[Number(items[i].dataset.snippetIndex)];
-        }
-        return null;
-      }
-
       function applySearch() {
         const q = (searchInput.value || "").trim().toLowerCase();
         let visibleCount = 0;
@@ -582,36 +555,28 @@
           items[i].style.display = match ? "" : "none";
           if (match) visibleCount += 1;
         }
-        if (visibleCount === 0) {
-          noMatchesEl.removeAttribute("hidden");
-          setPreview(null);
-        } else {
-          noMatchesEl.setAttribute("hidden", "");
-          const first = getFirstVisibleSnippet();
-          let currentStillVisible = false;
-          listScroll.querySelectorAll(".fm-snippets-item").forEach(function (el) {
-            if (el.style.display !== "none" && snippets[Number(el.dataset.snippetIndex)].id === currentPreviewId) currentStillVisible = true;
-          });
-          if (!currentStillVisible) setPreview(first);
-        }
+        noMatchesEl.hidden = visibleCount > 0;
       }
 
       function openDropdown() {
         dropdown.removeAttribute("hidden");
         searchInput.value = "";
         applySearch();
-        setPreview(snippets[0] || null);
         searchInput.focus();
+        window.postMessage({ type: "fm-ace-snippet-dropdown-opened" }, window.location.origin || "*");
       }
 
-      function closeDropdown() {
+      function closeDropdown(removePreview) {
+        if (removePreview !== false) {
+          window.postMessage({ type: "fm-ace-snippet-dropdown-closed" }, window.location.origin || "*");
+        }
         dropdown.setAttribute("hidden", "");
       }
 
       function insertSnippet(snippet) {
         if (!snippet || typeof snippet.code !== "string") return;
-        document.dispatchEvent(new CustomEvent("fm-ace-insert-text", { detail: snippet.code }));
-        closeDropdown();
+        window.postMessage({ type: "fm-ace-insert-snippet", code: snippet.code }, window.location.origin || "*");
+        /* Keep dropdown open so user can insert more or pick another snippet to replace. */
       }
 
       for (let i = 0; i < snippets.length; i++) {
@@ -630,15 +595,6 @@
 
         item.appendChild(nameEl);
         item.appendChild(descEl);
-
-        item.addEventListener("mouseenter", function () {
-          window.clearTimeout(hoverTimer);
-          hoverTimer = window.setTimeout(function () { setPreview(s); }, 150);
-        });
-        item.addEventListener("mouseleave", function () {
-          window.clearTimeout(hoverTimer);
-          hoverTimer = null;
-        });
         item.addEventListener("click", function (ev) {
           ev.preventDefault();
           ev.stopPropagation();
@@ -657,7 +613,6 @@
       });
 
       dropdown.appendChild(listEl);
-      dropdown.appendChild(previewEl);
 
       btn.addEventListener("click", function (ev) {
         ev.preventDefault();
