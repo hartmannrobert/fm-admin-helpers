@@ -639,23 +639,22 @@
 
     function refreshSnippetsDropdown(forceRefresh) {
       if (!isOnScriptFormPage()) return;
-      if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.local) {
+      var storage = window.FM && window.FM.snippetStorage;
+      if (!storage) {
         ensureSnippetsButton(undefined, forceRefresh);
         return;
       }
-      chrome.storage.local.get(["userSnippets"], function (res) {
-        const builtIn = window.FM && Array.isArray(window.FM.scriptSnippets) ? window.FM.scriptSnippets : [];
-        const user = Array.isArray(res.userSnippets) ? res.userSnippets : [];
-        ensureSnippetsButton(builtIn.concat(user), forceRefresh);
+      storage.init().then(function () { return storage.getAll(); }).then(function (user) {
+        var builtIn = window.FM && Array.isArray(window.FM.scriptSnippets) ? window.FM.scriptSnippets : [];
+        var list = Array.isArray(user) ? user : [];
+        ensureSnippetsButton(builtIn.concat(list), forceRefresh);
+      }).catch(function () {
+        var builtIn = window.FM && Array.isArray(window.FM.scriptSnippets) ? window.FM.scriptSnippets : [];
+        ensureSnippetsButton(builtIn, forceRefresh);
       });
     }
 
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
-      chrome.storage.onChanged.addListener(function (changes, areaName) {
-        if (areaName !== "local" || !changes.userSnippets) return;
-        refreshSnippetsDropdown(true);
-      });
-    }
+    window.addEventListener("fm-snippets-changed", function () { refreshSnippetsDropdown(true); });
 
     // On script form page: make library script names in #section-includes clickable (open in new tab, color #5780AE)
     function ensureLibraryScriptLinksOpenInNewTab() {

@@ -37,6 +37,7 @@
       "js": [
         "content/config-bridge.js",
         "content/utils.js",
+        "content/snippet-storage.js",
         "content/snippet-modal.js",
         "content/feature-buttons.js",
         "content/feature-admin-titles.js",

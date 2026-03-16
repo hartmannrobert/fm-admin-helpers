@@ -1,20 +1,25 @@
 (function () {
-  const STORAGE_KEY = "userSnippets";
-
   function normalizeCode(code) {
     if (typeof code !== "string") return "";
     return code.replace(/\\n/g, "\n");
   }
 
+  function getStorage() {
+    var storage = window.FM && window.FM.snippetStorage;
+    if (!storage) return Promise.reject(new Error("FM.snippetStorage not available"));
+    return storage.init().then(function () { return storage; });
+  }
+
   function getStored(cb) {
-    chrome.storage.local.get([STORAGE_KEY], function (res) {
-      const list = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
-      cb(list);
-    });
+    getStorage().then(function (storage) { return storage.getAll(); })
+      .then(function (list) { cb(Array.isArray(list) ? list : []); })
+      .catch(function () { cb([]); });
   }
 
   function setStored(list, cb) {
-    chrome.storage.local.set({ [STORAGE_KEY]: list }, cb || function () {});
+    getStorage().then(function (storage) { return storage.replaceAll(list || []); })
+      .then(function () { if (typeof cb === "function") cb(); })
+      .catch(function () { if (typeof cb === "function") cb(); });
   }
 
   const form = document.getElementById("snippet-form");
