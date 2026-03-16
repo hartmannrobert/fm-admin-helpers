@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="options.css" />
+  <title>FM Helper – My Snippets</title>
+</head>
+
+<body>
+  <header class="hd">
+    <h1 class="title">My script snippets</h1>
+    <p class="sub">Add snippets that appear in the script editor “Insert snippet” dropdown. They are stored locally and
+      are not overwritten by extension updates.</p>
+  </header>
+
+  <main class="panel">
+    <section class="form-section">
+      <h2>Add or edit snippet</h2>
+      <p class="hint">Pasted code: literal backslash-n (<code>\n</code>) is converted to newlines. If your code needs a
+        literal <code>\n</code> in a string, type a real newline in the textarea or use double backslash.</p>
+      <form id="snippet-form">
+        <label class="field">
+          <span>Id <em>(required, unique)</em></span>
+          <input id="snippet-id" type="text" required autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Name</span>
+          <input id="snippet-name" type="text" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Description</span>
+          <input id="snippet-desc" type="text" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Code <em>(required)</em></span>
+          <textarea id="snippet-code" rows="10" required></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit" id="btn-save">Save</button>
+          <button type="button" id="btn-cancel">Cancel</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="list-section">
+      <h2>Your snippets</h2>
+      <div class="import-export">
+        <button type="button" id="btn-import-default">Import default</button>
+        <button type="button" id="btn-export">Export as JSON</button>
+        <button type="button" id="btn-import">Import from JSON</button>
+        <input type="file" id="import-file" accept=".json,application/json" hidden />
+      </div>
+      <ul id="snippet-list" class="snippet-list"></ul>
+    </section>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+
+</html>

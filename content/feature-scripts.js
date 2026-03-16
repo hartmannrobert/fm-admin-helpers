@@ -497,14 +497,19 @@
     }
 
     // Script form page: Insert snippet button + dropdown. Click to insert at cursor or replace selection.
-    function ensureSnippetsButton() {
+    // snippets: optional array; if omitted, uses built-in only (for backward compat). When provided, built-in + user merged.
+    // forceRefresh: when true, remove existing wrap and rebuild (e.g. after storage change). When false, skip if wrap already exists so tick() does not constantly recreate the button.
+    function ensureSnippetsButton(snippets, forceRefresh) {
       if (!isOnScriptFormPage()) return;
-      const snippets = window.FM && Array.isArray(window.FM.scriptSnippets) ? window.FM.scriptSnippets : [];
-      if (snippets.length === 0) return;
+      const builtIn = window.FM && Array.isArray(window.FM.scriptSnippets) ? window.FM.scriptSnippets : [];
+      const list = Array.isArray(snippets) ? snippets : builtIn;
+      if (list.length === 0) return;
 
       const codeRow = findCodeRow(document);
       if (!codeRow) return;
-      if (codeRow.querySelector(".fm-snippets-wrap")) return;
+      const existingWrap = codeRow.querySelector(".fm-snippets-wrap");
+      if (existingWrap && !forceRefresh) return;
+      if (existingWrap) existingWrap.remove();
 
       const nameCell = codeRow.querySelector("td.fieldName");
       if (!nameCell) return;
@@ -548,7 +553,7 @@
         let visibleCount = 0;
         const items = listScroll.querySelectorAll(".fm-snippets-item");
         for (let i = 0; i < items.length; i++) {
-          const s = snippets[Number(items[i].dataset.snippetIndex)];
+          const s = list[Number(items[i].dataset.snippetIndex)];
           const name = (s && s.name ? s.name : "").toLowerCase();
           const desc = (s && s.description ? s.description : "").toLowerCase();
           const match = q === "" || name.indexOf(q) !== -1 || desc.indexOf(q) !== -1;
@@ -579,8 +584,8 @@
         /* Keep dropdown open so user can insert more or pick another snippet to replace. */
       }
 
-      for (let i = 0; i < snippets.length; i++) {
-        const s = snippets[i];
+      for (let i = 0; i < list.length; i++) {
+        const s = list[i];
         const item = document.createElement("div");
         item.className = "fm-snippets-item";
         item.dataset.snippetId = s.id || String(i);
@@ -630,6 +635,26 @@
       });
 
       nameCell.appendChild(wrap);
+    }
+
+    function refreshSnippetsDropdown(forceRefresh) {
+      if (!isOnScriptFormPage()) return;
+      if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.local) {
+        ensureSnippetsButton(undefined, forceRefresh);
+        return;
+      }
+      chrome.storage.local.get(["userSnippets"], function (res) {
+        const builtIn = window.FM && Array.isArray(window.FM.scriptSnippets) ? window.FM.scriptSnippets : [];
+        const user = Array.isArray(res.userSnippets) ? res.userSnippets : [];
+        ensureSnippetsButton(builtIn.concat(user), forceRefresh);
+      });
+    }
+
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener(function (changes, areaName) {
+        if (areaName !== "local" || !changes.userSnippets) return;
+        refreshSnippetsDropdown(true);
+      });
     }
 
     // On script form page: make library script names in #section-includes clickable (open in new tab, color #5780AE)
@@ -817,7 +842,7 @@
       tick: function () {
         setScriptFormPageTitle();
         ensureCopySaveButton();
-        ensureSnippetsButton();
+        refreshSnippetsDropdown();
         ensureLibraryScriptLinksOpenInNewTab();
         tickSimpleGridView();
         tickEnhancements();

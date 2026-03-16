@@ -1,0 +1,184 @@
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.hd {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(120, 120, 120, 0.35);
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sub {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.panel {
+  padding: 20px;
+  max-width: 720px;
+}
+
+.form-section,
+.list-section {
+  margin-bottom: 24px;
+}
+
+.form-section h2,
+.list-section h2 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hint {
+  margin: 0 0 12px 0;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.hint code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.95em;
+}
+
+.field {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.field span {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.field span em {
+  font-weight: normal;
+  opacity: 0.8;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  max-width: 560px;
+  padding: 8px 10px;
+  border: 1px solid rgba(120, 120, 120, 0.45);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.field textarea {
+  font-family: ui-monospace, monospace;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.actions button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(120, 120, 120, 0.45);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.actions button[type="submit"] {
+  font-weight: 600;
+}
+
+.import-export {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.import-export button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(120, 120, 120, 0.45);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.snippet-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.snippet-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(120, 120, 120, 0.35);
+  border-radius: 6px;
+  background: rgba(120, 120, 120, 0.06);
+}
+
+.snippet-list li .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.snippet-list li .name {
+  font-weight: 600;
+}
+
+.snippet-list li .id {
+  font-size: 12px;
+  opacity: 0.75;
+  font-family: ui-monospace, monospace;
+}
+
+.snippet-list li .desc {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.snippet-list li .btns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.snippet-list li button {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(120, 120, 120, 0.45);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.snippet-list .empty {
+  padding: 16px;
+  text-align: center;
+  opacity: 0.8;
+  font-size: 13px;
+}

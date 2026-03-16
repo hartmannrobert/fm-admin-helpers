@@ -6,11 +6,20 @@
     "default_title": "FM",
     "default_popup": "popup/popup.html"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "activeTab"],
+  "options_ui": {
+    "page": "options/options.html"
+  },
   "host_permissions": [
     "https://*.autodeskplm360.net/plm/*",
     "https://*.autodeskplm360.net/admin*",
     "https://*.autodeskplm360.net/script.form*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["data/default-snippets.json"],
+      "matches": ["https://*.autodeskplm360.net/*"]
+    }
   ],
   "content_scripts": [
     {
@@ -28,7 +37,7 @@
       "js": [
         "content/config-bridge.js",
         "content/utils.js",
-        "content/script-snippets.js",
+        "content/snippet-modal.js",
         "content/feature-buttons.js",
         "content/feature-admin-titles.js",
         "content/feature-fieldid.js",

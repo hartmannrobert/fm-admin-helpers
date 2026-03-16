@@ -15,13 +15,30 @@ $("opt-other").addEventListener("change", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById("btn-close");
-    if (!btn) return;
-  
-    btn.addEventListener("click", (e) => {
+  const closeBtn = document.getElementById("btn-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       window.close();
     });
-  });
+  }
+  const snippetsBtn = document.getElementById("btn-snippets");
+  if (snippetsBtn) {
+    snippetsBtn.addEventListener("click", () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0] && tabs[0].id !== undefined) {
+          chrome.tabs.sendMessage(tabs[0].id, { type: "fm-open-snippet-modal" }, (err) => {
+            if (chrome.runtime.lastError) {
+              chrome.runtime.openOptionsPage();
+            }
+          });
+        } else {
+          chrome.runtime.openOptionsPage();
+        }
+        window.close();
+      });
+    });
+  }
+});
   
