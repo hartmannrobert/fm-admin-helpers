@@ -588,7 +588,7 @@
         const s = list[i];
         const item = document.createElement("div");
         item.className = "fm-snippets-item";
-        item.dataset.snippetId = s.id || String(i);
+        item.dataset.snippetId = s.name || String(i);
         item.dataset.snippetIndex = String(i);
 
         const nameEl = document.createElement("span");

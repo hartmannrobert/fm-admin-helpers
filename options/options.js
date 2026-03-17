@@ -22,100 +22,79 @@
       .catch(function () { if (typeof cb === "function") cb(); });
   }
 
-  const form = document.getElementById("snippet-form");
-  const idEl = document.getElementById("snippet-id");
-  const nameEl = document.getElementById("snippet-name");
-  const descEl = document.getElementById("snippet-desc");
-  const codeEl = document.getElementById("snippet-code");
-  const listEl = document.getElementById("snippet-list");
-  const btnCancel = document.getElementById("btn-cancel");
-  const btnImportDefault = document.getElementById("btn-import-default");
-  const btnExport = document.getElementById("btn-export");
-  const btnImport = document.getElementById("btn-import");
-  const importFile = document.getElementById("import-file");
+  var form = document.getElementById("snippet-form");
+  var nameEl = document.getElementById("snippet-name");
+  var descEl = document.getElementById("snippet-desc");
+  var codeEl = document.getElementById("snippet-code");
+  var listEl = document.getElementById("snippet-list");
+  var btnCancel = document.getElementById("btn-cancel");
+  var btnImportDefault = document.getElementById("btn-import-default");
+  var btnExport = document.getElementById("btn-export");
+  var btnImport = document.getElementById("btn-import");
+  var importFile = document.getElementById("import-file");
 
-  let editingId = null;
+  var editingName = null;
 
   function clearForm() {
-    editingId = null;
-    idEl.value = "";
+    editingName = null;
     nameEl.value = "";
     descEl.value = "";
     codeEl.value = "";
-    idEl.disabled = false;
+    nameEl.disabled = false;
   }
 
   function renderList(list) {
     listEl.innerHTML = "";
     if (list.length === 0) {
-      const li = document.createElement("li");
+      var li = document.createElement("li");
       li.className = "empty";
       li.textContent = "No custom snippets yet. Add one above.";
       listEl.appendChild(li);
       return;
     }
-    for (let i = 0; i < list.length; i++) {
-      const s = list[i];
-      const li = document.createElement("li");
-      const info = document.createElement("div");
+    for (var i = 0; i < list.length; i++) {
+      var s = list[i];
+      var li = document.createElement("li");
+      var info = document.createElement("div");
       info.className = "info";
-      const name = document.createElement("div");
-      name.className = "name";
-      name.textContent = s.name && String(s.name).trim() ? s.name : s.id || "Unnamed";
-      const idLine = document.createElement("div");
-      idLine.className = "id";
-      idLine.textContent = s.id || "";
-      const desc = document.createElement("div");
+      var nameDiv = document.createElement("div");
+      nameDiv.className = "name";
+      nameDiv.textContent = (s.name && String(s.name).trim()) ? s.name : "Unnamed";
+      var desc = document.createElement("div");
       desc.className = "desc";
       desc.textContent = (s.description && String(s.description).trim()) || "";
-      info.appendChild(name);
-      info.appendChild(idLine);
+      info.appendChild(nameDiv);
       info.appendChild(desc);
-      const btns = document.createElement("div");
+      var btns = document.createElement("div");
       btns.className = "btns";
-      const editBtn = document.createElement("button");
+      var editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.textContent = "Edit";
-      editBtn.addEventListener("click", function () {
-        editingId = s.id;
-        idEl.value = s.id || "";
-        nameEl.value = s.name || "";
-        descEl.value = s.description || "";
-        codeEl.value = s.code || "";
-        idEl.disabled = true;
-      });
-      const delBtn = document.createElement("button");
+      editBtn.addEventListener("click", function (snip) {
+        return function () {
+          editingName = snip.name;
+          nameEl.value = snip.name || "";
+          descEl.value = snip.description || "";
+          codeEl.value = snip.code || "";
+          nameEl.disabled = true;
+        };
+      }(s));
+      var delBtn = document.createElement("button");
       delBtn.type = "button";
       delBtn.textContent = "Delete";
-      delBtn.addEventListener("click", function () {
-        const idToDelete = String(s.id || "");
-        if (!idToDelete) return;
-        const confirmBtn = document.createElement("button");
-        confirmBtn.type = "button";
-        confirmBtn.textContent = "Confirm";
-        const cancelBtn = document.createElement("button");
-        cancelBtn.type = "button";
-        cancelBtn.textContent = "Cancel";
-        confirmBtn.addEventListener("click", function () {
-          getStored(function (arr) {
-            const next = arr.filter(function (x) { return String(x.id || "") !== idToDelete; });
-            setStored(next, function () {
-              if (editingId === idToDelete) clearForm();
-              renderList(next);
-            });
-          });
-        });
-        cancelBtn.addEventListener("click", function () {
-          btns.removeChild(confirmBtn);
-          btns.removeChild(cancelBtn);
-          btns.appendChild(editBtn);
-          btns.appendChild(delBtn);
-        });
-        btns.removeChild(editBtn);
-        btns.removeChild(delBtn);
-        btns.appendChild(confirmBtn);
-        btns.appendChild(cancelBtn);
-      });
+      delBtn.addEventListener("click", function (snip) {
+        return function () {
+          var nameToDelete = String(snip.name || "");
+          if (!nameToDelete) return;
+          if (!confirm("Delete snippet \"" + nameToDelete.replace(/"/g, "\\\"") + "\"?")) return;
+          getStorage().then(function (storage) { return storage.remove(nameToDelete); })
+            .then(function () {
+              if (editingName === nameToDelete) clearForm();
+              getStored(renderList);
+            })
+            .catch(function () {});
+        };
+      }(s));
       btns.appendChild(editBtn);
       btns.appendChild(delBtn);
       li.appendChild(info);
@@ -126,26 +105,36 @@
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    const id = String(idEl.value || "").trim();
-    const name = String(nameEl.value || "").trim();
-    const description = String(descEl.value || "").trim();
-    const codeRaw = codeEl.value;
-    const code = normalizeCode(codeRaw).trim();
-    if (!id) return;
+    var name = String(nameEl.value || "").trim();
+    var description = String(descEl.value || "").trim();
+    var codeRaw = codeEl.value;
+    var code = normalizeCode(codeRaw).trim();
+    if (!name) return;
     if (!code) return;
     getStored(function (arr) {
-      const existing = arr.findIndex(function (x) { return x.id === id; });
-      const item = { id: id, name: name || id, description: description, code: code };
-      let next;
-      if (existing >= 0) {
-        next = arr.slice();
-        next[existing] = item;
-      } else {
-        next = arr.concat(item);
+      var nameExists = arr.some(function (x) { return x.name === name; });
+      var isEdit = editingName !== null;
+      if (!isEdit && nameExists) {
+        alert("A snippet with this name already exists. Choose a different name.");
+        return;
       }
-      setStored(next, function () {
-        renderList(next);
-        clearForm();
+      if (isEdit && editingName !== name && nameExists) {
+        alert("A snippet with this name already exists. Choose a different name.");
+        return;
+      }
+      var item = { name: name, description: description, code: code };
+      getStorage().then(function (storage) {
+        if (isEdit && editingName !== name) {
+          return storage.remove(editingName).then(function () { return storage.put(item); });
+        }
+        return storage.put(item);
+      }).then(function () {
+        getStored(function (list) {
+          renderList(list);
+          clearForm();
+        });
+      }).catch(function () {
+        alert("Failed to save. Try again.");
       });
     });
   });
@@ -156,10 +145,10 @@
 
   function exportSnippets() {
     getStored(function (list) {
-      const json = JSON.stringify(list, null, 2);
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      var json = JSON.stringify(list, null, 2);
+      var blob = new Blob([json], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
       a.href = url;
       a.download = "fm-snippets.json";
       a.click();
@@ -168,24 +157,27 @@
   }
 
   function parseImportedList(data) {
-    let parsed;
+    var parsed;
     try {
       parsed = JSON.parse(data);
     } catch (e) {
       return { error: "Invalid JSON." };
     }
     if (!Array.isArray(parsed)) return { error: "File must be a JSON array of snippets." };
-    const list = [];
-    for (let i = 0; i < parsed.length; i++) {
-      const raw = parsed[i];
+    var list = [];
+    for (var i = 0; i < parsed.length; i++) {
+      var raw = parsed[i];
       if (!raw || typeof raw !== "object") continue;
-      const id = typeof raw.id === "string" ? raw.id.trim() : String(raw.id || "").trim();
-      const code = typeof raw.code === "string" ? raw.code : String(raw.code || "");
-      if (!id || !code) continue;
+      var name = (typeof raw.name === "string" && raw.name.trim() !== "")
+        ? raw.name.trim()
+        : (typeof raw.id === "string" && raw.id.trim() !== "")
+          ? raw.id.trim()
+          : "";
+      var code = typeof raw.code === "string" ? raw.code : String(raw.code || "");
+      if (!name || !code) continue;
       list.push({
-        id: id,
-        name: typeof raw.name === "string" ? raw.name.trim() : (raw.name ? String(raw.name).trim() : id),
-        description: typeof raw.description === "string" ? raw.description.trim() : (raw.description ? String(raw.description).trim() : ""),
+        name: name,
+        description: (typeof raw.description === "string" ? raw.description : (raw.description != null ? String(raw.description) : "")).trim(),
         code: normalizeCode(code).trim()
       });
     }
@@ -194,24 +186,22 @@
 
   function importSnippets(file) {
     if (!file) return;
-    const reader = new FileReader();
+    var reader = new FileReader();
     reader.onload = function () {
-      const result = parseImportedList(reader.result);
+      var result = parseImportedList(reader.result);
       if (result.error) {
         alert(result.error);
         return;
       }
       if (result.list.length === 0) {
-        alert("No valid snippets in file. Each item needs id and code.");
+        alert("No valid snippets in file. Each item needs a name (or id) and code.");
         return;
       }
       getStored(function (current) {
-        const byId = new Map();
-        current.forEach(function (x) { byId.set(String(x.id || ""), x); });
-        result.list.forEach(function (item) {
-          byId.set(String(item.id || ""), item);
-        });
-        const merged = Array.from(byId.values());
+        var byName = new Map();
+        current.forEach(function (x) { byName.set(x.name, x); });
+        result.list.forEach(function (item) { byName.set(item.name, item); });
+        var merged = Array.from(byName.values());
         setStored(merged, function () {
           renderList(merged);
           clearForm();
@@ -222,26 +212,29 @@
   }
 
   function importDefaultSnippets() {
-    const url = chrome.runtime.getURL("data/default-snippets.json");
+    var url = chrome.runtime.getURL("data/default-snippets.json");
     fetch(url)
       .then(function (r) { return r.json(); })
       .then(function (rawList) {
         if (!Array.isArray(rawList)) return;
-        const list = rawList.map(function (raw) {
-          const id = typeof raw.id === "string" ? raw.id.trim() : String(raw.id || "").trim();
-          const code = typeof raw.code === "string" ? raw.code : String(raw.code || "");
+        var list = rawList.map(function (raw) {
+          var name = (typeof raw.name === "string" && raw.name.trim() !== "")
+            ? raw.name.trim()
+            : (typeof raw.id === "string" && raw.id.trim() !== "")
+              ? raw.id.trim()
+              : "";
+          var code = typeof raw.code === "string" ? raw.code : String(raw.code || "");
           return {
-            id: id,
-            name: typeof raw.name === "string" ? raw.name.trim() : (raw.name ? String(raw.name).trim() : id),
-            description: typeof raw.description === "string" ? raw.description.trim() : (raw.description ? String(raw.description).trim() : ""),
+            name: name,
+            description: (typeof raw.description === "string" ? raw.description : (raw.description != null ? String(raw.description) : "")).trim(),
             code: normalizeCode(code).trim()
           };
-        }).filter(function (x) { return x.id && x.code; });
+        }).filter(function (x) { return x.name && x.code; });
         getStored(function (current) {
-          const byId = new Map();
-          current.forEach(function (x) { byId.set(String(x.id || ""), x); });
-          list.forEach(function (item) { byId.set(String(item.id || ""), item); });
-          const merged = Array.from(byId.values());
+          var byName = new Map();
+          current.forEach(function (x) { byName.set(x.name, x); });
+          list.forEach(function (item) { byName.set(item.name, item); });
+          var merged = Array.from(byName.values());
           setStored(merged, function () {
             renderList(merged);
             clearForm();
@@ -259,7 +252,7 @@
   }
   if (importFile) {
     importFile.addEventListener("change", function () {
-      const file = importFile.files && importFile.files[0];
+      var file = importFile.files && importFile.files[0];
       if (file) importSnippets(file);
       importFile.value = "";
     });

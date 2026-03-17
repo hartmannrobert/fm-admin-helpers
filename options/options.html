@@ -18,16 +18,11 @@
   <main class="panel">
     <section class="form-section">
       <h2>Add or edit snippet</h2>
-      <p class="hint">Pasted code: literal backslash-n (<code>\n</code>) is converted to newlines. If your code needs a
-        literal <code>\n</code> in a string, type a real newline in the textarea or use double backslash.</p>
+      <p class="hint">Pasted code: literal backslash-n (<code>\n</code>) is converted to newlines. Name must be unique.</p>
       <form id="snippet-form">
         <label class="field">
-          <span>Id <em>(required, unique)</em></span>
-          <input id="snippet-id" type="text" required autocomplete="off" />
-        </label>
-        <label class="field">
-          <span>Name</span>
-          <input id="snippet-name" type="text" autocomplete="off" />
+          <span>Name <em>(required, unique)</em></span>
+          <input id="snippet-name" type="text" required autocomplete="off" />
         </label>
         <label class="field">
           <span>Description</span>
