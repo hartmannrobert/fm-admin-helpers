@@ -39,7 +39,7 @@ The focus is on:
 
 ## Setup Instructions
 
-This extension is distributed as source code and must be loaded as an unpacked Chrome extension.
+This extension is distributed as source code and must be loaded as an unpacked Chrome extension. The loadable package lives in the **`dist`** folder at the repository root (it contains `manifest.json` and all runtime assets). The repository root also holds this README and the `images` folder used for documentation screenshots only—they are not part of the Chrome package.
 
 ### Installation Steps
 
@@ -59,7 +59,7 @@ This extension is distributed as source code and must be loaded as an unpacked C
 4. **Load the unpacked extension**
 
    - Click **Load unpacked**
-   - Select the **root folder of the extension** (the folder containing `manifest.json`)
+   - Select the **`dist` folder** inside the repository (the folder that contains `manifest.json`)
 
 5. **Verify installation**
 
@@ -92,7 +92,7 @@ This extension is distributed as source code and must be loaded as an unpacked C
 
 ### Updating the Extension
 
-After pulling updates or modifying the source code:
+After pulling updates or modifying extension files under **`dist/`**:
 
 1. Go to `chrome://extensions`
 2. Click the **Refresh** icon on the extension card
@@ -288,6 +288,11 @@ After pulling updates or modifying the source code:
 ## Architecture
 
 The extension is built using a modular **Manifest V3** architecture, designed for long-term maintainability and incremental feature growth.
+
+### Repository layout
+
+- **`dist/`** — Unpacked extension: `manifest.json`, content scripts, popup, options page, and bundled data. Point Chrome’s **Load unpacked** at this directory.
+- **`images/`** — Screenshots referenced by this README (not loaded by the extension).
 
 ### High-level structure
 
