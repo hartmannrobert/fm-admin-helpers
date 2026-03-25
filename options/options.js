@@ -24,7 +24,6 @@
 
   var form = document.getElementById("snippet-form");
   var nameEl = document.getElementById("snippet-name");
-  var descEl = document.getElementById("snippet-desc");
   var codeEl = document.getElementById("snippet-code");
   var listEl = document.getElementById("snippet-list");
   var btnCancel = document.getElementById("btn-cancel");
@@ -38,7 +37,6 @@
   function clearForm() {
     editingName = null;
     nameEl.value = "";
-    descEl.value = "";
     codeEl.value = "";
     nameEl.disabled = false;
   }
@@ -60,11 +58,7 @@
       var nameDiv = document.createElement("div");
       nameDiv.className = "name";
       nameDiv.textContent = (s.name && String(s.name).trim()) ? s.name : "Unnamed";
-      var desc = document.createElement("div");
-      desc.className = "desc";
-      desc.textContent = (s.description && String(s.description).trim()) || "";
       info.appendChild(nameDiv);
-      info.appendChild(desc);
       var btns = document.createElement("div");
       btns.className = "btns";
       var editBtn = document.createElement("button");
@@ -74,7 +68,6 @@
         return function () {
           editingName = snip.name;
           nameEl.value = snip.name || "";
-          descEl.value = snip.description || "";
           codeEl.value = snip.code || "";
           nameEl.disabled = true;
         };
@@ -106,7 +99,6 @@
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     var name = String(nameEl.value || "").trim();
-    var description = String(descEl.value || "").trim();
     var codeRaw = codeEl.value;
     var code = normalizeCode(codeRaw).trim();
     if (!name) return;
@@ -122,7 +114,7 @@
         alert("A snippet with this name already exists. Choose a different name.");
         return;
       }
-      var item = { name: name, description: description, code: code };
+      var item = { name: name, code: code };
       getStorage().then(function (storage) {
         if (isEdit && editingName !== name) {
           return storage.remove(editingName).then(function () { return storage.put(item); });
@@ -177,7 +169,6 @@
       if (!name || !code) continue;
       list.push({
         name: name,
-        description: (typeof raw.description === "string" ? raw.description : (raw.description != null ? String(raw.description) : "")).trim(),
         code: normalizeCode(code).trim()
       });
     }
@@ -226,7 +217,6 @@
           var code = typeof raw.code === "string" ? raw.code : String(raw.code || "");
           return {
             name: name,
-            description: (typeof raw.description === "string" ? raw.description : (raw.description != null ? String(raw.description) : "")).trim(),
             code: normalizeCode(code).trim()
           };
         }).filter(function (x) { return x.name && x.code; });

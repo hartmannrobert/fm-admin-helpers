@@ -1,7 +1,7 @@
 /**
  * IndexedDB storage layer for script snippets.
  * - No localStorage; all snippet data lives in IndexedDB.
- * - Unique key is snippet name (not id). Schema: { name, description?, code }.
+ * - Unique key is snippet name (not id). Schema: { name, code }.
  * - Migrates from chrome.storage.local and from id-based store (v1) to name-based (v2).
  */
 (function () {
@@ -13,7 +13,7 @@
 
   let dbPromise = null;
 
-  /** Normalize raw snippet to stored shape: { name, description, code }. Name is required. */
+  /** Normalize raw snippet to stored shape: { name, code }. Name is required. */
   function toRecord(s) {
     var name = (s && typeof s.name === "string" && s.name.trim() !== "")
       ? s.name.trim()
@@ -22,7 +22,6 @@
         : "";
     return {
       name: name,
-      description: (s && s.description != null) ? String(s.description) : "",
       code: (s && s.code != null) ? String(s.code) : ""
     };
   }
@@ -49,7 +48,6 @@
                 if (name) {
                   newStore.put({
                     name: name,
-                    description: (v.description != null) ? String(v.description) : "",
                     code: (v.code != null) ? String(v.code) : ""
                   });
                 }
@@ -119,8 +117,8 @@
   }
 
   /**
-   * Get all snippets. Each item: { name, description?, code }.
-   * @returns {Promise<Array<{name: string, description?: string, code: string}>>}
+   * Get all snippets. Each item: { name, code }.
+   * @returns {Promise<Array<{name: string, code: string}>>}
    */
   function getAll() {
     return withStore(STORE_NAME, "readonly", function (store) {
@@ -135,7 +133,7 @@
   /**
    * Get one snippet by name.
    * @param {string} name
-   * @returns {Promise<{name: string, description?: string, code: string}|undefined>}
+   * @returns {Promise<{name: string, code: string}|undefined>}
    */
   function get(name) {
     if (name == null || String(name).trim() === "") return Promise.resolve(undefined);
@@ -150,7 +148,7 @@
 
   /**
    * Create or update a single snippet. Unique key is name.
-   * @param {{name: string, description?: string, code: string}} snippet
+   * @param {{name: string, code: string}} snippet
    * @returns {Promise<void>}
    */
   function put(snippet) {
@@ -167,7 +165,7 @@
 
   /**
    * Write multiple snippets (merge by name).
-   * @param {Array<{name: string, description?: string, code: string}>} snippets
+   * @param {Array<{name: string, code: string}>} snippets
    * @returns {Promise<void>}
    */
   function putMany(snippets) {
@@ -229,7 +227,7 @@
 
   /**
    * Replace all snippets with the given array.
-   * @param {Array<{name: string, description?: string, code: string}>} snippets
+   * @param {Array<{name: string, code: string}>} snippets
    * @returns {Promise<void>}
    */
   function replaceAll(snippets) {

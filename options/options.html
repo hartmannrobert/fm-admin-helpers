@@ -17,16 +17,12 @@
 
   <main class="panel">
     <section class="form-section">
-      <h2>Add or edit snippet</h2>
-      <p class="hint">Pasted code: literal backslash-n (<code>\n</code>) is converted to newlines. Name must be unique.</p>
+      <p class="hint">Pasted code: literal backslash-n (<code>\n</code>) is converted to newlines. Name must be unique.
+      </p>
       <form id="snippet-form">
         <label class="field">
           <span>Name <em>(required, unique)</em></span>
           <input id="snippet-name" type="text" required autocomplete="off" />
-        </label>
-        <label class="field">
-          <span>Description</span>
-          <input id="snippet-desc" type="text" autocomplete="off" />
         </label>
         <label class="field">
           <span>Code <em>(required)</em></span>
@@ -40,7 +36,6 @@
     </section>
 
     <section class="list-section">
-      <h2>Your snippets</h2>
       <div class="import-export">
         <button type="button" id="btn-import-default">Import default</button>
         <button type="button" id="btn-export">Export as JSON</button>

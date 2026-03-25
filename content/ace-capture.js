@@ -282,6 +282,30 @@
     document.dispatchEvent(new CustomEvent("fm-ace-selection", { detail: getSelection() }));
   });
 
+  /** Selected text only when the range is non-empty (caret does not count). */
+  function getSelectedText() {
+    var editor = getEditor();
+    if (!editor || !editor.session) return "";
+    try {
+      var range = editor.selection && typeof editor.selection.getRange === "function" ? editor.selection.getRange() : null;
+      if (!range || !range.start || !range.end) return "";
+      if (range.start.row === range.end.row && range.start.column === range.end.column) return "";
+      if (typeof editor.session.getTextRange === "function") {
+        var text = editor.session.getTextRange(range);
+        return typeof text === "string" ? text : "";
+      }
+      if (typeof editor.getSelectedText === "function") {
+        var direct = editor.getSelectedText();
+        return typeof direct === "string" ? direct : "";
+      }
+    } catch (e) {}
+    return "";
+  }
+
+  document.addEventListener("fm-ace-get-selected-text", function () {
+    document.dispatchEvent(new CustomEvent("fm-ace-selected-text", { detail: getSelectedText() }));
+  });
+
   document.addEventListener("fm-ace-set-selection", function (ev) {
     var detail = ev.detail;
     if (!detail || !detail.start || !detail.end) return;
@@ -297,6 +321,197 @@
       editor.selection.setSelectionRange(r);
       if (editor.renderer && typeof editor.renderer.scrollCursorIntoView === "function") {
         editor.renderer.scrollCursorIntoView();
+      }
+    } catch (e) {}
+  });
+
+  var jumpFlashMarkerId = null;
+  var jumpFlashStyleId = "fm-ace-jump-flash-style";
+
+  function ensureJumpFlashStyle() {
+    if (document.getElementById(jumpFlashStyleId)) return;
+    var st = document.createElement("style");
+    st.id = jumpFlashStyleId;
+    st.textContent = ".fm-ace-jump-flash { background: rgba(255, 220, 100, 0.42); z-index: 20; }";
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  /**
+   * Scroll so document row is near the top of the viewport (Ace: scrollToLine(line, center=false) aligns to top).
+   */
+  function scrollEditorRowNearTop(editor, docRow) {
+    if (!editor || !editor.session || typeof docRow !== "number" || docRow < 0) return;
+    var session = editor.session;
+    var renderer = editor.renderer;
+    if (!renderer) return;
+    try {
+      if (typeof editor.resize === "function") {
+        editor.resize(true);
+      }
+    } catch (e0) {}
+    try {
+      if (typeof session.unfold === "function") {
+        session.unfold({ row: docRow, column: 0 });
+      }
+    } catch (eu) {}
+
+    var lineHeight = 16;
+    try {
+      if (renderer.layerConfig && typeof renderer.layerConfig.lineHeight === "number" && renderer.layerConfig.lineHeight > 0) {
+        lineHeight = renderer.layerConfig.lineHeight;
+      } else if (typeof renderer.lineHeight === "number" && renderer.lineHeight > 0) {
+        lineHeight = renderer.lineHeight;
+      }
+    } catch (elh) {}
+
+    var maxRow = 0;
+    try {
+      maxRow = Math.max(0, typeof session.getLength === "function" ? session.getLength() - 1 : 0);
+    } catch (em) {}
+    var r = Math.min(Math.max(0, Math.floor(docRow)), maxRow);
+
+    var doScrollToY = function (y) {
+      var yNum = typeof y === "number" && y >= 0 ? y : 0;
+      try {
+        if (typeof renderer.scrollToY === "function") {
+          renderer.scrollToY(yNum);
+        } else if (typeof renderer.setScrollTop === "function") {
+          renderer.setScrollTop(yNum);
+        } else if (typeof editor.setScrollTop === "function") {
+          editor.setScrollTop(yNum);
+        }
+      } catch (esy) {}
+    };
+
+    var applyTopAlign = function () {
+      try {
+        if (typeof editor.scrollToLine === "function") {
+          editor.scrollToLine(r, false, false, function () {});
+          return;
+        }
+      } catch (estl1) {}
+      try {
+        if (typeof renderer.scrollToLine === "function") {
+          renderer.scrollToLine(r, false, false, function () {});
+          return;
+        }
+      } catch (estl2) {}
+      var screenRow = r;
+      try {
+        if (typeof session.documentToScreenRow === "function") {
+          screenRow = session.documentToScreenRow(r, 0);
+        }
+      } catch (edsr) {}
+      doScrollToY(screenRow * lineHeight);
+    };
+
+    applyTopAlign();
+
+    try {
+      if (typeof editor.moveCursorTo === "function") {
+        editor.moveCursorTo(r, 0);
+      } else if (editor.selection && typeof editor.selection.moveCursorTo === "function") {
+        editor.selection.moveCursorTo(r, 0);
+      }
+    } catch (emc) {}
+
+    applyTopAlign();
+
+    try {
+      window.requestAnimationFrame(function () {
+        applyTopAlign();
+        try {
+          if (typeof editor.moveCursorTo === "function") {
+            editor.moveCursorTo(r, 0);
+          } else if (editor.selection && typeof editor.selection.moveCursorTo === "function") {
+            editor.selection.moveCursorTo(r, 0);
+          }
+        } catch (emc2) {}
+      });
+    } catch (raf) {}
+  }
+
+  document.addEventListener("fm-ace-jump-to-definition", function (ev) {
+    var detail = ev.detail;
+    if (!detail || typeof detail.row !== "number" || detail.row < 0 || detail.row !== Math.floor(detail.row)) return;
+    var editor = getEditor();
+    if (!editor || !editor.session) return;
+    ensureJumpFlashStyle();
+    try {
+      var row = detail.row;
+      var flash = detail.flash !== false;
+      var alignTop = detail.scrollAlign !== "center" && detail.scrollAlign !== "middle";
+
+      if (alignTop) {
+        scrollEditorRowNearTop(editor, row);
+      } else {
+        if (typeof editor.moveCursorTo === "function") {
+          editor.moveCursorTo(row, 0);
+        } else if (editor.selection && typeof editor.selection.moveCursorTo === "function") {
+          editor.selection.moveCursorTo(row, 0);
+        }
+        if (editor.renderer && typeof editor.renderer.scrollCursorIntoView === "function") {
+          try {
+            editor.renderer.scrollCursorIntoView({ halfCursorHeight: true });
+          } catch (eScroll) {
+            try {
+              editor.renderer.scrollCursorIntoView();
+            } catch (eScroll2) {}
+          }
+        }
+      }
+
+      if (typeof editor.clearSelection === "function") {
+        editor.clearSelection();
+      } else if (editor.selection && typeof editor.selection.clearSelection === "function") {
+        editor.selection.clearSelection();
+      }
+
+      var focusEditor = detail.focusEditor !== false;
+
+      if (focusEditor) {
+        if (typeof editor.focus === "function") {
+          editor.focus();
+        } else if (editor.textInput && typeof editor.textInput.focus === "function") {
+          editor.textInput.focus();
+        }
+      }
+
+      if (alignTop) {
+        try {
+          window.requestAnimationFrame(function () {
+            scrollEditorRowNearTop(editor, row);
+            if (focusEditor) {
+              try {
+                if (typeof editor.focus === "function") {
+                  editor.focus();
+                }
+              } catch (ef) {}
+            }
+          });
+        } catch (raf2) {}
+      }
+
+      if (flash) {
+        if (jumpFlashMarkerId !== null) {
+          try {
+            editor.session.removeMarker(jumpFlashMarkerId);
+          } catch (e1) {}
+          jumpFlashMarkerId = null;
+        }
+        var Range = typeof window.ace !== "undefined" && window.ace.require ? window.ace.require("ace/range").Range : null;
+        if (Range) {
+          var r = new Range(row, 0, row + 1, 0);
+          jumpFlashMarkerId = editor.session.addMarker(r, "fm-ace-jump-flash", "fullLine", false);
+          setTimeout(function () {
+            try {
+              if (jumpFlashMarkerId !== null && editor.session) {
+                editor.session.removeMarker(jumpFlashMarkerId);
+              }
+            } catch (e2) {}
+            jumpFlashMarkerId = null;
+          }, 650);
+        }
       }
     } catch (e) {}
   });

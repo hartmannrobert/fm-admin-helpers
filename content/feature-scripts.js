@@ -399,6 +399,22 @@
       });
     }
 
+    /** Resolves with selected text from the script Ace editor (main-world bridge), or "" if none / timeout. */
+    function getAceEditorSelectedText() {
+      const doc = document;
+      return new Promise(function (resolve) {
+        const timeout = setTimeout(function () { resolve(""); }, 800);
+        doc.addEventListener("fm-ace-selected-text", function onSel(ev) {
+          clearTimeout(timeout);
+          doc.removeEventListener("fm-ace-selected-text", onSel);
+          resolve(typeof ev.detail === "string" ? ev.detail : "");
+        }, { once: true });
+        doc.dispatchEvent(new CustomEvent("fm-ace-get-selected-text"));
+      });
+    }
+
+    FM.getAceEditorSelectedText = getAceEditorSelectedText;
+
     // Restore Ace scroll/cursor after reload (Copy & Save). Tries a few times so Ace is ready.
     function restoreAceEditorState() {
       const href = String(location.href || "");
@@ -481,6 +497,27 @@
       }
     }
 
+    function showSnippetsToast(message) {
+      const prev = document.getElementById("fm-snippets-toast");
+      if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+      const t = document.createElement("div");
+      t.id = "fm-snippets-toast";
+      t.className = "fm-snippets-toast";
+      t.setAttribute("role", "status");
+      t.textContent = message;
+      document.body.appendChild(t);
+      requestAnimationFrame(function () {
+        t.classList.add("fm-snippets-toast--visible");
+      });
+      if (t._fmHideTimer) clearTimeout(t._fmHideTimer);
+      t._fmHideTimer = setTimeout(function () {
+        t.classList.remove("fm-snippets-toast--visible");
+        setTimeout(function () {
+          if (t.parentNode) t.parentNode.removeChild(t);
+        }, 220);
+      }, 3200);
+    }
+
     // Script form page: find the table row that contains the "Code" label (td.fieldName with "Code")
     function findCodeRow(doc) {
       const byId = doc.getElementById("section-code");
@@ -496,36 +533,500 @@
       return null;
     }
 
-    // Script form page: Insert snippet button + dropdown. Click to insert at cursor or replace selection.
+    // Script form page: Insert Snippet (bar: list toggle + ⋮ menu) + Go to Function; panels independent; height from #codeEditor − 40px.
     // snippets: optional array; if omitted, uses built-in only (for backward compat). When provided, built-in + user merged.
     // forceRefresh: when true, remove existing wrap and rebuild (e.g. after storage change). When false, skip if wrap already exists so tick() does not constantly recreate the button.
     function ensureSnippetsButton(snippets, forceRefresh) {
       if (!isOnScriptFormPage()) return;
       const builtIn = window.FM && Array.isArray(window.FM.scriptSnippets) ? window.FM.scriptSnippets : [];
       const list = Array.isArray(snippets) ? snippets : builtIn;
-      if (list.length === 0) return;
 
       const codeRow = findCodeRow(document);
       if (!codeRow) return;
       const existingWrap = codeRow.querySelector(".fm-snippets-wrap");
       if (existingWrap && !forceRefresh) return;
-      if (existingWrap) existingWrap.remove();
-
+      if (existingWrap) {
+        if (existingWrap._fmOutsideClick) {
+          document.removeEventListener("click", existingWrap._fmOutsideClick);
+        }
+        if (existingWrap._fmSettingsEscape) {
+          document.removeEventListener("keydown", existingWrap._fmSettingsEscape);
+        }
+        if (typeof existingWrap._fmCloseSettingsMenu === "function") {
+          existingWrap._fmCloseSettingsMenu();
+        }
+        if (existingWrap._fmCodeEditorResizeObserver && typeof existingWrap._fmCodeEditorResizeObserver.disconnect === "function") {
+          existingWrap._fmCodeEditorResizeObserver.disconnect();
+        }
+        if (existingWrap._fmToolsStackWindowResize) {
+          window.removeEventListener("resize", existingWrap._fmToolsStackWindowResize);
+        }
+        if (existingWrap._fmToolsStackHeightRaf != null) {
+          cancelAnimationFrame(existingWrap._fmToolsStackHeightRaf);
+        }
+        existingWrap.remove();
+      }
       const nameCell = codeRow.querySelector("td.fieldName");
       if (!nameCell) return;
+
+      if (window.FM && typeof window.FM.injectMaterialIcons === "function") {
+        window.FM.injectMaterialIcons();
+      }
 
       const wrap = document.createElement("div");
       wrap.className = "fm-snippets-wrap";
 
+      const toolsStack = document.createElement("div");
+      toolsStack.className = "fm-editor-tools-stack";
+
+      function clickTargetInsideCodeEditor(target) {
+        var el = target;
+        if (!el) return false;
+        if (el.nodeType === 3 && el.parentElement) el = el.parentElement;
+        if (!el || el.nodeType !== 1) return false;
+        var host = document.getElementById("codeEditor");
+        return !!(host && host.contains(el));
+      }
+
+      function getCodeEditorToolsMaxHeightPx() {
+        var host = document.getElementById("codeEditor");
+        if (!host) return 400;
+        var h = host.getBoundingClientRect().height;
+        if (!Number.isFinite(h) || h <= 0) return 400;
+        return Math.max(120, Math.floor(h - 40));
+      }
+
+      function applyToolsStackLayoutHeight() {
+        var cap = getCodeEditorToolsMaxHeightPx();
+        toolsStack.style.maxHeight = cap + "px";
+        if (snippetSectionOpen || gotoSectionOpen) {
+          toolsStack.style.height = cap + "px";
+        } else {
+          toolsStack.style.height = "";
+        }
+      }
+
+      function scheduleToolsStackHeightUpdate() {
+        if (wrap._fmToolsStackHeightRaf != null) {
+          cancelAnimationFrame(wrap._fmToolsStackHeightRaf);
+        }
+        wrap._fmToolsStackHeightRaf = requestAnimationFrame(function () {
+          wrap._fmToolsStackHeightRaf = null;
+          applyToolsStackLayoutHeight();
+        });
+      }
+
+      const snippetSection = document.createElement("div");
+      snippetSection.className = "fm-tool-section fm-tool-section--snippet";
+
+      const bar = document.createElement("div");
+      bar.className = "fm-snippets-bar fm-tool-section-header";
+
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "fm-snippets-btn";
-      btn.textContent = "Insert snippet";
-      btn.title = "Click to insert at cursor or replace selection";
+      btn.className = "fm-snippets-btn fm-tool-accordion-trigger";
+      btn.setAttribute("aria-expanded", "false");
+      btn.title = "Show or hide snippet list — insert at cursor or replace selection";
+      const btnLabel = document.createElement("span");
+      btnLabel.className = "fm-tool-accordion-label";
+      btnLabel.textContent = "Insert Snippet";
+      const btnChevron = document.createElement("span");
+      btnChevron.className = "material-icons fm-tool-accordion-chevron";
+      btnChevron.setAttribute("aria-hidden", "true");
+      btnChevron.textContent = "expand_more";
+      btn.appendChild(btnLabel);
+      btn.appendChild(btnChevron);
 
-      const dropdown = document.createElement("div");
-      dropdown.className = "fm-snippets-dropdown";
-      dropdown.setAttribute("hidden", "");
+      const settingsBtn = document.createElement("button");
+      settingsBtn.type = "button";
+      settingsBtn.className = "fm-snippets-settings-btn";
+      settingsBtn.title = "Snippet manager and tools";
+      settingsBtn.setAttribute("aria-label", "Snippet manager and tools");
+      settingsBtn.setAttribute("aria-haspopup", "true");
+      settingsBtn.setAttribute("aria-expanded", "false");
+      settingsBtn.innerHTML = "<span class=\"material-icons\" aria-hidden=\"true\">more_vert</span>";
+
+      const settingsWrap = document.createElement("div");
+      settingsWrap.className = "fm-snippets-settings-wrap";
+
+      const settingsMenu = document.createElement("div");
+      settingsMenu.className = "fm-snippets-settings-menu";
+      settingsMenu.setAttribute("hidden", "");
+      settingsMenu.setAttribute("role", "menu");
+
+      const menuSnippetManager = document.createElement("button");
+      menuSnippetManager.type = "button";
+      menuSnippetManager.className = "fm-snippets-settings-menu-item";
+      menuSnippetManager.setAttribute("role", "menuitem");
+      menuSnippetManager.textContent = "Snippet Manager";
+
+      const menuNewSnippet = document.createElement("button");
+      menuNewSnippet.type = "button";
+      menuNewSnippet.className = "fm-snippets-settings-menu-item";
+      menuNewSnippet.setAttribute("role", "menuitem");
+      menuNewSnippet.textContent = "New Snippet";
+
+      const menuNewSnippetMarked = document.createElement("button");
+      menuNewSnippetMarked.type = "button";
+      menuNewSnippetMarked.className = "fm-snippets-settings-menu-item";
+      menuNewSnippetMarked.setAttribute("role", "menuitem");
+      menuNewSnippetMarked.textContent = "New Snippet with Marked Code";
+
+      function setSettingsExpanded(open) {
+        settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+
+      function repositionSettingsMenu() {
+        if (settingsMenu.hasAttribute("hidden")) return;
+        const rect = settingsBtn.getBoundingClientRect();
+        const pad = 8;
+        const gap = 6;
+        settingsMenu.classList.add("fm-snippets-settings-menu--fixed");
+        settingsMenu.style.position = "fixed";
+        settingsMenu.style.zIndex = "2147483640";
+        const maxH = Math.max(100, window.innerHeight - 2 * pad);
+        settingsMenu.style.maxHeight = maxH + "px";
+        settingsMenu.style.overflowY = "auto";
+        settingsMenu.style.right = "auto";
+        settingsMenu.style.bottom = "auto";
+        const mw = settingsMenu.offsetWidth;
+        const mh = settingsMenu.offsetHeight;
+        /* Open below the trigger; submenu’s left edge aligns with the button’s left edge (viewport-clamped). */
+        let left = rect.left;
+        let top = rect.bottom + gap;
+        if (left < pad) {
+          left = pad;
+        }
+        if (left + mw > window.innerWidth - pad) {
+          left = Math.max(pad, window.innerWidth - pad - mw);
+        }
+        if (top + mh > window.innerHeight - pad) {
+          top = Math.max(pad, rect.top - gap - mh);
+        }
+        if (top < pad) {
+          top = pad;
+        }
+        settingsMenu.style.left = left + "px";
+        settingsMenu.style.top = top + "px";
+      }
+
+      function closeSettingsMenu() {
+        settingsMenu.setAttribute("hidden", "");
+        setSettingsExpanded(false);
+        settingsMenu.classList.remove("fm-snippets-settings-menu--fixed");
+        settingsMenu.style.left = "";
+        settingsMenu.style.top = "";
+        settingsMenu.style.position = "";
+        settingsMenu.style.zIndex = "";
+        settingsMenu.style.maxHeight = "";
+        settingsMenu.style.overflowY = "";
+        settingsMenu.style.right = "";
+        settingsMenu.style.bottom = "";
+        if (wrap._fmSettingsMenuCaptureOutside) {
+          document.removeEventListener("click", wrap._fmSettingsMenuCaptureOutside, true);
+          wrap._fmSettingsMenuCaptureOutside = null;
+        }
+        if (wrap._fmSettingsMenuViewportListeners) {
+          window.removeEventListener("resize", wrap._fmSettingsMenuViewportListeners);
+          window.removeEventListener("scroll", wrap._fmSettingsMenuViewportListeners, true);
+          wrap._fmSettingsMenuViewportListeners = null;
+        }
+      }
+
+      function openSettingsMenu() {
+        settingsMenu.removeAttribute("hidden");
+        setSettingsExpanded(true);
+        requestAnimationFrame(function () {
+          repositionSettingsMenu();
+          requestAnimationFrame(repositionSettingsMenu);
+          if (!wrap._fmSettingsMenuViewportListeners) {
+            const fn = function () {
+              repositionSettingsMenu();
+            };
+            wrap._fmSettingsMenuViewportListeners = fn;
+            window.addEventListener("resize", fn);
+            window.addEventListener("scroll", fn, true);
+          }
+          setTimeout(function () {
+            if (wrap._fmSettingsMenuCaptureOutside) {
+              document.removeEventListener("click", wrap._fmSettingsMenuCaptureOutside, true);
+              wrap._fmSettingsMenuCaptureOutside = null;
+            }
+            const captureOutside = function (e) {
+              if (settingsWrap.contains(e.target)) return;
+              if (clickTargetInsideCodeEditor(e.target)) return;
+              closeSettingsMenu();
+            };
+            wrap._fmSettingsMenuCaptureOutside = captureOutside;
+            document.addEventListener("click", captureOutside, true);
+          }, 0);
+        });
+      }
+
+      menuSnippetManager.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        closeSettingsMenu();
+        window.dispatchEvent(new CustomEvent("fm-open-snippet-modal-request"));
+      });
+
+      menuNewSnippet.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        closeSettingsMenu();
+        window.dispatchEvent(new CustomEvent("fm-open-snippet-modal-request", {
+          detail: { editorFocusNewSnippet: true }
+        }));
+      });
+
+      menuNewSnippetMarked.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        closeSettingsMenu();
+        getAceEditorSelectedText().then(function (text) {
+          const trimmed = String(text || "").trim();
+          if (!trimmed) {
+            showSnippetsToast("Select code in the editor first to use New Snippet with Marked Code.");
+            return;
+          }
+          window.dispatchEvent(new CustomEvent("fm-snippet-load-from-editor", { detail: { code: text } }));
+        });
+      });
+
+      settingsMenu.appendChild(menuSnippetManager);
+      settingsMenu.appendChild(menuNewSnippet);
+      settingsMenu.appendChild(menuNewSnippetMarked);
+
+      function dispatchAceJumpToDefinition(lineNumber1Based, opts) {
+        const n = Number(lineNumber1Based);
+        if (!Number.isFinite(n) || n < 1) return;
+        const row = Math.floor(n) - 1;
+        const detail = { row: row, flash: true, scrollAlign: "top" };
+        if (opts && opts.focusEditor === false) {
+          detail.focusEditor = false;
+        }
+        document.dispatchEvent(new CustomEvent("fm-ace-jump-to-definition", {
+          detail: detail
+        }));
+      }
+
+      function selectionToFunctionQueryHint(text) {
+        let t = String(text || "").split(/\r?\n/)[0].trim();
+        if (t.length > 120) t = t.slice(0, 120);
+        if (/^[$A-Za-z_][$A-Za-z0-9_]*$/.test(t)) return t;
+        const m = t.match(/[$A-Za-z_][$A-Za-z0-9_]*/);
+        return m ? m[0] : t;
+      }
+
+      const gotoSection = document.createElement("div");
+      gotoSection.className = "fm-tool-section fm-tool-section--goto";
+
+      const gotoHeaderBar = document.createElement("div");
+      gotoHeaderBar.className = "fm-goto-fn-header fm-tool-section-header";
+
+      const gotoAccordionBtn = document.createElement("button");
+      gotoAccordionBtn.type = "button";
+      gotoAccordionBtn.className = "fm-snippets-btn fm-tool-accordion-trigger fm-goto-fn-accordion-btn";
+      gotoAccordionBtn.setAttribute("aria-expanded", "false");
+      gotoAccordionBtn.title = "Show or hide function list and filter";
+      const gotoBtnLabel = document.createElement("span");
+      gotoBtnLabel.className = "fm-tool-accordion-label";
+      gotoBtnLabel.textContent = "Go to Function";
+      const gotoBtnChevron = document.createElement("span");
+      gotoBtnChevron.className = "material-icons fm-tool-accordion-chevron";
+      gotoBtnChevron.setAttribute("aria-hidden", "true");
+      gotoBtnChevron.textContent = "expand_more";
+      gotoAccordionBtn.appendChild(gotoBtnLabel);
+      gotoAccordionBtn.appendChild(gotoBtnChevron);
+
+      gotoHeaderBar.appendChild(gotoAccordionBtn);
+
+      const gotoPanel = document.createElement("div");
+      gotoPanel.className = "fm-tool-section-panel fm-goto-fn-panel";
+      gotoPanel.setAttribute("hidden", "");
+
+      const gotoPanelBody = document.createElement("div");
+      gotoPanelBody.className = "fm-goto-fn-panel-body";
+
+      const gotoSearchInput = document.createElement("input");
+      gotoSearchInput.type = "text";
+      gotoSearchInput.className = "fm-goto-fn-search";
+      gotoSearchInput.placeholder = "Filter by function name…";
+      gotoSearchInput.autocomplete = "off";
+      gotoSearchInput.setAttribute("aria-label", "Filter function definitions");
+
+      const gotoStatus = document.createElement("div");
+      gotoStatus.className = "fm-goto-fn-status";
+      gotoStatus.setAttribute("role", "status");
+
+      const gotoListWrap = document.createElement("div");
+      gotoListWrap.className = "fm-goto-fn-list-wrap";
+      gotoListWrap.setAttribute("hidden", "");
+
+      const gotoListScroll = document.createElement("div");
+      gotoListScroll.className = "fm-goto-fn-list-scroll";
+
+      gotoListWrap.appendChild(gotoListScroll);
+
+      function refreshGotoCandidates(cb) {
+        const parseDefs = window.FM && typeof window.FM.parseScriptFunctionDefinitions === "function"
+          ? window.FM.parseScriptFunctionDefinitions
+          : null;
+        getScriptEditorContent().then(function (src) {
+          const text = typeof src === "string" ? src : "";
+          wrap._fmGotoCandidates = parseDefs ? parseDefs(text) : [];
+          if (typeof cb === "function") cb();
+        });
+      }
+
+      function appendGotoFnListItems(matches) {
+        for (let mi = 0; mi < matches.length; mi += 1) {
+          const c = matches[mi];
+          if (!c || typeof c.lineNumber !== "number") continue;
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "fm-goto-fn-item";
+          item.dataset.lineNumber = String(c.lineNumber);
+
+          const nameEl = document.createElement("span");
+          nameEl.className = "fm-goto-fn-item-name";
+          nameEl.textContent = typeof c.functionName === "string" ? c.functionName : "";
+
+          const lineEl = document.createElement("span");
+          lineEl.className = "fm-goto-fn-item-line";
+          lineEl.textContent = String(c.lineNumber);
+
+          item.appendChild(nameEl);
+          item.appendChild(lineEl);
+          item.addEventListener("click", function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            dispatchAceJumpToDefinition(c.lineNumber);
+          });
+          gotoListScroll.appendChild(item);
+        }
+      }
+
+      function renderGotoFnResults() {
+        const candidates = Array.isArray(wrap._fmGotoCandidates) ? wrap._fmGotoCandidates : [];
+        const rankFn = window.FM && typeof window.FM.filterRankFunctionCandidates === "function"
+          ? window.FM.filterRankFunctionCandidates
+          : null;
+        const sortFn = window.FM && typeof window.FM.sortFunctionDefinitionsByLine === "function"
+          ? window.FM.sortFunctionDefinitionsByLine
+          : null;
+        const q = (gotoSearchInput.value || "").trim();
+        gotoListScroll.textContent = "";
+        wrap._fmGotoVisibleMatches = [];
+        gotoStatus.style.whiteSpace = "";
+        gotoStatus.textContent = "";
+        gotoStatus.className = "fm-goto-fn-status";
+        gotoListWrap.setAttribute("hidden", "");
+
+        if (!rankFn || !sortFn) {
+          gotoStatus.textContent = "Function navigation is unavailable.";
+          return;
+        }
+
+        const matches = q.length === 0
+          ? sortFn(candidates)
+          : rankFn(candidates, q);
+        wrap._fmGotoVisibleMatches = matches;
+
+        if (matches.length === 0) {
+          gotoStatus.textContent = q.length === 0
+            ? "No function definitions found in this script."
+            : "No matching function definitions.";
+          return;
+        }
+
+        const filterActive = q.length > 0;
+
+        if (matches.length >= 1) {
+          gotoListWrap.removeAttribute("hidden");
+          appendGotoFnListItems(matches);
+        }
+
+        if (!filterActive) {
+          if (matches.length === 1) {
+            gotoStatus.textContent = "1 definition — choose below or type to filter.";
+          }
+          return;
+        }
+      }
+
+      function refocusGotoFilterSoon() {
+        try {
+          window.requestAnimationFrame(function () {
+            gotoSearchInput.focus();
+          });
+        } catch (e) { /* ignore */ }
+      }
+
+      function tryJumpIfSingleMatch() {
+        const vis = wrap._fmGotoVisibleMatches;
+        if (vis && vis.length === 1) {
+          dispatchAceJumpToDefinition(vis[0].lineNumber, { focusEditor: false });
+          refocusGotoFilterSoon();
+        }
+      }
+
+      gotoSearchInput.addEventListener("input", function () {
+        gotoStatus.style.whiteSpace = "";
+        renderGotoFnResults();
+        const qAfter = (gotoSearchInput.value || "").trim();
+        const vis = wrap._fmGotoVisibleMatches;
+        if (qAfter.length > 0 && vis && vis.length === 1) {
+          dispatchAceJumpToDefinition(vis[0].lineNumber, { focusEditor: false });
+          refocusGotoFilterSoon();
+        }
+      });
+      gotoSearchInput.addEventListener("keydown", function (ev) {
+        ev.stopPropagation();
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          tryJumpIfSingleMatch();
+        }
+      });
+      gotoSearchInput.addEventListener("focus", function () {
+        refreshGotoCandidates(function () {
+          renderGotoFnResults();
+        });
+      });
+
+      const gotoSearchRow = document.createElement("div");
+      gotoSearchRow.className = "fm-goto-fn-search-row";
+      gotoSearchRow.appendChild(gotoSearchInput);
+
+      gotoPanelBody.appendChild(gotoSearchRow);
+      gotoPanelBody.appendChild(gotoStatus);
+      gotoPanelBody.appendChild(gotoListWrap);
+      gotoPanel.appendChild(gotoPanelBody);
+
+      var gotoBootstrapped = false;
+      function ensureGotoBootstrapped() {
+        if (gotoBootstrapped) return;
+        gotoBootstrapped = true;
+        refreshGotoCandidates(function () {
+          getAceEditorSelectedText().then(function (sel) {
+            gotoSearchInput.value = selectionToFunctionQueryHint(sel);
+            renderGotoFnResults();
+            const q = (gotoSearchInput.value || "").trim();
+            const vis = wrap._fmGotoVisibleMatches;
+            if (q && vis && vis.length === 1) {
+              dispatchAceJumpToDefinition(vis[0].lineNumber, { focusEditor: false });
+              refocusGotoFilterSoon();
+            }
+          });
+        });
+      }
+
+      const snippetPanel = document.createElement("div");
+      snippetPanel.className = "fm-tool-section-panel fm-snippets-tool-panel";
+      snippetPanel.setAttribute("hidden", "");
+
+      const snippetPanelBody = document.createElement("div");
+      snippetPanelBody.className = "fm-snippets-panel-body";
 
       const listEl = document.createElement("div");
       listEl.className = "fm-snippets-list";
@@ -538,7 +1039,6 @@
       searchInput.placeholder = "Search snippets…";
       searchInput.autocomplete = "off";
       searchWrap.appendChild(searchInput);
-      listEl.appendChild(searchWrap);
 
       const listScroll = document.createElement("div");
       listScroll.className = "fm-snippets-list-scroll";
@@ -555,27 +1055,74 @@
         for (let i = 0; i < items.length; i++) {
           const s = list[Number(items[i].dataset.snippetIndex)];
           const name = (s && s.name ? s.name : "").toLowerCase();
-          const desc = (s && s.description ? s.description : "").toLowerCase();
-          const match = q === "" || name.indexOf(q) !== -1 || desc.indexOf(q) !== -1;
+          const match = q === "" || name.indexOf(q) !== -1;
           items[i].style.display = match ? "" : "none";
           if (match) visibleCount += 1;
         }
         noMatchesEl.hidden = visibleCount > 0;
       }
 
-      function openDropdown() {
-        dropdown.removeAttribute("hidden");
-        searchInput.value = "";
-        applySearch();
-        searchInput.focus();
+      function postSnippetAccordionOpened() {
         window.postMessage({ type: "fm-ace-snippet-dropdown-opened" }, window.location.origin || "*");
       }
 
-      function closeDropdown(removePreview) {
-        if (removePreview !== false) {
-          window.postMessage({ type: "fm-ace-snippet-dropdown-closed" }, window.location.origin || "*");
+      function postSnippetAccordionClosed() {
+        window.postMessage({ type: "fm-ace-snippet-dropdown-closed" }, window.location.origin || "*");
+      }
+
+      var snippetSectionOpen = false;
+      var gotoSectionOpen = false;
+
+      function syncToolsStackExpandedClass() {
+        scheduleToolsStackHeightUpdate();
+      }
+
+      function closeSnippetAccordionSoft() {
+        snippetPanel.setAttribute("hidden", "");
+        btn.setAttribute("aria-expanded", "false");
+        snippetSection.classList.remove("is-expanded");
+      }
+
+      function closeGotoAccordionSoft() {
+        gotoPanel.setAttribute("hidden", "");
+        gotoAccordionBtn.setAttribute("aria-expanded", "false");
+        gotoSection.classList.remove("is-expanded");
+      }
+
+      function toggleSnippetSection() {
+        if (snippetSectionOpen) {
+          postSnippetAccordionClosed();
+          closeSnippetAccordionSoft();
+          snippetSectionOpen = false;
+        } else {
+          closeSettingsMenu();
+          snippetPanel.removeAttribute("hidden");
+          btn.setAttribute("aria-expanded", "true");
+          snippetSection.classList.add("is-expanded");
+          snippetSectionOpen = true;
+          searchInput.value = "";
+          applySearch();
+          postSnippetAccordionOpened();
+          searchInput.focus();
         }
-        dropdown.setAttribute("hidden", "");
+        syncToolsStackExpandedClass();
+      }
+
+      function toggleGotoSection() {
+        if (gotoSectionOpen) {
+          closeGotoAccordionSoft();
+          gotoSectionOpen = false;
+        } else {
+          gotoPanel.removeAttribute("hidden");
+          gotoAccordionBtn.setAttribute("aria-expanded", "true");
+          gotoSection.classList.add("is-expanded");
+          gotoSectionOpen = true;
+          ensureGotoBootstrapped();
+          window.requestAnimationFrame(function () {
+            gotoSearchInput.focus();
+          });
+        }
+        syncToolsStackExpandedClass();
       }
 
       function insertSnippet(snippet) {
@@ -594,12 +1141,8 @@
         const nameEl = document.createElement("span");
         nameEl.className = "fm-snippets-item-name";
         nameEl.textContent = s.name || "Snippet";
-        const descEl = document.createElement("span");
-        descEl.className = "fm-snippets-item-desc";
-        descEl.textContent = (s.description || "").trim() || s.name || "";
 
         item.appendChild(nameEl);
-        item.appendChild(descEl);
         item.addEventListener("click", function (ev) {
           ev.preventDefault();
           ev.stopPropagation();
@@ -617,24 +1160,92 @@
         ev.stopPropagation();
       });
 
-      dropdown.appendChild(listEl);
+      const snippetPanelToolbar = document.createElement("div");
+      snippetPanelToolbar.className = "fm-snippets-panel-toolbar";
+      snippetPanelToolbar.appendChild(searchWrap);
+
+      snippetPanelBody.appendChild(snippetPanelToolbar);
+      snippetPanelBody.appendChild(listEl);
+      snippetPanel.appendChild(snippetPanelBody);
+
+      snippetPanel.id = "fm-accordion-snippet-panel";
+      gotoPanel.id = "fm-accordion-goto-panel";
+      btn.setAttribute("aria-controls", snippetPanel.id);
+      gotoAccordionBtn.setAttribute("aria-controls", gotoPanel.id);
 
       btn.addEventListener("click", function (ev) {
         ev.preventDefault();
         ev.stopPropagation();
-        if (dropdown.hasAttribute("hidden")) openDropdown(); else closeDropdown();
+        toggleSnippetSection();
       });
 
-      wrap.appendChild(btn);
-      wrap.appendChild(dropdown);
+      gotoAccordionBtn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        toggleGotoSection();
+      });
 
-      document.addEventListener("click", function outside(ev) {
-        if (dropdown.hasAttribute("hidden")) return;
+      settingsBtn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (settingsMenu.hasAttribute("hidden")) {
+          openSettingsMenu();
+        } else {
+          closeSettingsMenu();
+        }
+      });
+
+      function outsideClick(ev) {
+        if (settingsMenu.hasAttribute("hidden")) return;
         if (wrap.contains(ev.target)) return;
-        closeDropdown();
-      });
+        if (clickTargetInsideCodeEditor(ev.target)) return;
+        closeSettingsMenu();
+      }
+      document.addEventListener("click", outsideClick);
+      wrap._fmOutsideClick = outsideClick;
+
+      const onSettingsEscape = function (e) {
+        if (e.key !== "Escape") return;
+        if (!settingsMenu.hasAttribute("hidden")) {
+          closeSettingsMenu();
+        }
+      };
+      document.addEventListener("keydown", onSettingsEscape);
+      wrap._fmSettingsEscape = onSettingsEscape;
+      wrap._fmCloseSettingsMenu = closeSettingsMenu;
+
+      settingsWrap.appendChild(settingsBtn);
+      settingsWrap.appendChild(settingsMenu);
+
+      bar.appendChild(btn);
+      bar.appendChild(settingsWrap);
+
+      snippetSection.appendChild(bar);
+      snippetSection.appendChild(snippetPanel);
+
+      gotoSection.appendChild(gotoHeaderBar);
+      gotoSection.appendChild(gotoPanel);
+
+      toolsStack.appendChild(snippetSection);
+      toolsStack.appendChild(gotoSection);
+      wrap.appendChild(toolsStack);
 
       nameCell.appendChild(wrap);
+
+      scheduleToolsStackHeightUpdate();
+      var codeEditorEl = document.getElementById("codeEditor");
+      if (codeEditorEl && typeof ResizeObserver !== "undefined") {
+        var toolsStackRo = new ResizeObserver(function () {
+          scheduleToolsStackHeightUpdate();
+        });
+        toolsStackRo.observe(codeEditorEl);
+        wrap._fmCodeEditorResizeObserver = toolsStackRo;
+      }
+      function onToolsStackWindowResize() {
+        scheduleToolsStackHeightUpdate();
+      }
+      window.addEventListener("resize", onToolsStackWindowResize);
+      wrap._fmToolsStackWindowResize = onToolsStackWindowResize;
     }
 
     function refreshSnippetsDropdown(forceRefresh) {

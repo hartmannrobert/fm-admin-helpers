@@ -242,17 +242,33 @@ After pulling updates or modifying the source code:
     />
 </p>
 
-- **Script Editor**
-  - Added _Copy to Clipboard and Save_ Button to prevent mistakes from happening
-  - After saving with the new button, the script editor jumps back to the position it was at before
-  - Added the option to open Library Scripts directly from within the script editor by simply clicking on it
+### Script Editor Enhancements
 
+- Added _Copy to Clipboard and Save_ Button to prevent mistakes from happening
+- After saving with the new button, the script editor jumps back to the position it was at before
+- Added the option to open Library Scripts directly from within the script editor by simply clicking on it
+- Insert Snippet option to add code snippets to where the cursor is or replace existing marked code with it
+- Function Overview that lists all the functions that are defined within the current script with the option to easily navigate to them by clicking the given function
   <p align="center">
     <img
         src="images/Script-Editor-Enhancement.png"
         width="600"
         style="border:1px solid #d0d7de; border-radius:6px;"
     />
+</p>
+
+**Snippet Mananager**
+
+- To manage the snippets, the user can click the actions icon on the right of the insert snippet button
+- This allows the user to either get to the snippet management, or to add a new snippet with the code marked in the code editor
+- The snippet editor window itself allows to manage existing snippets, pull in a default configuration or export and import snippets as json files to share them with colleagues
+
+  <p align="center">
+  <img
+      src="images/Snippet-Manager.png"
+      width="600"
+      style="border:1px solid #d0d7de; border-radius:6px;"
+  />
 </p>
 
 ### Other Improvements

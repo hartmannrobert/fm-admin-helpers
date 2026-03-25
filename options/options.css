@@ -155,12 +155,6 @@ body {
   font-family: ui-monospace, monospace;
 }
 
-.snippet-list li .desc {
-  font-size: 12px;
-  opacity: 0.85;
-  margin-top: 2px;
-}
-
 .snippet-list li .btns {
   display: flex;
   gap: 6px;

@@ -835,6 +835,9 @@ FM.initShortcuts = function () {
   FM.getOrCreateButtonsContainer();
   FM.ensurePlacement();
   FM.ensureButtonsPresent();
+  if (typeof FM.applyFusionManageThemeToDocument === "function") {
+    FM.applyFusionManageThemeToDocument();
+  }
   FM.setupShortcutsDelegation();
   if (FM._shortcutsObserver) {
     try { FM._shortcutsObserver.disconnect(); } catch (e) { }
@@ -845,6 +848,9 @@ FM.initShortcuts = function () {
     FM._shortcutsObserverTimer = setTimeout(function () {
       FM.ensurePlacement();
       FM.ensureButtonsPresent();
+      if (typeof FM.applyFusionManageThemeToDocument === "function") {
+        FM.applyFusionManageThemeToDocument();
+      }
     }, 120);
   });
   const observeTargets = [];
@@ -853,12 +859,34 @@ FM.initShortcuts = function () {
   const headerRight = document.getElementById("fusion-header-right") || (document.getElementById("fusion-header-search") && document.getElementById("fusion-header-search").parentElement);
   if (headerRight) observeTargets.push(headerRight);
   if (document.body) observeTargets.push(document.body);
+  var observeOpts = {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["data-testid"]
+  };
   observeTargets.forEach(function (t) {
     try {
-      FM._shortcutsObserver.observe(t, { childList: true, subtree: true });
+      FM._shortcutsObserver.observe(t, observeOpts);
     } catch (e) { }
   });
-  window.addEventListener("popstate", function () { setTimeout(function () { FM.ensurePlacement(); FM.ensureButtonsPresent(); }, 80); });
-  window.addEventListener("hashchange", function () { setTimeout(function () { FM.ensurePlacement(); FM.ensureButtonsPresent(); }, 80); });
+  window.addEventListener("popstate", function () {
+    setTimeout(function () {
+      FM.ensurePlacement();
+      FM.ensureButtonsPresent();
+      if (typeof FM.applyFusionManageThemeToDocument === "function") {
+        FM.applyFusionManageThemeToDocument();
+      }
+    }, 80);
+  });
+  window.addEventListener("hashchange", function () {
+    setTimeout(function () {
+      FM.ensurePlacement();
+      FM.ensureButtonsPresent();
+      if (typeof FM.applyFusionManageThemeToDocument === "function") {
+        FM.applyFusionManageThemeToDocument();
+      }
+    }, 80);
+  });
 };
 

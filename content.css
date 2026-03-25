@@ -111,6 +111,67 @@
   color: #606060;
 }
 
+/* Fusion Manage dark mode (header moon/sun via data-fm-manage-theme on html + #fm-shortcuts, set by FM.applyFusionManageThemeToDocument) */
+html[data-fm-manage-theme="dark"] #fm-shortcuts.fm-shortcuts-in-header .fm-btn {
+  color: #577390;
+}
+
+html[data-fm-manage-theme="dark"] #fm-shortcuts.fm-shortcuts-in-header .fm-btn:hover,
+html[data-fm-manage-theme="dark"] #fm-shortcuts.fm-shortcuts-in-header .fm-btn:focus,
+html[data-fm-manage-theme="dark"] #fm-shortcuts.fm-shortcuts-in-header .fm-btn:active {
+  color: #05A7DF;
+}
+
+html[data-fm-manage-theme="dark"] #fm-shortcuts.fm-shortcuts-in-header .fm-btn .material-icons {
+  color: #577390;
+}
+
+html[data-fm-manage-theme="dark"] #fm-shortcuts.fm-shortcuts-in-header .fm-btn:hover .material-icons,
+html[data-fm-manage-theme="dark"] #fm-shortcuts.fm-shortcuts-in-header .fm-btn:focus .material-icons,
+html[data-fm-manage-theme="dark"] #fm-shortcuts.fm-shortcuts-in-header .fm-btn:active .material-icons {
+  color: #05A7DF;
+}
+
+html[data-fm-manage-theme="dark"] #fm-shortcuts:not(.fm-shortcuts-in-header) .fm-btn .material-icons {
+  color: #577390;
+}
+
+html[data-fm-manage-theme="dark"] #fm-shortcuts:not(.fm-shortcuts-in-header) .fm-btn:hover .material-icons,
+html[data-fm-manage-theme="dark"] #fm-shortcuts:not(.fm-shortcuts-in-header) .fm-btn:focus .material-icons,
+html[data-fm-manage-theme="dark"] #fm-shortcuts:not(.fm-shortcuts-in-header) .fm-btn:active .material-icons {
+  color: #05A7DF;
+}
+
+html[data-fm-manage-theme="dark"] .fm-itemviewer-activity-quicklinks .fm-btn .material-icons {
+  color: #577390;
+}
+
+html[data-fm-manage-theme="dark"] .fm-itemviewer-activity-quicklinks .fm-btn:hover .material-icons,
+html[data-fm-manage-theme="dark"] .fm-itemviewer-activity-quicklinks .fm-btn:focus .material-icons,
+html[data-fm-manage-theme="dark"] .fm-itemviewer-activity-quicklinks .fm-btn:active .material-icons {
+  color: #05A7DF;
+}
+
+html[data-fm-manage-theme="dark"] .fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-icon {
+  color: #577390 !important;
+}
+
+html[data-fm-manage-theme="dark"] .fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:hover .fm-ws-quicklinks-popup-icon,
+html[data-fm-manage-theme="dark"] .fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:focus .fm-ws-quicklinks-popup-icon,
+html[data-fm-manage-theme="dark"] .fm-ws-quicklinks-popup .fm-ws-quicklinks-popup-link:active .fm-ws-quicklinks-popup-icon {
+  color: #05A7DF !important;
+}
+
+html[data-fm-manage-theme="dark"] #fm-itemviewer-actions .fm-btn.fm-admin-toggle .fm-admin-toggle-label,
+html[data-fm-manage-theme="dark"] #command-bar-react .fm-btn.fm-admin-toggle .fm-admin-toggle-label {
+  color: #DDDDDD;
+}
+
+html[data-fm-manage-theme="dark"] #fm-itemviewer-actions .fm-btn.fm-admin-toggle:hover:not(.disabled) .fm-admin-toggle-label,
+html[data-fm-manage-theme="dark"] #command-bar-react .fm-btn.fm-admin-toggle:hover:not(.disabled) .fm-admin-toggle-label {
+  color: #DDDDDD;
+}
+
 /* Bulk buttons wrapper — ensure it does not clip the new row */
 .roundButtonsWrapperWithDescription {
   display: flex;
@@ -1473,6 +1534,162 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
 .fm-snippets-wrap {
   position: relative;
   margin-bottom: 8px;
+  /* Do not widen the label column: shrink within host cell instead of forcing table growth */
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+/* Insert Snippet + Go to Function: stacked tools; max-height / expanded height set in JS from #codeEditor − 40px */
+.fm-editor-tools-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 0;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.fm-tool-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 0 0 auto;
+  transition: flex-basis 0.2s ease;
+}
+
+.fm-tool-section.is-expanded {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.fm-tool-section > .fm-tool-section-header {
+  flex: 0 0 auto;
+}
+
+.fm-tool-section > .fm-tool-section-panel:not([hidden]) {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.fm-tool-section-header {
+  transition: background 0.18s ease, border-radius 0.18s ease, border-color 0.18s ease;
+}
+
+.fm-tool-section.is-expanded > .fm-tool-section-header {
+  background: #eceff1;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.fm-tool-section.is-expanded > .fm-snippets-bar.fm-tool-section-header {
+  border-bottom: none;
+}
+
+.fm-tool-section.is-expanded > .fm-goto-fn-header.fm-tool-section-header {
+  border-bottom: none;
+}
+
+/*
+ * Chevron at a fixed inset from the left edge of the trigger so both rows align regardless of label length.
+ * Label is capped so it does not run under the icon (ellipsis if ever longer).
+ */
+.fm-tool-accordion-trigger {
+  --fm-acc-chevron-x: 8.75rem;
+  position: relative;
+  display: block;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.fm-snippets-bar .fm-tool-accordion-trigger {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.fm-tool-accordion-label {
+  display: block;
+  max-width: calc(var(--fm-acc-chevron-x) - 0.375rem);
+  min-width: 0;
+  padding-right: 0.25rem;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: inherit;
+}
+
+.fm-tool-accordion-chevron {
+  position: absolute;
+  left: var(--fm-acc-chevron-x);
+  top: 50%;
+  transform: translateY(-50%);
+  flex-shrink: 0;
+  font-size: 20px !important;
+  color: #616161;
+  line-height: 1;
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+.fm-tool-section.is-expanded .fm-tool-accordion-chevron {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.fm-tool-section-panel {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid #bdbdbd;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  background: #fff;
+}
+
+.fm-tool-section-panel[hidden] {
+  display: none !important;
+}
+
+.fm-snippets-panel-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.fm-snippets-panel-toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+  box-sizing: border-box;
+}
+
+.fm-snippets-panel-toolbar .fm-snippets-search-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border-bottom: none;
+}
+
+.fm-snippets-tool-panel .fm-snippets-list {
+  max-height: none;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 /* Button in Code label cell: below "Code" in the unused whitespace */
@@ -1482,40 +1699,162 @@ td.fieldName .fm-snippets-wrap {
   margin-top: 8px;
 }
 
-.fm-snippets-btn {
-  padding: 6px 12px;
-  font-size: 13px;
+/*
+ * Fixed-width left rail: snippets + Go to Function stay left of the editor; value cell gets the rest.
+ * Editor no longer spans an overly wide value column alone — the label column intentionally holds the tools.
+ */
+#section-code td.fieldName:has(.fm-snippets-wrap),
+tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldName {
+  width: 300px;
+  max-width: 320px;
+  min-width: 260px;
+  box-sizing: border-box;
+  vertical-align: top;
+  text-align: left;
+}
+
+#section-code > td.fieldValue,
+tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
+  width: auto;
+  min-width: 0;
+  vertical-align: top;
+}
+
+/* Unified control bar: Insert Snippet + Settings (compact, grouped) */
+.fm-snippets-bar {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 6px;
   border: 1px solid #bdbdbd;
-  border-radius: 4px;
+  border-radius: 5px;
   background: #f5f5f5;
+  padding: 2px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.fm-snippets-btn {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
   color: #333;
   cursor: pointer;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: center;
+}
+
+/* Accordion row labels: left-aligned (beats .fm-snippets-btn text-align: center) */
+.fm-snippets-btn.fm-tool-accordion-trigger {
+  text-align: left;
 }
 
 .fm-snippets-btn:hover {
   background: #eee;
-  border-color: #9e9e9e;
 }
 
-.fm-snippets-dropdown {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  margin-top: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: 220px;
+.fm-snippets-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #333;
+  cursor: pointer;
+}
+
+.fm-snippets-settings-btn:hover {
+  background: #eee;
+}
+
+.fm-snippets-settings-btn .material-icons {
+  font-size: 18px;
+}
+
+.fm-snippets-settings-wrap {
+  position: relative;
+}
+
+/* Position (left/top) set in JS as fixed so the menu is not clipped by table cell overflow. */
+.fm-snippets-settings-menu {
+  min-width: 240px;
+  max-width: min(320px, calc(100vw - 16px));
   background: #fff;
   border: 1px solid #bdbdbd;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 10000;
-  overflow: hidden;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
-.fm-snippets-dropdown[hidden] {
+.fm-snippets-settings-menu.fm-snippets-settings-menu--fixed {
+  margin: 0;
+}
+
+.fm-snippets-settings-menu[hidden] {
   display: none !important;
+}
+
+/* Child combinator + wrap scope beats host-page rules like button+button / :not(:first-child) that shrink sibling padding. */
+.fm-snippets-wrap .fm-snippets-settings-menu > button.fm-snippets-settings-menu-item {
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 8px 12px !important;
+  margin: 0 !important;
+  font-size: 12px;
+  font-family: inherit;
+  line-height: normal;
+  cursor: pointer;
+  color: #333;
+  width: 100%;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.fm-snippets-wrap .fm-snippets-settings-menu > button.fm-snippets-settings-menu-item::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+.fm-snippets-wrap .fm-snippets-settings-menu > button.fm-snippets-settings-menu-item:hover {
+  background: #e3f2fd;
+}
+
+.fm-snippets-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  max-width: min(420px, 92vw);
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.35;
+  background: #323232;
+  color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  z-index: 2147483640;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fm-snippets-toast.fm-snippets-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .fm-snippets-list {
@@ -1587,10 +1926,164 @@ td.fieldName .fm-snippets-wrap {
   color: #333;
 }
 
-.fm-snippets-item-desc {
+/* Go to Function (script editor) — accordion header + panel */
+.fm-goto-fn-header {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 0;
+  border: 1px solid #bdbdbd;
+  border-radius: 5px;
+  background: #f5f5f5;
+  padding: 2px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.fm-goto-fn-accordion-btn {
+  width: 100%;
+}
+
+.fm-goto-fn-panel-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 8px;
+  box-sizing: border-box;
+  background: #fafafa;
+}
+
+.fm-goto-fn-search-row {
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.fm-goto-fn-search-row .fm-goto-fn-search {
+  width: 100%;
+  max-width: 100%;
+}
+
+.fm-goto-fn-search {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 5px 6px;
+  font-size: 12px;
+  border: 1px solid #bdbdbd;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.fm-goto-fn-search:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.fm-goto-fn-status {
+  margin-top: 0;
+  flex-shrink: 0;
   font-size: 11px;
+  line-height: 1.45;
+  color: #616161;
+}
+
+.fm-goto-fn-status:not(:empty) {
+  min-height: 1.45em;
+}
+
+.fm-goto-fn-status:empty {
+  display: none;
+}
+
+.fm-goto-fn-status--multi {
+  font-weight: 600;
+  color: #333;
+}
+
+.fm-goto-fn-list-wrap {
+  margin-top: 2px;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.fm-goto-fn-list-wrap[hidden] {
+  display: none !important;
+}
+
+.fm-goto-fn-status:not(:empty) + .fm-goto-fn-list-wrap {
+  margin-top: 5px;
+}
+
+.fm-goto-fn-list-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.fm-goto-fn-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 8px;
+  border: none;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+/*
+ * Fusion / host CSS often applies button+button { margin-left: 7px } (or similar) so stacked
+ * controls don’t touch. Our list rows are sibling <button>s — only the first stays flush.
+ * (Selector must not depend on removed .fm-goto-fn-wrap; panel lives under .fm-goto-fn-panel-body.)
+ */
+.fm-goto-fn-list-scroll > button.fm-goto-fn-item {
+  margin: 0 !important;
+  padding: 5px 8px !important;
+}
+
+.fm-goto-fn-item:hover {
+  background: #e3f2fd;
+}
+
+.fm-goto-fn-item:last-child {
+  border-bottom: none;
+}
+
+.fm-goto-fn-item-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: #333;
+  font-family: ui-monospace, monospace;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fm-goto-fn-item-line {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 500;
   color: #666;
-  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  margin-right: 4px;
 }
 
 /* ---------------------------
@@ -1612,4 +2105,59 @@ td.fieldName .fm-snippets-wrap {
 #itembody-2 table tr>th:nth-child(4),
 #itembody-2 table tr>td:nth-child(4) {
   border-left: 0 !important;
+}
+
+/* ---------------------------
+   13. Snippet manager modal — layout vs host CSS
+   Fusion / script form pages often set global textarea, label, or form rules that
+   defeat flex/grid height for the in-page modal. Extension rules here load with
+   content.css and use !important so the code editor can fill the left column.
+   JS also sets an explicit height from the snippet table’s bottom edge.
+   --------------------------- */
+
+#fm-snippet-modal-root .fm-sm-form > .fm-sm-field-code {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+#fm-snippet-modal-root .fm-sm-code-editor-wrap {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  min-height: 10rem !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  padding-bottom: 2px !important;
+}
+
+#fm-snippet-modal-root .fm-sm-code-editor-wrap.fm-sm-code-editor-wrap--sized {
+  flex: 0 0 auto !important;
+}
+
+#fm-snippet-modal-root textarea#fm-sm-code {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  resize: none !important;
+  display: block !important;
+  overflow: auto !important;
+}
+
+#fm-snippet-modal-root .fm-sm-code-field-label {
+  display: block !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  cursor: default !important;
 }

@@ -1,7 +1,7 @@
 /**
  * Fusion Manage script snippets library.
  * Used by the script editor "Insert snippet" feature.
- * Add new snippets to the array; each has: id, name, description, code.
+ * Add new snippets to the array; each has: id, name, code.
  * Each code string should end with a newline so inserts are followed by a line break.
  */
 (function () {
