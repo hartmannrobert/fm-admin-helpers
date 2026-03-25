@@ -39,7 +39,7 @@ The focus is on:
 
 ## Setup Instructions
 
-This extension is distributed as source code and must be loaded as an unpacked Chrome extension. The loadable package lives in the **`dist`** folder at the repository root (it contains `manifest.json` and all runtime assets). The repository root also holds this README and the `images` folder used for documentation screenshots only—they are not part of the Chrome package.
+This extension is distributed as source code and must be loaded as an unpacked Chrome extension. The loadable package lives in the **`dist`** folder within the repository.
 
 ### Installation Steps
 
