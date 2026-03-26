@@ -78,3 +78,27 @@ FM.applyFusionManageThemeToDocument = function () {
   return theme;
 };
 
+/** Browser-like alternate open intent for non-anchor controls. */
+FM.isNewTabIntentEvent = function (evt) {
+  if (!evt) return false;
+  // Requested behavior: middle click or Shift+click should open in a new tab.
+  return evt.button === 1 || evt.shiftKey === true;
+};
+
+/**
+ * Open URL with event-aware behavior:
+ * - default: current tab
+ * - middle/shift: new tab
+ * - forceNewTab: always new tab (used by Settings/Admin shortcuts)
+ */
+FM.openUrlWithEvent = function (url, evt, opts) {
+  if (!url) return;
+  var forceNewTab = !!(opts && opts.forceNewTab);
+  var openInNewTab = forceNewTab || FM.isNewTabIntentEvent(evt);
+  if (openInNewTab) {
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+  window.location.assign(url);
+};
+

@@ -1288,8 +1288,6 @@
         const scriptName = (span.textContent || "").trim();
         const a = document.createElement("a");
         a.href = `/script.form?ID=${encodeURIComponent(scriptId)}`;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
         a.className = "fm-library-script-link";
         a.textContent = scriptName;
         span.replaceWith(a);
@@ -1314,19 +1312,36 @@
 
         nameCell.classList.add("fm-script-name-link");
         nameCell.style.cursor = "pointer";
-        function openScriptInNewTab() {
-          window.open(`/script.form?ID=${scriptId}`, "_blank", "noopener,noreferrer");
+        function openScriptFromEvent(ev) {
+          var url = `/script.form?ID=${scriptId}`;
+          if (typeof FM.openUrlWithEvent === "function") {
+            FM.openUrlWithEvent(url, ev);
+            return;
+          }
+          if (ev && (ev.button === 1 || ev.shiftKey)) {
+            window.open(url, "_blank", "noopener,noreferrer");
+          } else {
+            window.location.assign(url);
+          }
         }
         nameCell.addEventListener("click", (ev) => {
           if (ev.defaultPrevented) return;
           const interactive = ev.target?.closest?.("a, button, input, textarea, select, label");
           if (interactive) return;
           if (ev.button === 2) return;
-          if (ev.button === 0 && (ev.shiftKey || ev.altKey)) return;
+          if (ev.altKey || ev.metaKey || ev.ctrlKey) return;
           if (ev.button !== 0 && ev.button !== 1) return;
           ev.preventDefault();
           ev.stopPropagation();
-          openScriptInNewTab();
+          openScriptFromEvent(ev);
+        });
+        nameCell.addEventListener("auxclick", (ev) => {
+          if (ev.defaultPrevented || ev.button !== 1) return;
+          const interactive = ev.target?.closest?.("a, button, input, textarea, select, label");
+          if (interactive) return;
+          ev.preventDefault();
+          ev.stopPropagation();
+          openScriptFromEvent(ev);
         });
 
         row.dataset.fmNameNewtab = "1";

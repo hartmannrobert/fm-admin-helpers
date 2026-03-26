@@ -375,8 +375,6 @@ FM.showSettingsShortcutsPopup = function (anchorButton) {
   function addIconLink(parent, url, iconName, title, description, linkKey) {
     var a = document.createElement("a");
     a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
     a.className = "fm-ws-quicklinks-popup-link";
     if (linkKey && linkKey === current) a.classList.add("fm-quicklinks-popup-link-active");
     a.title = title;
@@ -471,8 +469,6 @@ FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
     workspaceLinks.forEach(function (item) {
       var a = document.createElement("a");
       a.href = item.url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
       a.className = "fm-ws-quicklinks-popup-link";
       var icon = document.createElement("span");
       icon.className = "material-icons fm-ws-quicklinks-popup-icon";
@@ -534,8 +530,6 @@ FM.showAdminShortcutsPopup = function (anchorElement) {
   function addLink(href, label, title, linkClass) {
     var a = document.createElement("a");
     a.href = href;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
     a.className = "fm-admin-shortcuts-popup-link" + (linkClass ? " " + linkClass : "");
     a.textContent = label;
     if (title) a.title = title;
@@ -625,11 +619,11 @@ FM.ensureAdminShortcutsDropdown = function (container, insertAfterLi) {
 };
 
 FM.setupShortcutsDelegation = function () {
-  const container = FM.getOrCreateButtonsContainer();
   if (FM._fmPointerHandler) {
     document.removeEventListener("pointerdown", FM._fmPointerHandler, true);
   }
   FM._fmPointerHandler = function (evt) {
+    const container = FM.getOrCreateButtonsContainer();
     var actionEl = (evt.target.closest && evt.target.closest(".fm-btn")) || (evt.target.closest && evt.target.closest("[data-fm-action]"));
     if (!actionEl || !actionEl.getAttribute("data-fm-action")) return;
     var inShortcuts = container && container.contains(actionEl);
@@ -637,28 +631,39 @@ FM.setupShortcutsDelegation = function () {
     var wrapperBtnsEl = document.getElementById("itemviewer-wrapper-buttons");
     var inItemviewerBar = wrapperBtnsEl && wrapperBtnsEl.contains(actionEl);
     if (!inShortcuts && !inCommandBar && !inItemviewerBar) return;
-    evt.stopPropagation();
-    evt.preventDefault();
+    if (evt.button === 2) return;
     const action = actionEl.getAttribute("data-fm-action");
     switch (action) {
       case "openWorkspaceManager":
-        window.open(FM.buildWorkspaceManagerUrl(), "_blank", "noopener,noreferrer");
+        evt.stopPropagation();
+        evt.preventDefault();
+        FM.openUrlWithEvent(FM.buildWorkspaceManagerUrl(), evt);
         break;
       case "openScripts":
-        window.open(FM.buildScriptsUrl(), "_blank", "noopener,noreferrer");
+        evt.stopPropagation();
+        evt.preventDefault();
+        FM.openUrlWithEvent(FM.buildScriptsUrl(), evt);
         break;
       case "openRoles":
-        window.open(FM.buildRolesUrl(), "_blank", "noopener,noreferrer");
+        evt.stopPropagation();
+        evt.preventDefault();
+        FM.openUrlWithEvent(FM.buildRolesUrl(), evt);
         break;
       case "openWorkspaceItems":
+        evt.stopPropagation();
+        evt.preventDefault();
         var wsId = FM.getWorkspaceIdFromAdminUrl(location.href);
-        if (wsId) window.open(FM.buildWorkspaceItemsUrl(wsId), "_blank", "noopener,noreferrer");
+        if (wsId) FM.openUrlWithEvent(FM.buildWorkspaceItemsUrl(wsId), evt);
         break;
       case "openWorkspaceAddItem":
+        evt.stopPropagation();
+        evt.preventDefault();
         var wsIdAdd = FM.getWorkspaceIdFromAdminUrl(location.href);
-        if (wsIdAdd) window.open(FM.buildWorkspaceAddItemUrl(wsIdAdd), "_blank", "noopener,noreferrer");
+        if (wsIdAdd) FM.openUrlWithEvent(FM.buildWorkspaceAddItemUrl(wsIdAdd), evt);
         break;
       case "toggleItemDetailsAdmin":
+        evt.stopPropagation();
+        evt.preventDefault();
         if (!FM.isOnFrontendItemDetailsPage(location.href)) return;
         var next = !FM.getItemDetailsAdminMode();
         FM.setItemDetailsAdminMode(next);
@@ -670,9 +675,13 @@ FM.setupShortcutsDelegation = function () {
         FM.updateItemDetailsAdminButtonState();
         break;
       case "openSettingsShortcuts":
+        evt.stopPropagation();
+        evt.preventDefault();
         FM.showSettingsShortcutsPopup(actionEl);
         break;
       case "openWorkspaceQuicklinks":
+        evt.stopPropagation();
+        evt.preventDefault();
         FM.showWorkspaceQuicklinksPopup(actionEl);
         break;
       default:
@@ -804,17 +813,17 @@ FM.ensureButtonsPresent = function () {
   if (FM.isAdminUi()) {
     var adminLi = container.querySelector("li.drop_down.nav_item.with_separator.systemlink-admin");
     if (!adminLi) return;
-    function ensureShortcutLi(id, props, insertAfter) {
-      var existing = document.getElementById(id);
-      if (existing) return existing.closest("li") || null;
-      var li = FM.createShortcutLi({ id: id, label: props.label, title: props.title, action: props.action });
-      container.insertBefore(li, insertAfter ? insertAfter.nextSibling : null);
-      return li;
-    }
+    var staleAdminShortcuts = [
+      "fm-btn-workspace-manager",
+      "fm-btn-scripts",
+      "fm-btn-roles"
+    ];
+    staleAdminShortcuts.forEach(function (id) {
+      var el = document.getElementById(id);
+      var li = el && el.closest ? el.closest("li") : null;
+      if (li && li.parentNode) li.parentNode.removeChild(li);
+    });
     var after = adminLi;
-    after = ensureShortcutLi("fm-btn-workspace-manager", { label: "Workspace Manager", title: "Workspace Manager", action: "openWorkspaceManager" }, after) || document.getElementById("fm-btn-workspace-manager").closest("li");
-    after = ensureShortcutLi("fm-btn-scripts", { label: "Scripts", title: "Scripts", action: "openScripts" }, after) || document.getElementById("fm-btn-scripts").closest("li");
-    after = ensureShortcutLi("fm-btn-roles", { label: "Roles", title: "Roles", action: "openRoles" }, after) || document.getElementById("fm-btn-roles").closest("li");
     var inWorkspaceAdmin = !!FM.getWorkspaceIdFromAdminUrl(location.href);
     if (inWorkspaceAdmin) {
       after = FM.ensureAdminShortcutsDropdown(container, after) || (document.getElementById("fm-admin-shortcuts-dropdown") && document.getElementById("fm-admin-shortcuts-dropdown").closest("li"));

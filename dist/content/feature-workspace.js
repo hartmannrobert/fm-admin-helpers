@@ -362,7 +362,7 @@ window.FM = window.FM || {};
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = BTN_CLASS;
-    btn.title = url ? "Open in new tab" : "No target URL found";
+    btn.title = url ? "Open" : "No target URL found";
 
     const icon = document.createElement("span");
     icon.className = ICON_CLASS;
@@ -378,7 +378,13 @@ window.FM = window.FM || {};
           e.preventDefault();
           e.stopPropagation();
           e.stopImmediatePropagation();
-          window.open(url, "_blank", "noopener,noreferrer");
+          if (typeof FM.openUrlWithEvent === "function") {
+            FM.openUrlWithEvent(url, e);
+          } else if (e.button === 1 || e.shiftKey) {
+            window.open(url, "_blank", "noopener,noreferrer");
+          } else {
+            window.location.assign(url);
+          }
         },
         true
       );
@@ -603,7 +609,7 @@ window.FM = window.FM || {};
       if (!url) continue;
 
       const a = document.createElement("a");
-      a.href = "javascript:;";
+      a.href = url;
       a.title = `${def.title} (WS ${wsId})`;
       a.className = PILL_CLASS;
 
@@ -612,11 +618,6 @@ window.FM = window.FM || {};
       icon.textContent = def.icon;
 
       a.appendChild(icon);
-
-      a.addEventListener("click", (e) => {
-        e.preventDefault();
-        window.open(url, "_blank", "noopener,noreferrer");
-      });
 
       bar.appendChild(a);
     }

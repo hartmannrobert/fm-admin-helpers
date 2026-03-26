@@ -13,10 +13,9 @@
  *   the user types name or code).
  * - Edits are written into draftByKey on every input (and when switching rows). IndexedDB is updated only when the
  *   user clicks Save (replaceAll). Deletes and bulk removes are draft-only until Save.
- * - Clear: clears the left form and starts a fresh new-snippet buffer. Persisted-row edits stay in draftByKey;
+ * - New: clears the left form and starts a fresh new-snippet buffer. Persisted-row edits stay in draftByKey;
  *   an in-progress "n:" row is removed if it was active. Does not discard the rest of the draft session.
- * - Close: hides the modal and clears ephemeral UI (search, selection, scroll); draftByKey and persistedSnapshot
- *   are kept so reopening continues the same session. A full page reload clears everything.
+ * - Close: hides the modal and discards all unsaved session draft state. Reopen starts from persisted storage.
  */
 (function () {
   const MODAL_ID = "fm-snippet-modal-root";
@@ -73,9 +72,9 @@
       "#" + MODAL_ID + " .fm-sm-remove-selected-header.fm-sm-visible { display: inline-flex; }",
       "#" + MODAL_ID + " .fm-sm-remove-selected-header .material-icons { font-size: 20px; }",
       "#" + MODAL_ID + " .fm-sm-remove-selected-header .fm-sm-btn-label { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
-      "#" + MODAL_ID + " .fm-sm-dropdown-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(120,120,120,0.45); background: transparent; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }",
+      "#" + MODAL_ID + " .fm-sm-dropdown-btn { width: 32px; height: 32px; padding: 0; border-radius: 6px; border: 1px solid rgba(120,120,120,0.45); background: transparent; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }",
       "#" + MODAL_ID + " .fm-sm-dropdown-btn .material-icons { font-size: 20px; }",
-      "#" + MODAL_ID + " .fm-sm-dropdown-menu { position: absolute; top: 100%; right: 0; margin-top: 4px; min-width: 180px; background: var(--fm-sm-bg, #fff); border: 1px solid rgba(120,120,120,0.35); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 10; padding: 6px 0; display: none; }",
+      "#" + MODAL_ID + " .fm-sm-dropdown-menu { position: fixed; top: 0; left: 0; min-width: 180px; background: var(--fm-sm-bg, #fff); border: 1px solid rgba(120,120,120,0.35); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 2147483647; padding: 6px 0; display: none; }",
       "#" + MODAL_ID + " .fm-sm-dropdown-menu.open { display: block; }",
       "#" + MODAL_ID + " .fm-sm-dropdown-menu > button[type=\"button\"] { display: block; width: 100%; box-sizing: border-box; margin: 0 !important; padding: 8px 14px !important; border: none; background: none; cursor: pointer; font-size: 13px; font-family: inherit; line-height: normal; text-align: left; appearance: none; -webkit-appearance: none; }",
       "#" + MODAL_ID + " .fm-sm-dropdown-menu > button[type=\"button\"]::-moz-focus-inner { border: 0; padding: 0; }",
@@ -255,8 +254,9 @@
     var dropdownBtn = document.createElement("button");
     dropdownBtn.type = "button";
     dropdownBtn.className = "fm-sm-dropdown-btn";
-    dropdownBtn.title = "Import / Export";
-    dropdownBtn.innerHTML = "<span class=\"material-icons\" aria-hidden=\"true\">more_vert</span><span>Actions</span>";
+    dropdownBtn.title = "Actions";
+    dropdownBtn.setAttribute("aria-label", "Actions");
+    dropdownBtn.innerHTML = "<span class=\"material-icons\" aria-hidden=\"true\">more_vert</span>";
     var dropdownMenu = document.createElement("div");
     dropdownMenu.className = "fm-sm-dropdown-menu";
     dropdownMenu.setAttribute("role", "menu");
@@ -278,7 +278,7 @@
     var clearBtn = document.createElement("button");
     clearBtn.type = "button";
     clearBtn.className = "fm-sm-hd-btn";
-    clearBtn.textContent = "Clear";
+    clearBtn.textContent = "New";
     clearBtn.title = "Clear the editor and start a new snippet (other draft rows are kept)";
     var saveBtn = document.createElement("button");
     saveBtn.type = "button";
@@ -289,8 +289,8 @@
     closeBtn.type = "button";
     closeBtn.className = "fm-sm-close";
     closeBtn.textContent = "Close";
-    hdActions.appendChild(removeSelectedBtn);
     hdActions.appendChild(dropdownBtn);
+    hdActions.appendChild(removeSelectedBtn);
     hdActions.appendChild(dropdownMenu);
     var headerFileInput = document.createElement("input");
     headerFileInput.type = "file";
@@ -993,7 +993,7 @@
     }
 
     /**
-     * Clear: empties the editor and selects a fresh new-snippet buffer. Persisted snippets keep their draft edits in
+     * New: empties the editor and selects a fresh new-snippet buffer. Persisted snippets keep their draft edits in
      * the table; an active unsaved "new" row (n:…) is removed so you can start another snippet from scratch.
      */
     function clearForm() {
@@ -1200,6 +1200,7 @@
 
     function renderAll() {
       renderVirtualized();
+      positionDropdownMenu();
     }
 
     headerSelectAllCb.addEventListener("change", function () {
@@ -1356,9 +1357,28 @@
     function closeDropdownMenu() {
       dropdownMenu.classList.remove("open");
     }
+    function positionDropdownMenu() {
+      if (!dropdownMenu.classList.contains("open")) return;
+      if (!root || root.style.display === "none") return;
+      var triggerRect = dropdownBtn.getBoundingClientRect();
+      var menuWidth = dropdownMenu.offsetWidth || 180;
+      var viewportPadding = 8;
+      var left = triggerRect.left;
+      var top = triggerRect.bottom + 4;
+      if (left + menuWidth > window.innerWidth - viewportPadding) {
+        left = window.innerWidth - viewportPadding - menuWidth;
+      }
+      if (left < viewportPadding) left = viewportPadding;
+      if (top < viewportPadding) top = viewportPadding;
+      dropdownMenu.style.left = Math.round(left) + "px";
+      dropdownMenu.style.top = Math.round(top) + "px";
+    }
     dropdownBtn.addEventListener("click", function (ev) {
       ev.stopPropagation();
       dropdownMenu.classList.toggle("open");
+      if (dropdownMenu.classList.contains("open")) {
+        positionDropdownMenu();
+      }
     });
     menuImportDefault.addEventListener("click", function () {
       closeDropdownMenu();
@@ -1382,6 +1402,8 @@
         closeDropdownMenu();
       }
     }, true);
+    window.addEventListener("resize", positionDropdownMenu);
+    tableWrap.addEventListener("scroll", positionDropdownMenu);
 
     function exportSnippets() {
       getStored(function (list) {
@@ -1504,7 +1526,7 @@
 
     tableWrap.addEventListener("scroll", onTableScroll);
 
-    /** Clears ephemeral UI when closing or reopening the modal; does not discard draftByKey or the editor buffer. */
+    /** Clears ephemeral UI and any open overlays/menus. */
     function resetEphemeralOnModalHide() {
       closeDeleteOverlay();
       closeDropdownMenu();
@@ -1520,12 +1542,29 @@
       headerFileInput.value = "";
     }
 
+    function discardUnsavedSessionState() {
+      state.draftByKey = Object.create(null);
+      state.nextNewId = 1;
+      state.activeDraftKey = null;
+      state.selectedDraftKeys.clear();
+      state.searchQuery = "";
+      state.scrollTop = 0;
+      cancelJustSavedFlash();
+      nameEl.value = "";
+      codeElRef.value = "";
+      hideSelectionSourceNote();
+      clearValidation();
+      searchInput.value = "";
+      tableWrap.scrollTop = 0;
+    }
+
     function onModalReopen() {
       resetEphemeralOnModalHide();
     }
 
     function closeModal() {
       resetEphemeralOnModalHide();
+      discardUnsavedSessionState();
       root.style.display = "none";
     }
     closeBtn.addEventListener("click", closeModal);
