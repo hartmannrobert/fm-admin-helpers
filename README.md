@@ -7,9 +7,11 @@ This extension is designed for Fusion Manage administrators, implementation cons
 Special thanks to **Patrick Flügge**, who originally created the first features of this extension.
 
 
-If you are interested in user oriented Chrome Extensions, check out **https://github.com/AHoop91/Fusion-Manage-Chrome-Extensions**.
+If you are interested in user oriented Chrome Extensions, check out  
+**https://github.com/AHoop91/Fusion-Manage-Chrome-Extensions**.
 
-If you want to leverage the powerful API that Fusion Manage offers and expand the possibilities, check out **https://github.com/dickmans/plm-extensions**.
+If you want to leverage the powerful API that Fusion Manage offers and expand the possibilities, check out  
+**https://github.com/dickmans/plm-extensions**.
 
 ## Table of Contents
 
