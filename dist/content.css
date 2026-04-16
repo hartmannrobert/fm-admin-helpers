@@ -1017,8 +1017,9 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
   text-decoration: underline;
 }
 
-/* Do not show Grid View toggle in the whereused dialog */
-#whereused-dialog .fm-scripts-grid-toggle-btn {
+/* Do not show scripts toolbar controls in the whereused dialog */
+#whereused-dialog .fm-scripts-grid-toggle-btn,
+#whereused-dialog .fm-scripts-errors-filter-btn {
   display: none !important;
 }
 
@@ -1169,6 +1170,34 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
 
 .itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-active .fm-toggle-thumb {
   transform: translateX(18px);
+}
+
+/* Scripts tab: show-only-rows-with-errors filter (before Grid View toggle), icon-only */
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-toggle-btn-contained {
+  margin-left: 10px;
+  padding: 0 6px;
+  gap: 0;
+  min-width: 31px;
+  justify-content: center;
+}
+
+.itemsectionmenu .fm-scripts-errors-filter-btn .fm-scripts-errors-filter-icon.material-icons {
+  font-size: 16px !important;
+  width: 16px;
+  height: 16px;
+  line-height: 16px !important;
+  color: #f57c00;
+}
+
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-toggle-btn-contained.fm-active {
+  background: #fff3e0;
+  border-color: #f9a825;
+  color: #5d4037;
+  box-shadow: 0 0 0 1px rgba(249, 168, 37, 0.35);
+}
+
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-toggle-btn-contained.fm-active .fm-scripts-errors-filter-icon.material-icons {
+  color: #e65100;
 }
 
 /* ---------------------------

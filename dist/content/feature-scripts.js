@@ -37,8 +37,13 @@
   FM.features.scripts = (function () {
     const LS_KEY = "fmScriptsSimpleGridView";
     const BTN_CLASS = "fm-scripts-grid-toggle-btn";
+    const ERRORS_BTN_CLASS = "fm-scripts-errors-filter-btn";
+    const WARN_TRIANGLE_SRC = "/images/icons/warntriangle_16.png";
     const GRID_BODY_CLASS = "fm-scripts-simple-grid";
     FM.state.scriptsFilterLastInputAt = FM.state.scriptsFilterLastInputAt || 0;
+    if (FM.state.scriptsErrorsOnlyFilter !== true) {
+      FM.state.scriptsErrorsOnlyFilter = false;
+    }
 
     // Helpers
     function isOnScriptsTab() {
@@ -85,54 +90,120 @@
       btn.setAttribute("aria-pressed", enabled ? "true" : "false");
     }
 
-    // Toggle button insertion (idempotent) — skip .itemsectionmenu inside whereused dialog
-    function ensureToggleOnce() {
+    function updateErrorsFilterVisual(btn, active) {
+      if (!btn) return;
+      btn.classList.toggle("fm-active", !!active);
+      btn.title = active ? "Show all scripts (clear error filter)" : "Show only scripts with errors";
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+      btn.setAttribute("aria-label", active ? "Error filter on — show all scripts" : "Show only scripts with errors");
+    }
+
+    function getScriptsToolbarMenu() {
       const menus = document.querySelectorAll(".itemsectionmenu");
-      let menu = null;
       for (let i = 0; i < menus.length; i++) {
         if (!menus[i].closest("#whereused-dialog")) {
-          menu = menus[i];
-          break;
+          return menus[i];
         }
       }
+      return null;
+    }
+
+    function rowHasScriptsTabErrorIcon(row) {
+      if (!row || !row.querySelectorAll) return false;
+      const imgs = row.querySelectorAll("img[src]");
+      for (let i = 0; i < imgs.length; i++) {
+        const src = String(imgs[i].getAttribute("src") || "");
+        if (src.indexOf(WARN_TRIANGLE_SRC) !== -1) return true;
+      }
+      return false;
+    }
+
+    function getScriptsFilterQueryForApply() {
+      const own = document.getElementById("fm-search-script");
+      if (own) return String(own.value || "");
+      const alt = findScriptsFilterInput();
+      return alt ? String(alt.value || "") : "";
+    }
+
+    // Grid + errors toolbar (idempotent) — skip .itemsectionmenu inside whereused dialog
+    function ensureToggleOnce() {
+      const menu = getScriptsToolbarMenu();
       if (!menu) return;
-      if (menu.querySelector(`.${BTN_CLASS}`)) return;
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = BTN_CLASS + " fm-pill-toggle fm-toggle-btn-contained";
-      btn.title = "Grid View";
+      let gridBtn = menu.querySelector(`.${BTN_CLASS}`);
+      let errorsBtn = menu.querySelector(`.${ERRORS_BTN_CLASS}`);
 
-      const labelEl = document.createElement("span");
-      labelEl.className = "fm-toggle-label";
-      labelEl.textContent = "Grid View";
-      btn.appendChild(labelEl);
+      if (!errorsBtn) {
+        if (typeof FM.injectMaterialIcons === "function") {
+          FM.injectMaterialIcons();
+        }
+        errorsBtn = document.createElement("button");
+        errorsBtn.type = "button";
+        errorsBtn.className = ERRORS_BTN_CLASS + " fm-toggle-btn-contained";
+        errorsBtn.setAttribute("aria-pressed", "false");
+        errorsBtn.setAttribute("aria-label", "Show only scripts with errors");
 
-      const pillEl = document.createElement("span");
-      pillEl.className = "fm-toggle-pill";
-      const trackEl = document.createElement("span");
-      trackEl.className = "fm-toggle-track";
-      pillEl.appendChild(trackEl);
-      const thumbEl = document.createElement("span");
-      thumbEl.className = "fm-toggle-thumb";
-      pillEl.appendChild(thumbEl);
-      btn.appendChild(pillEl);
+        const warnIcon = document.createElement("span");
+        warnIcon.className = "material-icons fm-scripts-errors-filter-icon";
+        warnIcon.setAttribute("aria-hidden", "true");
+        warnIcon.textContent = "warning";
 
-      btn.addEventListener("click", (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        const next = !isScriptsGridEnabled();
-        setScriptsGridEnabled(next);
-        applyBodyGridClass(next);
-        updateToggleVisual(btn, next);
-      });
+        errorsBtn.appendChild(warnIcon);
 
-      menu.appendChild(btn);
+        errorsBtn.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          FM.state.scriptsErrorsOnlyFilter = !FM.state.scriptsErrorsOnlyFilter;
+          updateErrorsFilterVisual(errorsBtn, FM.state.scriptsErrorsOnlyFilter);
+          applyScriptsFilter(getScriptsFilterQueryForApply());
+        });
 
-      // initialize visuals
+        if (gridBtn) {
+          menu.insertBefore(errorsBtn, gridBtn);
+        } else {
+          menu.appendChild(errorsBtn);
+        }
+        updateErrorsFilterVisual(errorsBtn, !!FM.state.scriptsErrorsOnlyFilter);
+        applyScriptsFilter(getScriptsFilterQueryForApply());
+      }
+
+      if (!gridBtn) {
+        gridBtn = document.createElement("button");
+        gridBtn.type = "button";
+        gridBtn.className = BTN_CLASS + " fm-pill-toggle fm-toggle-btn-contained";
+        gridBtn.title = "Grid View";
+
+        const labelEl = document.createElement("span");
+        labelEl.className = "fm-toggle-label";
+        labelEl.textContent = "Grid View";
+        gridBtn.appendChild(labelEl);
+
+        const pillEl = document.createElement("span");
+        pillEl.className = "fm-toggle-pill";
+        const trackEl = document.createElement("span");
+        trackEl.className = "fm-toggle-track";
+        pillEl.appendChild(trackEl);
+        const thumbEl = document.createElement("span");
+        thumbEl.className = "fm-toggle-thumb";
+        pillEl.appendChild(thumbEl);
+        gridBtn.appendChild(pillEl);
+
+        gridBtn.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const next = !isScriptsGridEnabled();
+          setScriptsGridEnabled(next);
+          applyBodyGridClass(next);
+          updateToggleVisual(gridBtn, next);
+        });
+
+        menu.appendChild(gridBtn);
+      }
+
       const enabled = isScriptsGridEnabled();
       applyBodyGridClass(enabled);
-      updateToggleVisual(btn, enabled);
+      updateToggleVisual(gridBtn, enabled);
+      updateErrorsFilterVisual(errorsBtn, !!FM.state.scriptsErrorsOnlyFilter);
     }
 
     // Filter input detection + "active typing" guard
@@ -1351,13 +1422,16 @@
     // Simple search field we inject (idempotent)
     function applyScriptsFilter(query) {
       const q = utils.normalize(query);
+      const errorsOnly = FM.state.scriptsErrorsOnlyFilter === true;
       const rows = getScriptsTableRows();
       if (rows.length === 0) return;
       for (const row of rows) {
         if (row.dataset.fmSearchText == null) row.dataset.fmSearchText = utils.normalize(row.textContent);
         const text = row.dataset.fmSearchText;
-        const match = q === "" || text.includes(q);
-        row.style.display = match ? "" : "none";
+        const searchMatch = q === "" || text.includes(q);
+        const errorPass = !errorsOnly || rowHasScriptsTabErrorIcon(row);
+        const visible = searchMatch && errorPass;
+        row.style.display = visible ? "" : "none";
       }
     }
 
@@ -1419,12 +1493,13 @@
       if (!isOnScriptsTab()) return;
       ensureToggleOnce();
 
-      // ensure visuals updated once
-      const menu = document.querySelector(".itemsectionmenu");
-      const btn = menu ? menu.querySelector(`.${BTN_CLASS}`) : null;
+      const menu = getScriptsToolbarMenu();
+      const gridBtn = menu ? menu.querySelector(`.${BTN_CLASS}`) : null;
+      const errBtn = menu ? menu.querySelector(`.${ERRORS_BTN_CLASS}`) : null;
       const enabled = isScriptsGridEnabled();
       applyBodyGridClass(enabled);
-      updateToggleVisual(btn, enabled);
+      updateToggleVisual(gridBtn, enabled);
+      updateErrorsFilterVisual(errBtn, !!FM.state.scriptsErrorsOnlyFilter);
     }
 
     function tickEnhancements() {
