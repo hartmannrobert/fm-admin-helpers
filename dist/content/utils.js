@@ -14,7 +14,22 @@ window.FM = window.FM || {};
 
 FM.tenantNameFromLocation = function() {
     return location.hostname.split(".")[0];
-}
+};
+
+/**
+ * Subdomain used in Fusion Manage URLs (e.g. "acme" from acme.autodeskplm360.net).
+ * Empty when not on an *.autodeskplm360.net page (e.g. extension options).
+ */
+FM.tenantSubdomainForSnippetsUi = function () {
+  try {
+    var h = typeof location !== "undefined" && location.hostname ? String(location.hostname) : "";
+    if (!h || h.indexOf("autodeskplm360.net") < 0) return "";
+    var part = h.split(".")[0];
+    return part ? part : "";
+  } catch (e) {
+    return "";
+  }
+};
 
 FM.isWorkspaceContext = function(url) {
     return /\/plm\/workspaces\/\d+/.test(url);

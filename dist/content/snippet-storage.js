@@ -1,54 +1,166 @@
 /**
- * IndexedDB storage layer for script snippets.
- * - No localStorage; all snippet data lives in IndexedDB.
- * - Unique key is snippet name (not id). Schema: { name, code }.
- * - Migrates from chrome.storage.local and from id-based store (v1) to name-based (v2).
+ * Script snippet persistence with a user-selectable backend (chrome.storage.local setting fmSnippetStorageScope).
+ * - extension: snippets in chrome.storage.local key fmScriptSnippets — shared across all Fusion Manage tenants.
+ * - origin: snippets in page IndexedDB (FMSnippetDB) — one library per site origin (per-tenant).
+ * Migrates legacy userSnippets into fmScriptSnippets when using extension storage; IDB path migrates legacy chrome data into IDB once per origin.
  */
 (function () {
+  const SCOPE_KEY = "fmSnippetStorageScope";
+  const SCOPE_EXTENSION = "extension";
+  const SCOPE_ORIGIN = "origin";
+
+  const STORAGE_KEY = "fmScriptSnippets";
+  const LEGACY_USER_SNIPPETS_KEY = "userSnippets";
+
   const DB_NAME = "FMSnippetDB";
   const DB_VERSION = 2;
   const STORE_NAME = "scriptSnippets_name";
-  const CHROME_LEGACY_KEY = "userSnippets";
   const MIGRATION_FLAG_KEY = "fm-snippets-migrated-to-idb";
 
-  let dbPromise = null;
+  var snippetStorageListenerAttached = false;
+  var idbPromise = null;
 
-  /** Normalize raw snippet to stored shape: { name, code }. Name is required. */
   function toRecord(s) {
     var name = (s && typeof s.name === "string" && s.name.trim() !== "")
       ? s.name.trim()
-      : (s && s.id != null && String(s.id).trim() !== "")
+      : (s && s.id !== undefined && s.id !== null && String(s.id).trim() !== "")
         ? String(s.id).trim()
         : "";
     return {
       name: name,
-      code: (s && s.code != null) ? String(s.code) : ""
+      code: (s && s.code !== undefined && s.code !== null) ? String(s.code) : ""
     };
   }
 
-  function openDB() {
-    if (dbPromise) return dbPromise;
-    dbPromise = new Promise(function (resolve, reject) {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
+  function normalizeSnippetArray(snippets) {
+    if (!Array.isArray(snippets)) return [];
+    var byName = Object.create(null);
+    for (var i = 0; i < snippets.length; i++) {
+      var r = toRecord(snippets[i]);
+      if (r.name) byName[r.name] = r;
+    }
+    var keys = Object.keys(byName);
+    keys.sort(function (a, b) {
+      return a.localeCompare(b, undefined, { sensitivity: "base" });
+    });
+    var out = [];
+    for (var j = 0; j < keys.length; j++) {
+      out.push(byName[keys[j]]);
+    }
+    return out;
+  }
+
+  function hasChromeStorage() {
+    return typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+  }
+
+  function storageGet(keys) {
+    return new Promise(function (resolve, reject) {
+      if (!hasChromeStorage()) {
+        reject(new Error("chrome.storage.local not available"));
+        return;
+      }
+      chrome.storage.local.get(keys, function (res) {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message || "storage get failed"));
+          return;
+        }
+        resolve(res || {});
+      });
+    });
+  }
+
+  function storageSet(obj) {
+    return new Promise(function (resolve, reject) {
+      if (!hasChromeStorage()) {
+        reject(new Error("chrome.storage.local not available"));
+        return;
+      }
+      chrome.storage.local.set(obj, function () {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message || "storage set failed"));
+          return;
+        }
+        resolve();
+      });
+    });
+  }
+
+  function readSnippetScope() {
+    if (!hasChromeStorage()) return Promise.resolve(SCOPE_EXTENSION);
+    return storageGet([SCOPE_KEY]).then(function (res) {
+      if (res[SCOPE_KEY] === SCOPE_ORIGIN) return SCOPE_ORIGIN;
+      return SCOPE_EXTENSION;
+    }).catch(function () {
+      return SCOPE_EXTENSION;
+    });
+  }
+
+  function migrateLegacyUserSnippetsIfNeeded() {
+    if (!hasChromeStorage()) return Promise.resolve();
+    return storageGet([STORAGE_KEY, LEGACY_USER_SNIPPETS_KEY]).then(function (res) {
+      if (Object.prototype.hasOwnProperty.call(res, STORAGE_KEY)) {
+        return;
+      }
+      var legacy = res[LEGACY_USER_SNIPPETS_KEY];
+      if (!Array.isArray(legacy) || legacy.length === 0) {
+        return storageSet({ [STORAGE_KEY]: [] });
+      }
+      var normalized = normalizeSnippetArray(legacy);
+      var patch = {};
+      patch[STORAGE_KEY] = normalized;
+      patch[LEGACY_USER_SNIPPETS_KEY] = [];
+      return storageSet(patch);
+    }).catch(function () {
+      return Promise.resolve();
+    });
+  }
+
+  function ensureCrossTabSnippetListener() {
+    if (snippetStorageListenerAttached) return;
+    try {
+      if (window.self !== window.top) return;
+    } catch (e) {
+      return;
+    }
+    if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.onChanged) return;
+    snippetStorageListenerAttached = true;
+    chrome.storage.onChanged.addListener(function (changes, areaName) {
+      if (areaName !== "local") return;
+      if (!changes) return;
+      if (!Object.prototype.hasOwnProperty.call(changes, STORAGE_KEY) &&
+          !Object.prototype.hasOwnProperty.call(changes, SCOPE_KEY)) {
+        return;
+      }
+      try {
+        window.dispatchEvent(new CustomEvent("fm-snippets-changed"));
+      } catch (e) { /* ignore */ }
+    });
+  }
+
+  function openIndexedDB() {
+    if (idbPromise) return idbPromise;
+    idbPromise = new Promise(function (resolve, reject) {
+      var req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onerror = function () { reject(req.error); };
       req.onsuccess = function () { resolve(req.result); };
       req.onupgradeneeded = function (ev) {
-        const db = ev.target.result;
-        const tx = ev.target.transaction;
+        var db = ev.target.result;
+        var tx = ev.target.transaction;
         if (ev.oldVersion < 2) {
           if (db.objectStoreNames.contains("scriptSnippets")) {
-            const oldStore = tx.objectStore("scriptSnippets");
-            const newStore = db.createObjectStore(STORE_NAME, { keyPath: "name" });
-            const cursorReq = oldStore.openCursor();
+            var oldStore = tx.objectStore("scriptSnippets");
+            var newStore = db.createObjectStore(STORE_NAME, { keyPath: "name" });
+            var cursorReq = oldStore.openCursor();
             cursorReq.onsuccess = function () {
-              const cursor = cursorReq.result;
+              var cursor = cursorReq.result;
               if (cursor) {
-                const v = cursor.value;
-                const name = (v.name && String(v.name).trim()) || (v.id && String(v.id).trim()) || "";
+                var v = cursor.value;
+                var name = (v.name && String(v.name).trim()) || (v.id && String(v.id).trim()) || "";
                 if (name) {
                   newStore.put({
                     name: name,
-                    code: (v.code != null) ? String(v.code) : ""
+                    code: (v.code !== undefined && v.code !== null) ? String(v.code) : ""
                   });
                 }
                 cursor.continue();
@@ -62,15 +174,15 @@
         }
       };
     });
-    return dbPromise;
+    return idbPromise;
   }
 
-  function withStore(storeName, mode, fn) {
-    return openDB().then(function (db) {
+  function idbWithStore(mode, fn) {
+    return openIndexedDB().then(function (db) {
       return new Promise(function (resolve, reject) {
-        const tx = db.transaction(storeName, mode);
-        const store = tx.objectStore(storeName);
-        const p = fn(store);
+        var tx = db.transaction(STORE_NAME, mode);
+        var store = tx.objectStore(STORE_NAME);
+        var p = fn(store);
         if (p && typeof p.then === "function") {
           p.then(resolve).catch(reject);
         } else {
@@ -81,27 +193,25 @@
     });
   }
 
-  function migrateFromChromeStorage() {
-    if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.local) {
-      return Promise.resolve();
-    }
+  function idbMigrateFromChromeStorage() {
+    if (!hasChromeStorage()) return Promise.resolve();
     return new Promise(function (resolve) {
-      chrome.storage.local.get([MIGRATION_FLAG_KEY, CHROME_LEGACY_KEY], function (res) {
+      chrome.storage.local.get([MIGRATION_FLAG_KEY, LEGACY_USER_SNIPPETS_KEY], function (res) {
         if (res[MIGRATION_FLAG_KEY] === "1") {
           resolve();
           return;
         }
-        const list = Array.isArray(res[CHROME_LEGACY_KEY]) ? res[CHROME_LEGACY_KEY] : [];
+        var list = Array.isArray(res[LEGACY_USER_SNIPPETS_KEY]) ? res[LEGACY_USER_SNIPPETS_KEY] : [];
         if (list.length === 0) {
           chrome.storage.local.set({ [MIGRATION_FLAG_KEY]: "1" }, resolve);
           return;
         }
-        const normalized = [];
+        var normalized = [];
         for (var i = 0; i < list.length; i++) {
           var r = toRecord(list[i]);
           if (r.name) normalized.push(r);
         }
-        putMany(normalized)
+        idbPutMany(normalized)
           .then(function () {
             chrome.storage.local.set({ [MIGRATION_FLAG_KEY]: "1" }, resolve);
           })
@@ -110,67 +220,48 @@
     });
   }
 
-  function init() {
-    return openDB().then(function (db) {
-      return migrateFromChromeStorage().then(function () { return db; });
+  function idbInit() {
+    return openIndexedDB().then(function () {
+      return idbMigrateFromChromeStorage();
     });
   }
 
-  /**
-   * Get all snippets. Each item: { name, code }.
-   * @returns {Promise<Array<{name: string, code: string}>>}
-   */
-  function getAll() {
-    return withStore(STORE_NAME, "readonly", function (store) {
+  function idbGetAll() {
+    return idbWithStore("readonly", function (store) {
       return new Promise(function (resolve, reject) {
-        const req = store.getAll();
-        req.onsuccess = function () { resolve(req.result || []); };
+        var req = store.getAll();
+        req.onsuccess = function () { resolve(normalizeSnippetArray(req.result || [])); };
         req.onerror = function () { reject(req.error); };
       });
     });
   }
 
-  /**
-   * Get one snippet by name.
-   * @param {string} name
-   * @returns {Promise<{name: string, code: string}|undefined>}
-   */
-  function get(name) {
-    if (name == null || String(name).trim() === "") return Promise.resolve(undefined);
-    return withStore(STORE_NAME, "readonly", function (store) {
+  function idbGet(name) {
+    if (name === undefined || name === null || String(name).trim() === "") return Promise.resolve(undefined);
+    return idbWithStore("readonly", function (store) {
       return new Promise(function (resolve, reject) {
-        const req = store.get(String(name).trim());
+        var req = store.get(String(name).trim());
         req.onsuccess = function () { resolve(req.result); };
         req.onerror = function () { reject(req.error); };
       });
     });
   }
 
-  /**
-   * Create or update a single snippet. Unique key is name.
-   * @param {{name: string, code: string}} snippet
-   * @returns {Promise<void>}
-   */
-  function put(snippet) {
+  function idbPut(snippet) {
     var record = toRecord(snippet);
     if (!record.name) return Promise.reject(new Error("Snippet must have a non-empty name"));
-    return withStore(STORE_NAME, "readwrite", function (store) {
+    return idbWithStore("readwrite", function (store) {
       return new Promise(function (resolve, reject) {
-        const req = store.put(record);
+        var req = store.put(record);
         req.onsuccess = function () { resolve(); };
         req.onerror = function () { reject(req.error); };
       });
     });
   }
 
-  /**
-   * Write multiple snippets (merge by name).
-   * @param {Array<{name: string, code: string}>} snippets
-   * @returns {Promise<void>}
-   */
-  function putMany(snippets) {
+  function idbPutMany(snippets) {
     if (!Array.isArray(snippets) || snippets.length === 0) return Promise.resolve();
-    return withStore(STORE_NAME, "readwrite", function (store) {
+    return idbWithStore("readwrite", function (store) {
       var i = 0;
       function next() {
         if (i >= snippets.length) return Promise.resolve();
@@ -186,35 +277,25 @@
     });
   }
 
-  /**
-   * Delete a snippet by name.
-   * @param {string} name
-   * @returns {Promise<void>}
-   */
-  function remove(name) {
-    if (name == null || String(name).trim() === "") return Promise.resolve();
-    return withStore(STORE_NAME, "readwrite", function (store) {
+  function idbRemove(name) {
+    if (name === undefined || name === null || String(name).trim() === "") return Promise.resolve();
+    return idbWithStore("readwrite", function (store) {
       return new Promise(function (resolve, reject) {
-        const req = store.delete(String(name).trim());
+        var req = store.delete(String(name).trim());
         req.onsuccess = function () { resolve(); };
         req.onerror = function () { reject(req.error); };
       });
     });
   }
 
-  /**
-   * Remove multiple snippets by name.
-   * @param {string[]} names
-   * @returns {Promise<void>}
-   */
-  function removeMany(names) {
+  function idbRemoveMany(names) {
     if (!Array.isArray(names) || names.length === 0) return Promise.resolve();
-    return withStore(STORE_NAME, "readwrite", function (store) {
+    return idbWithStore("readwrite", function (store) {
       var i = 0;
       function next() {
         if (i >= names.length) return Promise.resolve();
         var n = names[i++];
-        if (n == null || String(n).trim() === "") return next();
+        if (n === undefined || n === null || String(n).trim() === "") return next();
         return new Promise(function (resolve, reject) {
           var req = store.delete(String(n).trim());
           req.onsuccess = function () { resolve(next()); };
@@ -225,31 +306,23 @@
     });
   }
 
-  /**
-   * Replace all snippets with the given array.
-   * @param {Array<{name: string, code: string}>} snippets
-   * @returns {Promise<void>}
-   */
-  function replaceAll(snippets) {
-    return withStore(STORE_NAME, "readwrite", function (store) {
+  function idbReplaceAll(snippets) {
+    return idbWithStore("readwrite", function (store) {
       return new Promise(function (resolve, reject) {
-        const clearReq = store.clear();
+        var clearReq = store.clear();
         clearReq.onsuccess = function () {
-          if (!Array.isArray(snippets) || snippets.length === 0) {
+          var arr = normalizeSnippetArray(Array.isArray(snippets) ? snippets : []);
+          if (arr.length === 0) {
             resolve();
             return;
           }
-          var i = 0;
+          var idx = 0;
           function putNext() {
-            if (i >= snippets.length) {
+            if (idx >= arr.length) {
               resolve();
               return;
             }
-            var r = toRecord(snippets[i++]);
-            if (!r.name) {
-              putNext();
-              return;
-            }
+            var r = arr[idx++];
             var req = store.put(r);
             req.onsuccess = putNext;
             req.onerror = function () { reject(req.error); };
@@ -258,6 +331,177 @@
         };
         clearReq.onerror = function () { reject(clearReq.error); };
       });
+    });
+  }
+
+  function chromeGetAll() {
+    if (!hasChromeStorage()) return Promise.resolve([]);
+    return storageGet([STORAGE_KEY]).then(function (res) {
+      var raw = res[STORAGE_KEY];
+      if (!Array.isArray(raw)) return [];
+      return normalizeSnippetArray(raw);
+    }).catch(function () {
+      return [];
+    });
+  }
+
+  function chromeGet(name) {
+    if (name === undefined || name === null || String(name).trim() === "") return Promise.resolve(undefined);
+    var n = String(name).trim();
+    return chromeGetAll().then(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].name === n) return list[i];
+      }
+      return undefined;
+    });
+  }
+
+  function chromePut(snippet) {
+    var record = toRecord(snippet);
+    if (!record.name) return Promise.reject(new Error("Snippet must have a non-empty name"));
+    return chromeGetAll().then(function (list) {
+      var byName = Object.create(null);
+      for (var i = 0; i < list.length; i++) {
+        byName[list[i].name] = list[i];
+      }
+      byName[record.name] = record;
+      var merged = [];
+      for (var k in byName) {
+        if (Object.prototype.hasOwnProperty.call(byName, k)) merged.push(byName[k]);
+      }
+      return chromeReplaceAll(normalizeSnippetArray(merged));
+    });
+  }
+
+  function chromePutMany(snippets) {
+    if (!Array.isArray(snippets) || snippets.length === 0) return Promise.resolve();
+    return chromeGetAll().then(function (existing) {
+      var byName = Object.create(null);
+      for (var e = 0; e < existing.length; e++) {
+        byName[existing[e].name] = existing[e];
+      }
+      for (var i = 0; i < snippets.length; i++) {
+        var r = toRecord(snippets[i]);
+        if (r.name) byName[r.name] = r;
+      }
+      var merged = [];
+      for (var k in byName) {
+        if (Object.prototype.hasOwnProperty.call(byName, k)) merged.push(byName[k]);
+      }
+      return chromeReplaceAll(normalizeSnippetArray(merged));
+    });
+  }
+
+  function chromeRemove(name) {
+    if (name === undefined || name === null || String(name).trim() === "") return Promise.resolve();
+    var n = String(name).trim();
+    return chromeGetAll().then(function (list) {
+      var filtered = [];
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].name !== n) filtered.push(list[i]);
+      }
+      return chromeReplaceAll(filtered);
+    });
+  }
+
+  function chromeRemoveMany(names) {
+    if (!Array.isArray(names) || names.length === 0) return Promise.resolve();
+    var removeSet = Object.create(null);
+    for (var j = 0; j < names.length; j++) {
+      if (names[j] !== undefined && names[j] !== null && String(names[j]).trim() !== "") {
+        removeSet[String(names[j]).trim()] = true;
+      }
+    }
+    return chromeGetAll().then(function (list) {
+      var filtered = [];
+      for (var i = 0; i < list.length; i++) {
+        if (!removeSet[list[i].name]) filtered.push(list[i]);
+      }
+      return chromeReplaceAll(filtered);
+    });
+  }
+
+  function chromeReplaceAll(snippets) {
+    var normalized = normalizeSnippetArray(Array.isArray(snippets) ? snippets : []);
+    if (!hasChromeStorage()) {
+      return Promise.reject(new Error("chrome.storage.local not available"));
+    }
+    return storageSet({ [STORAGE_KEY]: normalized });
+  }
+
+  function withBackend(fn) {
+    return readSnippetScope().then(function (scope) {
+      return fn(scope);
+    });
+  }
+
+  function init() {
+    ensureCrossTabSnippetListener();
+    return readSnippetScope().then(function (scope) {
+      if (scope === SCOPE_ORIGIN) return idbInit();
+      return migrateLegacyUserSnippetsIfNeeded();
+    });
+  }
+
+  function openDB() {
+    return init();
+  }
+
+  function getAll() {
+    return withBackend(function (scope) {
+      return scope === SCOPE_ORIGIN ? idbGetAll() : chromeGetAll();
+    });
+  }
+
+  function get(name) {
+    return withBackend(function (scope) {
+      return scope === SCOPE_ORIGIN ? idbGet(name) : chromeGet(name);
+    });
+  }
+
+  function put(snippet) {
+    return withBackend(function (scope) {
+      return scope === SCOPE_ORIGIN ? idbPut(snippet) : chromePut(snippet);
+    });
+  }
+
+  function putMany(snippets) {
+    return withBackend(function (scope) {
+      return scope === SCOPE_ORIGIN ? idbPutMany(snippets) : chromePutMany(snippets);
+    });
+  }
+
+  function remove(name) {
+    return withBackend(function (scope) {
+      return scope === SCOPE_ORIGIN ? idbRemove(name) : chromeRemove(name);
+    });
+  }
+
+  function removeMany(names) {
+    return withBackend(function (scope) {
+      return scope === SCOPE_ORIGIN ? idbRemoveMany(names) : chromeRemoveMany(names);
+    });
+  }
+
+  function replaceAll(snippets) {
+    return withBackend(function (scope) {
+      return scope === SCOPE_ORIGIN ? idbReplaceAll(snippets) : chromeReplaceAll(snippets);
+    });
+  }
+
+  function getSnippetStorageScope() {
+    return readSnippetScope();
+  }
+
+  function setSnippetStorageScope(scope) {
+    if (scope !== SCOPE_ORIGIN && scope !== SCOPE_EXTENSION) {
+      return Promise.reject(new Error("Invalid snippet storage scope"));
+    }
+    if (!hasChromeStorage()) {
+      return Promise.reject(new Error("chrome.storage.local not available"));
+    }
+    return storageSet({ [SCOPE_KEY]: scope }).then(function () {
+      return init();
     });
   }
 
@@ -271,6 +515,10 @@
     putMany: putMany,
     remove: remove,
     removeMany: removeMany,
-    replaceAll: replaceAll
+    replaceAll: replaceAll,
+    getSnippetStorageScope: getSnippetStorageScope,
+    setSnippetStorageScope: setSnippetStorageScope,
+    SNIPPET_STORAGE_SCOPE_EXTENSION: SCOPE_EXTENSION,
+    SNIPPET_STORAGE_SCOPE_ORIGIN: SCOPE_ORIGIN
   };
 })();

@@ -2,16 +2,16 @@
  * In-page modal for managing custom script snippets. Opens when the popup sends "fm-open-snippet-modal"
  * or the page dispatches "fm-open-snippet-modal-request". Prefill from the script Ace editor via
  * "fm-snippet-load-from-editor" (detail.code); selection is read in the content script using FM.getAceEditorSelectedText.
- * Uses IndexedDB via FM.snippetStorage. Name is the unique identifier.
+ * Uses FM.snippetStorage (extension-wide chrome.storage.local or per-origin IndexedDB; user-selectable). Name is the unique identifier.
  * Layout: left = form/editor (flex-grow), right = snippet list (clamp width so names stay readable).
  *
  * --- Draft state model (session-scoped, survives modal close while this tab/content script lives) ---
- * - persistedSnapshot: Array<{name, code}> — last load from IndexedDB on open (refreshed each time the modal is shown).
+ * - persistedSnapshot: Array<{name, code}> — last load from storage on open (refreshed each time the modal is shown).
  * - draftByKey: Record<draftKey, DraftEntry> — working edits, deletes, and unsaved new rows. Keys: "p:<originalName>"
  *   for snippets that existed in persistedSnapshot when edited, or "n:<id>" for brand-new rows.
  * - activeDraftKey: which row the left form is bound to; null means an empty "new snippet" buffer (no row until
  *   the user types name or code).
- * - Edits are written into draftByKey on every input (and when switching rows). IndexedDB is updated only when the
+ * - Edits are written into draftByKey on every input (and when switching rows). Extension storage is updated only when the
  *   user clicks Save (replaceAll). Deletes and bulk removes are draft-only until Save.
  * - New: clears the left form and starts a fresh new-snippet buffer. Persisted-row edits stay in draftByKey;
  *   an in-progress "n:" row is removed if it was active. Does not discard the rest of the draft session.
@@ -149,7 +149,9 @@
       "#" + MODAL_ID + " .fm-sm-delete-overlay-inner button .material-icons { font-size: 18px; color: #303030; }",
       "#" + MODAL_ID + " .fm-sm-delete-overlay-inner button:hover .material-icons { color: #303030; }",
       "#" + MODAL_ID + " .fm-sm-table .fm-sm-empty { padding: 24px; text-align: center; color: rgba(0,0,0,0.5); font-size: 13px; }",
-      "#" + MODAL_ID + " .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }"
+      "#" + MODAL_ID + " .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }",
+      "#" + MODAL_ID + " .fm-sm-dropdown-menu .fm-sm-dropdown-sep { height: 1px; margin: 6px 10px; background: rgba(120,120,120,0.28); border: 0; padding: 0; pointer-events: none; }",
+      "#" + MODAL_ID + " .fm-sm-dropdown-menu > button[role=\"menuitemradio\"][aria-checked=\"true\"] { font-weight: 600; }"
     ].join("\n");
     var existingStyle = document.getElementById("fm-snippet-modal-styles");
     if (existingStyle) {
@@ -272,6 +274,33 @@
     menuImport.type = "button";
     menuImport.setAttribute("role", "menuitem");
     menuImport.textContent = "Import from JSON";
+    var menuScopeExtension = document.createElement("button");
+    menuScopeExtension.type = "button";
+    menuScopeExtension.setAttribute("role", "menuitemradio");
+    menuScopeExtension.setAttribute("aria-checked", "false");
+    menuScopeExtension.title = "Same snippet library for every Fusion Manage tenant in this browser";
+    menuScopeExtension.textContent = "All tenants";
+    var menuScopeOrigin = document.createElement("button");
+    menuScopeOrigin.type = "button";
+    menuScopeOrigin.setAttribute("role", "menuitemradio");
+    menuScopeOrigin.setAttribute("aria-checked", "false");
+    function updateTenantOriginMenuLabels() {
+      var sub = window.FM && typeof window.FM.tenantSubdomainForSnippetsUi === "function"
+        ? String(window.FM.tenantSubdomainForSnippetsUi() || "").trim()
+        : "";
+      menuScopeOrigin.textContent = sub ? sub : "This tenant";
+      menuScopeOrigin.title = sub
+        ? "Snippets stored only for tenant \"" + sub + "\" on this browser (IndexedDB)"
+        : "Snippets stored only for the current Fusion Manage tenant on this browser (IndexedDB)";
+    }
+    updateTenantOriginMenuLabels();
+    var menuStorageSep = document.createElement("div");
+    menuStorageSep.className = "fm-sm-dropdown-sep";
+    menuStorageSep.setAttribute("role", "separator");
+    dropdownMenu.setAttribute("aria-label", "Snippet manager actions");
+    dropdownMenu.appendChild(menuScopeExtension);
+    dropdownMenu.appendChild(menuScopeOrigin);
+    dropdownMenu.appendChild(menuStorageSep);
     dropdownMenu.appendChild(menuImportDefault);
     dropdownMenu.appendChild(menuExport);
     dropdownMenu.appendChild(menuImport);
@@ -1377,8 +1406,19 @@
       ev.stopPropagation();
       dropdownMenu.classList.toggle("open");
       if (dropdownMenu.classList.contains("open")) {
+        syncStorageMenuFromScope();
         positionDropdownMenu();
       }
+    });
+    menuScopeExtension.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      closeDropdownMenu();
+      applyStorageScopeChange("extension");
+    });
+    menuScopeOrigin.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      closeDropdownMenu();
+      applyStorageScopeChange("origin");
     });
     menuImportDefault.addEventListener("click", function () {
       closeDropdownMenu();
@@ -1558,7 +1598,54 @@
       tableWrap.scrollTop = 0;
     }
 
+    function syncStorageMenuFromScope() {
+      updateTenantOriginMenuLabels();
+      var st = window.FM && window.FM.snippetStorage;
+      if (!st || typeof st.getSnippetStorageScope !== "function") return;
+      st.getSnippetStorageScope().then(function (scope) {
+        menuScopeExtension.setAttribute("aria-checked", scope === "extension" ? "true" : "false");
+        menuScopeOrigin.setAttribute("aria-checked", scope === "origin" ? "true" : "false");
+      }).catch(function () { });
+    }
+
+    function applyStorageScopeChange(newScope) {
+      var st = window.FM && window.FM.snippetStorage;
+      if (!st || typeof st.setSnippetStorageScope !== "function" || typeof st.getSnippetStorageScope !== "function") return;
+      function revertMenu() {
+        syncStorageMenuFromScope();
+      }
+      st.getSnippetStorageScope().then(function (current) {
+        if (current === newScope) return;
+        if (hasUnsavedDraftWork()) {
+          if (!window.confirm("Switching storage reloads snippets from the new location and discards unsaved changes in this window. Continue?")) {
+            revertMenu();
+            return;
+          }
+        }
+        st.setSnippetStorageScope(newScope).then(function () {
+          notifySnippetsChanged();
+          getStored(function (list) {
+            refreshPersistedAndReconcile(list);
+            discardUnsavedSessionState();
+            renderAll();
+            syncStorageMenuFromScope();
+            try {
+              state.scrollTop = 0;
+              tableWrap.scrollTop = 0;
+              renderVirtualized();
+              updateSaveButtonEnabled();
+            } catch (e2) { /* ignore */ }
+          });
+        }).catch(function () {
+          revertMenu();
+        });
+      }).catch(function () {
+        revertMenu();
+      });
+    }
+
     function onModalReopen() {
+      syncStorageMenuFromScope();
       resetEphemeralOnModalHide();
     }
 
@@ -1574,6 +1661,7 @@
     panel.addEventListener("click", function (ev) { ev.stopPropagation(); });
 
     getStored(function (list) {
+      syncStorageMenuFromScope();
       refreshPersistedAndReconcile(list);
       renderAll();
       requestAnimationFrame(function () {

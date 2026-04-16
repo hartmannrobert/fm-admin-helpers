@@ -16,6 +16,21 @@
   </header>
 
   <main class="panel">
+    <section class="storage-scope-section" aria-labelledby="snippet-storage-scope-title">
+      <h2 id="snippet-storage-scope-title" class="storage-scope-title">Snippet library storage</h2>
+      <p class="hint storage-scope-hint">Extension storage is shared across all tenants in this browser. IndexedDB keeps
+        a separate library per tenant. Use Export / Import to copy snippets between the two.</p>
+      <div class="storage-scope-radios">
+        <label class="scope-label">
+          <input type="radio" name="fm-snippet-storage-scope" value="extension" />
+          <span id="fm-scope-extension-label">All tenants (extension storage)</span>
+        </label>
+        <label class="scope-label">
+          <input type="radio" name="fm-snippet-storage-scope" value="origin" />
+          <span id="fm-scope-origin-label">This tenant (IndexedDB)</span>
+        </label>
+      </div>
+    </section>
     <section class="form-section">
       <p class="hint">Pasted code: literal backslash-n (<code>\n</code>) is converted to newlines. Name must be unique.
       </p>
@@ -46,6 +61,7 @@
     </section>
   </main>
 
+  <script src="../content/utils.js"></script>
   <script src="../content/snippet-storage.js"></script>
   <script src="options.js"></script>
 </body>
