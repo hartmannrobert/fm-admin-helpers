@@ -1094,6 +1094,8 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
 /* Round edges for the pill when inside the contained button */
 .itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill,
 .itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-track,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-track,
 .fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill,
 .fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-track {
   border-radius: 10px;
@@ -1101,12 +1103,14 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
 
 /* Contained button: toggle 2px smaller overall (36×18 pill, 12×12 thumb) */
 .itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill,
 .fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-pill {
   width: 36px;
   height: 18px;
 }
 
 .itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-thumb,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-thumb,
 .fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained .fm-toggle-thumb {
   top: 2px;
   left: 2px;
@@ -1115,21 +1119,26 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
 }
 
 .itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained.fm-active .fm-toggle-thumb,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle.fm-toggle-btn-contained.fm-active .fm-toggle-thumb,
 .fm-ws-compact-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained.fm-active .fm-toggle-thumb {
   transform: translateX(20px);
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained {
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-toggle-btn-contained,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle.fm-toggle-btn-contained {
   margin-left: 10px;
 }
 
 .itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-pill,
-.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-track {
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-track,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle .fm-toggle-pill,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle .fm-toggle-track {
   border: none;
   box-shadow: none;
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-pill {
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-pill,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle .fm-toggle-pill {
   position: relative;
   display: inline-block;
   width: 38px;
@@ -1139,7 +1148,8 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
   border-radius: 3px;
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-track {
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-track,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle .fm-toggle-track {
   position: absolute;
   left: -1px;
   right: -1px;
@@ -1150,11 +1160,13 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
   transition: background 0.2s ease;
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-active .fm-toggle-track {
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-active .fm-toggle-track,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle.fm-active .fm-toggle-track {
   background: #0896D7;
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-thumb {
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle .fm-toggle-thumb,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle .fm-toggle-thumb {
   position: absolute;
   top: 2px;
   left: 3px;
@@ -1168,36 +1180,9 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
   pointer-events: none;
 }
 
-.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-active .fm-toggle-thumb {
+.itemsectionmenu .fm-scripts-grid-toggle-btn.fm-pill-toggle.fm-active .fm-toggle-thumb,
+.itemsectionmenu .fm-scripts-errors-filter-btn.fm-pill-toggle.fm-active .fm-toggle-thumb {
   transform: translateX(18px);
-}
-
-/* Scripts tab: show-only-rows-with-errors filter (before Grid View toggle), icon-only */
-.itemsectionmenu .fm-scripts-errors-filter-btn.fm-toggle-btn-contained {
-  margin-left: 10px;
-  padding: 0 6px;
-  gap: 0;
-  min-width: 31px;
-  justify-content: center;
-}
-
-.itemsectionmenu .fm-scripts-errors-filter-btn .fm-scripts-errors-filter-icon.material-icons {
-  font-size: 16px !important;
-  width: 16px;
-  height: 16px;
-  line-height: 16px !important;
-  color: #f57c00;
-}
-
-.itemsectionmenu .fm-scripts-errors-filter-btn.fm-toggle-btn-contained.fm-active {
-  background: #fff3e0;
-  border-color: #f9a825;
-  color: #5d4037;
-  box-shadow: 0 0 0 1px rgba(249, 168, 37, 0.35);
-}
-
-.itemsectionmenu .fm-scripts-errors-filter-btn.fm-toggle-btn-contained.fm-active .fm-scripts-errors-filter-icon.material-icons {
-  color: #e65100;
 }
 
 /* ---------------------------

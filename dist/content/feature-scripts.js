@@ -95,7 +95,7 @@
       btn.classList.toggle("fm-active", !!active);
       btn.title = active ? "Show all scripts (clear error filter)" : "Show only scripts with errors";
       btn.setAttribute("aria-pressed", active ? "true" : "false");
-      btn.setAttribute("aria-label", active ? "Error filter on — show all scripts" : "Show only scripts with errors");
+      btn.setAttribute("aria-label", active ? "Show Errors on — click to show all scripts" : "Show Errors off — show only scripts with errors");
     }
 
     function getScriptsToolbarMenu() {
@@ -132,23 +132,32 @@
 
       let gridBtn = menu.querySelector(`.${BTN_CLASS}`);
       let errorsBtn = menu.querySelector(`.${ERRORS_BTN_CLASS}`);
+      if (errorsBtn && !errorsBtn.classList.contains("fm-pill-toggle")) {
+        errorsBtn.remove();
+        errorsBtn = null;
+      }
 
       if (!errorsBtn) {
-        if (typeof FM.injectMaterialIcons === "function") {
-          FM.injectMaterialIcons();
-        }
         errorsBtn = document.createElement("button");
         errorsBtn.type = "button";
-        errorsBtn.className = ERRORS_BTN_CLASS + " fm-toggle-btn-contained";
+        errorsBtn.className = ERRORS_BTN_CLASS + " fm-pill-toggle fm-toggle-btn-contained";
         errorsBtn.setAttribute("aria-pressed", "false");
         errorsBtn.setAttribute("aria-label", "Show only scripts with errors");
 
-        const warnIcon = document.createElement("span");
-        warnIcon.className = "material-icons fm-scripts-errors-filter-icon";
-        warnIcon.setAttribute("aria-hidden", "true");
-        warnIcon.textContent = "warning";
+        const labelEl = document.createElement("span");
+        labelEl.className = "fm-toggle-label";
+        labelEl.textContent = "Show Errors";
+        errorsBtn.appendChild(labelEl);
 
-        errorsBtn.appendChild(warnIcon);
+        const pillEl = document.createElement("span");
+        pillEl.className = "fm-toggle-pill";
+        const trackEl = document.createElement("span");
+        trackEl.className = "fm-toggle-track";
+        pillEl.appendChild(trackEl);
+        const thumbEl = document.createElement("span");
+        thumbEl.className = "fm-toggle-thumb";
+        pillEl.appendChild(thumbEl);
+        errorsBtn.appendChild(pillEl);
 
         errorsBtn.addEventListener("click", (ev) => {
           ev.preventDefault();
@@ -158,6 +167,7 @@
           applyScriptsFilter(getScriptsFilterQueryForApply());
         });
 
+        gridBtn = menu.querySelector(`.${BTN_CLASS}`);
         if (gridBtn) {
           menu.insertBefore(errorsBtn, gridBtn);
         } else {
