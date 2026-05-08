@@ -353,9 +353,19 @@ FM._fmPointerHandler = null;
 
 FM._fmQuicklinksPopupClose = function (popup, onClose) {
   if (!popup || !popup.parentNode) return;
+  if (popup._fmUrlInterval) { clearInterval(popup._fmUrlInterval); popup._fmUrlInterval = null; }
   popup.parentNode.removeChild(popup);
   document.removeEventListener("click", onClose, true);
   document.removeEventListener("scroll", onClose, true);
+};
+
+FM._fmWatchUrlAndClose = function (popup, onClose) {
+  var startedAt = location.href;
+  popup._fmUrlInterval = setInterval(function () {
+    if (location.href !== startedAt) {
+      FM._fmQuicklinksPopupClose(popup, onClose);
+    }
+  }, 150);
 };
 
 /** Returns which settings shortcut is current based on location (e.g. "general-settings", "workspaces", "scripts", "users", "groups", "roles"). */
@@ -438,6 +448,15 @@ FM.showSettingsShortcutsPopup = function (anchorButton) {
     if (popup.contains(e.target) || anchorButton.contains(e.target)) return;
     FM._fmQuicklinksPopupClose(popup, closeHandler);
   };
+
+  popup.addEventListener("click", function (e) {
+    var link = e.target && e.target.closest && e.target.closest("a");
+    if (!link || !popup.contains(link)) return;
+    FM._fmQuicklinksPopupClose(popup, closeHandler);
+  }, true);
+
+  FM._fmWatchUrlAndClose(popup, closeHandler);
+
   popup._fmCloseHandler = closeHandler;
 
   document.addEventListener("click", closeHandler, true);
@@ -501,6 +520,9 @@ FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
     if (popup.contains(e.target) || anchorButton.contains(e.target)) return;
     FM._fmQuicklinksPopupClose(popup, closeHandler);
   };
+
+  FM._fmWatchUrlAndClose(popup, closeHandler);
+
   popup._fmCloseHandler = closeHandler;
 
   document.addEventListener("click", closeHandler, true);
@@ -564,6 +586,21 @@ FM.showAdminShortcutsPopup = function (anchorElement) {
     FM._fmQuicklinksPopupClose(popup, closeHandler);
     if (li) li.classList.remove("fm-admin-shortcuts-popup-open");
   };
+
+  popup.addEventListener("click", function (e) {
+    var link = e.target && e.target.closest && e.target.closest("a");
+    if (!link || !popup.contains(link)) return;
+    FM._fmQuicklinksPopupClose(popup, closeHandler);
+    if (li) li.classList.remove("fm-admin-shortcuts-popup-open");
+  }, true);
+
+  var startedAt = location.href;
+  popup._fmUrlInterval = setInterval(function () {
+    if (location.href === startedAt) return;
+    FM._fmQuicklinksPopupClose(popup, closeHandler);
+    if (li) li.classList.remove("fm-admin-shortcuts-popup-open");
+  }, 150);
+
   popup._fmCloseHandler = closeHandler;
 
   document.addEventListener("click", closeHandler, true);
