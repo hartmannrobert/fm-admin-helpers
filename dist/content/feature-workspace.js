@@ -1,6 +1,22 @@
 window.FM = window.FM || {};
+window.FM.ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP || {
+  workspaceedit: "",
+  itemdetails: "item-details-tab",
+  descriptor: "descriptor-order",
+  grid: "grid-tab",
+  workflowitems: "managed-items-tab",
+  bom: "bill-of-materials-tab",
+  sourcing: "sourcing-tab",
+  relationship: "workspace-relationships",
+  tabsedit: "tab-names",
+  printview: "print-views",
+  advancedPrintViewList: "advanced-print-views",
+  behavior: "behaviors"
+};
 
 (function () {
+  const ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP;
+
   function isOnWorkspacesSetupHome() {
     return (
       location.href.includes("/admin") &&
@@ -161,6 +177,7 @@ window.FM = window.FM || {};
 
 (function () {
   window.FM = window.FM || {};
+  const ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP;
 
   const FEATURE_KEY = "workspaceOpenInNewTab";
   const BTN_CLASS = "fm-open-newtab-btn";
@@ -275,15 +292,11 @@ window.FM = window.FM || {};
     return getWorkspaceIdFromContextFallback();
   }
 
-  function buildAdminHashUrl({ item, workspaceID, metaType }) {
-    const params = metaType
-      ? { workspaceID: String(workspaceID), metaType: String(metaType) }
-      : { workspaceID: String(workspaceID) };
-
-    const encodedParams = encodeURIComponent(JSON.stringify(params));
-    const base = `${location.origin}/admin`;
-
-    return `${base}#section=setuphome&tab=workspaces&item=${encodeURIComponent(item)}&params=${encodedParams}`;
+  function buildAdminHashUrl({ item, workspaceID }) {
+    const wid = encodeURIComponent(String(workspaceID));
+    const base = `${location.origin}/plm/admin/workspace-manager/${wid}`;
+    const suffix = ADMIN_ITEM_PATH_MAP[item];
+    return suffix ? `${base}/${suffix}` : base;
   }
 
   function resolveTargetUrl(anchor) {
@@ -446,6 +459,7 @@ window.FM = window.FM || {};
 
 (function () {
   window.FM = window.FM || {};
+  const ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP;
 
   // ===== Feature: Workspace Compact List (inject ALL quicklinks after ws id badge, no hiding) =====
   // - Shows all targets you have in itembody (and a few derived ones)
@@ -488,16 +502,10 @@ window.FM = window.FM || {};
 
   function buildAdminHashUrl(args) {
     const item = args?.item;
-    const workspaceID = args?.workspaceID;
-    const metaType = args?.metaType;
-
-    const params = metaType
-      ? { workspaceID: String(workspaceID), metaType: String(metaType) }
-      : { workspaceID: String(workspaceID) };
-
-    const encodedParams = encodeURIComponent(JSON.stringify(params));
-    const base = `${location.origin}/admin`;
-    return `${base}#section=setuphome&tab=workspaces&item=${encodeURIComponent(item)}&params=${encodedParams}`;
+    const wid = encodeURIComponent(String(args?.workspaceID));
+    const base = `${location.origin}/plm/admin/workspace-manager/${wid}`;
+    const suffix = ADMIN_ITEM_PATH_MAP[item];
+    return suffix ? `${base}/${suffix}` : base;
   }
 
   function getAllCompactTargets(workspaceId) {

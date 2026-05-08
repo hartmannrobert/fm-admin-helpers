@@ -131,40 +131,53 @@ FM.createAdminModeToggle = function () {
 
 FM.buildWorkspaceAdminUrl = function (currentUrl) {
   const tenant = FM.tenantNameFromLocation();
-  let workspaceURL = "https://" + tenant + ".autodeskplm360.net/admin#section=setuphome&tab=workspaces";
+  let workspaceURL = "https://" + tenant + ".autodeskplm360.net/plm/admin/workspace-manager";
   const gridMatch = currentUrl.match(/\/plm\/workspaces\/(\d+)\/items\/grid/);
   const bomMatch = currentUrl.match(/\/plm\/workspaces\/(\d+)\/items\/bom/);
   const wsMatch = currentUrl.match(/\/plm\/workspaces\/(\d+)\/items/);
   if (gridMatch) {
     const workspaceID = gridMatch[1];
-    workspaceURL = "https://" + tenant + ".autodeskplm360.net/admin#section=setuphome&tab=workspaces&item=grid&params=" + encodeURIComponent(JSON.stringify({ workspaceID: String(workspaceID), metaType: "G" }));
+    workspaceURL = "https://" + tenant + ".autodeskplm360.net/plm/admin/workspace-manager/" + encodeURIComponent(String(workspaceID)) + "/grid-tab";
   } else if (bomMatch) {
     const workspaceID = bomMatch[1];
-    workspaceURL = "https://" + tenant + ".autodeskplm360.net/admin#section=setuphome&tab=workspaces&item=bom&params=" + encodeURIComponent(JSON.stringify({ workspaceID: String(workspaceID), metaType: "B" }));
+    workspaceURL = "https://" + tenant + ".autodeskplm360.net/plm/admin/workspace-manager/" + encodeURIComponent(String(workspaceID)) + "/bill-of-materials-tab";
   } else if (wsMatch) {
     const workspaceID = wsMatch[1];
-    workspaceURL = "https://" + tenant + ".autodeskplm360.net/admin#section=setuphome&tab=workspaces&item=itemdetails&params=" + encodeURIComponent(JSON.stringify({ metaType: "D", workspaceID: String(workspaceID) }));
+    workspaceURL = "https://" + tenant + ".autodeskplm360.net/plm/admin/workspace-manager/" + encodeURIComponent(String(workspaceID)) + "/item-details-tab";
   }
   return workspaceURL;
 };
 
 FM.buildScriptsUrl = function () {
   const tenant = FM.tenantNameFromLocation();
-  return "https://" + tenant + ".autodeskplm360.net/admin#section=setuphome&tab=scripts";
+  return "https://" + tenant + ".autodeskplm360.net/plm/admin/system-configuration/scripting";
+};
+
+FM.isFusionEnvironment = function () {
+  return !!document.getElementById("fusion-header-fuison-link");
 };
 
 FM.buildRolesUrl = function () {
   const tenant = FM.tenantNameFromLocation();
+  if (FM.isFusionEnvironment()) {
+    return "https://" + tenant + ".autodeskplm360.net/plm/admin/roles";
+  }
   return "https://" + tenant + ".autodeskplm360.net/admin#section=adminusers&tab=roles";
 };
 
 FM.buildUsersUrl = function () {
   const tenant = FM.tenantNameFromLocation();
+  if (FM.isFusionEnvironment()) {
+    return "https://" + tenant + ".autodesk360.com/g/admin/manage/members";
+  }
   return "https://" + tenant + ".autodeskplm360.net/admin#section=adminusers&tab=users";
 };
 
 FM.buildGroupsUrl = function () {
   const tenant = FM.tenantNameFromLocation();
+  if (FM.isFusionEnvironment()) {
+    return "https://" + tenant + ".autodesk360.com/g/admin/manage/groups";
+  }
   return "https://" + tenant + ".autodeskplm360.net/admin#section=adminusers&tab=groups";
 };
 
@@ -176,28 +189,18 @@ FM.buildGeneralSettingsUrl = function () {
 /** Always returns the generic Workspace Manager URL (no context-based deep link). */
 FM.buildWorkspaceManagerUrl = function () {
   const tenant = FM.tenantNameFromLocation();
-  return "https://" + tenant + ".autodeskplm360.net/admin#section=setuphome&tab=workspaces";
+  return "https://" + tenant + ".autodeskplm360.net/plm/admin/workspace-manager";
 };
 
 /**
- * Extract workspace ID from current URL when on admin workspace settings
- * (e.g. admin#section=setuphome&tab=workspaces&item=grid&params={"workspaceID":"81",...}).
- * Returns null if not on that pattern or params lack workspaceID.
+ * Extract workspace ID from current URL when on admin workspace manager
+ * (e.g. /plm/admin/workspace-manager/307/descriptor-order).
+ * Returns null if not on that pattern.
  */
 FM.getWorkspaceIdFromAdminUrl = function (url) {
   if (typeof url !== "string") return null;
-  const hash = url.indexOf("#") >= 0 ? url.slice(url.indexOf("#") + 1) : "";
-  if (!hash.includes("section=setuphome") || !hash.includes("tab=workspaces") || !hash.includes("params=")) return null;
-  const paramsMatch = hash.match(/params=([^&]+)/);
-  if (!paramsMatch || !paramsMatch[1]) return null;
-  try {
-    const decoded = decodeURIComponent(paramsMatch[1]);
-    const obj = JSON.parse(decoded);
-    const id = obj && (obj.workspaceID !== undefined) ? String(obj.workspaceID) : null;
-    return id || null;
-  } catch (e) {
-    return null;
-  }
+  const m = url.match(/\/plm\/admin\/workspace-manager\/(\d+)/);
+  return m ? m[1] : null;
 };
 
 /** Build URL to workspace items (e.g. /plm/workspaces/81/items). workspaceId must be a string. */
@@ -214,7 +217,7 @@ FM.buildWorkspaceAddItemUrl = function (workspaceId) {
 
 FM.buildWorkflowUrl = function (currentUrl) {
   const tenant = FM.tenantNameFromLocation();
-  let url = "https://" + tenant + ".autodeskplm360.net/admin#section=setuphome&tab=workspaces";
+  let url = "https://" + tenant + ".autodeskplm360.net/plm/admin/workspace-manager";
   const wsMatch = currentUrl.match(/\/plm\/workspaces\/(\d+)\/items/);
   if (wsMatch) {
     url = "https://" + tenant + ".autodeskplm360.net/workflowEditor.form?workspaceId=" + wsMatch[1];
@@ -359,10 +362,10 @@ FM._fmQuicklinksPopupClose = function (popup, onClose) {
 FM.getCurrentSettingsShortcut = function () {
   var href = location.href;
   if (href.indexOf("/plm/admin/system-configuration/general-settings") >= 0) return "general-settings";
+  if (href.indexOf("/plm/admin/workspace-manager") >= 0) return "workspaces";
+  if (href.indexOf("/plm/admin/system-configuration/scripting") >= 0) return "scripts";
   if (!href.includes("autodeskplm360.net/admin")) return null;
   var hash = href.indexOf("#") >= 0 ? href.slice(href.indexOf("#") + 1) : "";
-  if (hash.indexOf("section=setuphome") >= 0 && hash.indexOf("tab=workspaces") >= 0) return "workspaces";
-  if (hash.indexOf("section=setuphome") >= 0 && hash.indexOf("tab=scripts") >= 0) return "scripts";
   if (hash.indexOf("section=adminusers") >= 0 && hash.indexOf("tab=users") >= 0) return "users";
   if (hash.indexOf("section=adminusers") >= 0 && hash.indexOf("tab=groups") >= 0) return "groups";
   if (hash.indexOf("section=adminusers") >= 0 && hash.indexOf("tab=roles") >= 0) return "roles";
@@ -414,7 +417,8 @@ FM.showSettingsShortcutsPopup = function (anchorButton) {
 
   var listRight = document.createElement("div");
   listRight.className = "fm-ws-quicklinks-popup-list fm-settings-shortcuts-popup-col";
-  addIconLink(listRight, FM.buildUsersUrl(), "account_circle", "Users", "Users", "users");
+  var usersLabel = FM.isFusionEnvironment() ? "Members" : "Users";
+  addIconLink(listRight, FM.buildUsersUrl(), "account_circle", usersLabel, usersLabel, "users");
   addIconLink(listRight, FM.buildGroupsUrl(), "groups", "Groups", "Groups", "groups");
   addIconLink(listRight, FM.buildRolesUrl(), "lock_person", "Roles", "Roles", "roles");
 
