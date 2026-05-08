@@ -1,6 +1,7 @@
 const DEFAULTS = {
     enabledButtons: true,
-    enabledOther: true
+    enabledOther: true,
+    enabledWorkspaceShortcuts: true
   };
   
   function postConfig(cfg) {

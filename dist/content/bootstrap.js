@@ -3,7 +3,7 @@ window.FM = window.FM || {};
 
 // Do not assume enabled before we receive config from storage (avoids new-tab
 // showing "active" when user had unchecked the control center).
-const CONFIG_DEFAULTS = { enabledButtons: true, enabledOther: true };
+const CONFIG_DEFAULTS = { enabledButtons: true, enabledOther: true, enabledWorkspaceShortcuts: true };
 FM.config = FM.config ?? null;
 
 window.addEventListener("message", (ev) => {
@@ -55,7 +55,6 @@ function mainTick() {
 
   FM.safeRun("injectCollapseExpandButtons", () => FM.injectCollapseExpandButtons()?.());
 
-  FM.safeRun("workspaceFilter", () => FM.runWorkspacesSearchFeature?.());
   FM.safeRun("picklistsActions", () => FM.runPicklistsTick?.());
 
   FM.safeRun("securityMoveAllButton", () => FM.ensureBulkMoveButtonsInCenter?.());
@@ -63,7 +62,7 @@ function mainTick() {
   FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
   FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
 
-  FM.safeRun("runWorkspacesCompactModeTick", () => FM.runWorkspacesCompactModeTick?.());
+  FM.safeRun("workspaceManagerShortcuts", () => FM.runWorkspaceManagerShortcutsTick?.());
 }
 
 (function () {

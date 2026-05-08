@@ -748,6 +748,14 @@ html[data-fm-manage-theme="dark"] #command-bar-react .fm-btn.fm-admin-toggle:hov
   user-select: text;
 }
 
+/* Workspace ID prefix sits directly next to the workspace title */
+.workspace-name-cell .fm-ws-id-badge--prefix {
+  flex: 0 0 auto;
+  padding: 0 8px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+
 /* Item Details ADMIN mode: field ID next to collapsed value */
 .fm-item-detail-field-id {
   display: inline-block;
@@ -1206,6 +1214,29 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
 
 .fm-ws-links-slot {
   margin-left: 10px;
+}
+
+/* New Admin UI workspace row — badge + title sit together on the left,
+   pills bar (when present) right-aligned, actions menu directly after. */
+.workspace-name-cell {
+  display: flex !important;
+  align-items: center;
+  width: 100%;
+  justify-content: flex-start !important;
+  gap: 0;
+}
+
+.workspace-name-cell .workspace-title {
+  flex: 0 0 auto;
+  text-align: left;
+}
+
+.workspace-name-cell .fm-ws-links-slot {
+  margin-left: auto;
+}
+
+.workspace-name-cell .MuiDataGrid-actionsCell {
+  margin-left: 4px !important;
 }
 
 .fm-ws-pill {
