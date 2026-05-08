@@ -342,11 +342,11 @@ FM.applyItemDetailsAdminModeIfActive = function () {
 FM.updateItemDetailsAdminButtonState = function () {
   var btn = document.getElementById("fm-btn-itemdetails-admin");
   if (!btn) return;
-  var onPage = FM.isOnFrontendItemDetailsPage(location.href);
+  var onPage = FM.isOnFieldIdTogglePage(location.href);
   var adminOn = onPage && FM.getItemDetailsAdminMode();
   btn.classList.toggle("disabled", !onPage);
   btn.classList.toggle("fm-admin-mode-on", adminOn);
-  btn.title = onPage ? "Toggle FieldID" : "Only on Item Details page";
+  btn.title = onPage ? "Toggle FieldID" : "Only on Item Details or Grid page";
 };
 
 FM._fmPointerHandler = null;
@@ -668,14 +668,17 @@ FM.setupShortcutsDelegation = function () {
       case "toggleItemDetailsAdmin":
         evt.stopPropagation();
         evt.preventDefault();
-        if (!FM.isOnFrontendItemDetailsPage(location.href)) return;
+        if (!FM.isOnFieldIdTogglePage(location.href)) return;
         var next = !FM.getItemDetailsAdminMode();
         FM.setItemDetailsAdminMode(next);
-        if (next) {
-          FM.applyItemDetailsAdminMode();
-        } else {
-          FM.unapplyItemDetailsAdminMode();
+        if (FM.isOnFrontendItemDetailsPage(location.href)) {
+          if (next) {
+            FM.applyItemDetailsAdminMode();
+          } else {
+            FM.unapplyItemDetailsAdminMode();
+          }
         }
+        // Grid overlay reads getItemDetailsAdminMode() per-frame, so no apply/unapply needed there.
         FM.updateItemDetailsAdminButtonState();
         break;
       case "openSettingsShortcuts":
@@ -742,6 +745,7 @@ FM.ensureButtonsPresent = function () {
     }
   }
   var onItemDetailsPage = FM.isOnFrontendItemDetailsPage(location.href);
+  var onTogglePage = FM.isOnFieldIdTogglePage(location.href);
   if (!FM.isAdminUi()) {
     var adminSlot = document.getElementById("fm-shortcuts-admin-slot");
     if (!adminSlot) {
@@ -775,7 +779,7 @@ FM.ensureButtonsPresent = function () {
     var wrapper = document.getElementById("fm-itemviewer-actions");
     var activityWrapper = document.getElementById("fm-itemviewer-activity-quicklinks");
     if (wrapperBtns) {
-      if (onItemDetailsPage) {
+      if (onTogglePage) {
         if (!wrapper) {
           wrapper = document.createElement("div");
           wrapper.id = "fm-itemviewer-actions";

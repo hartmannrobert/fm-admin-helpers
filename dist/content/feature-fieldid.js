@@ -25,6 +25,13 @@
     return location.href.includes("admin#section=setuphome&tab=workspaces&item=itemdetails");
   }
 
+  function isOnItemsGridTab() {
+    if (!isAutodeskPlmHost()) return false;
+    const href = location.href || "";
+    return /\/plm\/workspaces\/\d+\/items\/grid(\?|$|#)/i.test(href) &&
+           /[?&]tab=grid(&|$|#)/i.test(href);
+  }
+
   // ------------------ clipboard util ------------------
   async function copyToClipboard(text) {
     try {
@@ -151,11 +158,185 @@
   ];
   function isOnFieldIdTargetPage() {
     const href = location.href || "";
-    return FM_FIELDID_TARGETS.some((t) => href.includes(t));
+    if (FM_FIELDID_TARGETS.some((t) => href.includes(t))) return true;
+    return isOnItemsGridTab();
+  }
+
+  // ------------------ Items grid (Handsontable) field-id overlay ------------------
+  const FM_GRID_OVERLAY_ID = "fm-grid-fieldid-overlay";
+  const FM_GRID_OVERLAY_CELL_CLASS = "fm-grid-fieldid-cell";
+  const FM_GRID_OVERLAY_HEIGHT = 18;
+  const FM_GRID_TABLE_TOP_PADDING = FM_GRID_OVERLAY_HEIGHT + 6;
+  const FM_GRID_TABLE_PADDED_ATTR = "data-fm-grid-padded";
+
+  function findMasterHtCoreThead() {
+    for (const tbl of safeQueryAll("table.htCore")) {
+      const thead = tbl.querySelector(":scope > thead");
+      if (thead && thead.querySelector(".header[field-id]")) return thead;
+    }
+    return null;
+  }
+
+  function stripUnderscores(raw) {
+    return (raw || "").replace(/^_+|_+$/g, "");
+  }
+
+  function getOrCreateGridOverlay() {
+    let overlay = document.getElementById(FM_GRID_OVERLAY_ID);
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = FM_GRID_OVERLAY_ID;
+      Object.assign(overlay.style, {
+        position: "fixed",
+        top: "0", left: "0",
+        pointerEvents: "none",
+        zIndex: "9999",
+        display: "none",
+      });
+      document.body.appendChild(overlay);
+    }
+    return overlay;
+  }
+
+  let fmGridRafHandle = null;
+
+  function findGridPaddingTarget() {
+    // Target the spreadsheet element rendered by gridCtrl (id="gridCtrl.spreadsheetId").
+    // Pushing it down creates space below the <plm-command-bar> toolbar so the field-id
+    // overlay sits in the gap without overlapping either.
+    return document.getElementById("gridCtrl.spreadsheetId");
+  }
+
+  function applyGridTopMargin() {
+    const target = findGridPaddingTarget();
+    if (!target) return;
+    if (target.getAttribute(FM_GRID_TABLE_PADDED_ATTR) === "1") return;
+    target.setAttribute(FM_GRID_TABLE_PADDED_ATTR, "1");
+    target.dataset.fmGridPrevMarginTop = target.style.marginTop || "";
+    target.style.marginTop = FM_GRID_TABLE_TOP_PADDING + "px";
+  }
+
+  function clearGridTopMargin() {
+    safeQueryAll("[" + FM_GRID_TABLE_PADDED_ATTR + "='1']").forEach((el) => {
+      el.style.marginTop = el.dataset.fmGridPrevMarginTop || "";
+      delete el.dataset.fmGridPrevMarginTop;
+      el.removeAttribute(FM_GRID_TABLE_PADDED_ATTR);
+    });
+  }
+
+  function syncGridOverlay() {
+    const overlay = getOrCreateGridOverlay();
+
+    const toggleOn = typeof FM.getItemDetailsAdminMode === "function" && FM.getItemDetailsAdminMode();
+    if (!isOnItemsGridTab() || !FM.isEnabled("fieldIdShowFieldId") || !toggleOn) {
+      overlay.style.display = "none";
+      overlay.replaceChildren();
+      clearGridTopMargin();
+      return;
+    }
+
+    const thead = findMasterHtCoreThead();
+    if (!thead) { overlay.style.display = "none"; clearGridTopMargin(); return; }
+
+    applyGridTopMargin();
+
+    const masterPane =
+      thead.closest(".ht_master") ||
+      thead.closest(".handsontable") ||
+      thead.closest("table.htCore");
+    const paneRect = masterPane.getBoundingClientRect();
+    const headers = Array.from(thead.querySelectorAll(".header[field-id]"));
+
+    overlay.style.display = "block";
+
+    const existing = new Map();
+    Array.from(overlay.children).forEach((c) => existing.set(c.dataset.fieldId, c));
+    const seen = new Set();
+
+    for (const headerEl of headers) {
+      const rect = headerEl.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
+
+      const fieldId = stripUnderscores(headerEl.getAttribute("field-id") || "");
+      if (!fieldId) continue;
+
+      const left = Math.max(rect.left, paneRect.left);
+      const right = Math.min(rect.right, paneRect.right);
+      if (right <= left) continue;
+      seen.add(fieldId);
+
+      let cell = existing.get(fieldId);
+      if (!cell) {
+        cell = document.createElement("div");
+        // Match .fm-field-id colors (color #4675A8, font-weight 600, opacity 0.95) without
+        // inheriting its vertical-align/line-height/padding which shifted the text in the
+        // grid overlay's fixed-position cell.
+        cell.className = FM_GRID_OVERLAY_CELL_CLASS;
+        cell.dataset.fieldId = fieldId;
+        cell.textContent = fieldId;
+        cell.title = "Click to copy Field ID";
+        Object.assign(cell.style, {
+          position: "fixed",
+          height: FM_GRID_OVERLAY_HEIGHT + "px",
+          lineHeight: FM_GRID_OVERLAY_HEIGHT + "px",
+          boxSizing: "border-box",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+          pointerEvents: "auto",
+          cursor: "copy",
+          fontFamily: "monospace",
+          fontSize: "0.9em",
+          fontWeight: "600",
+          padding: "0 4px",
+          background: "transparent",
+          color: "#4675A8",
+          opacity: "0.95",
+          userSelect: "none",
+          marginTop: "-4px",
+        });
+        cell.addEventListener("mouseenter", () => { cell.style.textDecoration = "underline"; });
+        cell.addEventListener("mouseleave", () => { cell.style.textDecoration = "none"; });
+        cell.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const ok = await copyToClipboard(fieldId);
+          cell.title = ok ? `Copied: ${fieldId}` : "Copy failed";
+          setTimeout(() => { cell.title = "Click to copy Field ID"; }, 1200);
+        });
+        overlay.appendChild(cell);
+      }
+
+      cell.style.left = left + "px";
+      cell.style.width = (right - left) + "px";
+      cell.style.top = (rect.top - FM_GRID_OVERLAY_HEIGHT) + "px";
+    }
+
+    for (const [fid, cell] of existing) {
+      if (!seen.has(fid)) cell.remove();
+    }
+  }
+
+  function startGridOverlayLoop() {
+    if (fmGridRafHandle != null) return;
+    const tick = () => {
+      syncGridOverlay();
+      fmGridRafHandle = requestAnimationFrame(tick);
+    };
+    fmGridRafHandle = requestAnimationFrame(tick);
+  }
+
+  function stopGridOverlayLoop() {
+    if (fmGridRafHandle != null) cancelAnimationFrame(fmGridRafHandle);
+    fmGridRafHandle = null;
+    const overlay = document.getElementById(FM_GRID_OVERLAY_ID);
+    if (overlay) overlay.remove();
+    clearGridTopMargin();
   }
 
   window.FM.runFieldIdFeature = function () {
     enhanceFieldIdentifiersOnce(document);
+    if (isOnItemsGridTab()) startGridOverlayLoop();
+    else stopGridOverlayLoop();
   };
 
   // ------------------ Section expand / collapse + button injection ------------------

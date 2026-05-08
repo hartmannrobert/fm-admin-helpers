@@ -40,6 +40,18 @@ FM.isOnFrontendItemDetailsPage = function(url) {
   return typeof url === "string" && /autodeskplm360\.net\/plm\/workspaces\/\d+\/items\/itemDetails/.test(url);
 };
 
+/** True when on frontend workspace items grid page (e.g. /plm/workspaces/57/items/grid?tab=grid). */
+FM.isOnFrontendGridPage = function(url) {
+  if (typeof url !== "string") return false;
+  return /autodeskplm360\.net\/plm\/workspaces\/\d+\/items\/grid(\?|$|#)/i.test(url) &&
+         /[?&]tab=grid(&|$|#)/i.test(url);
+};
+
+/** True when the current page should host the FieldID toggle (item details or grid). */
+FM.isOnFieldIdTogglePage = function(url) {
+  return FM.isOnFrontendItemDetailsPage(url) || FM.isOnFrontendGridPage(url);
+};
+
 FM.isOnScriptsTab = function() {
     return location.href.includes("tab=scripts");
 }
