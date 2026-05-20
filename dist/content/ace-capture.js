@@ -3,7 +3,7 @@
  * The editor is not visible to content scripts; we expose full content via custom events.
  */
 (function () {
-  if (!/script\.form/i.test(location.href)) return;
+  if (!/script\.form/i.test(location.href) && !/system-configuration\/scripting/i.test(location.href)) return;
 
   var capturedEditor = null;
 
@@ -166,14 +166,11 @@
         startCol = selRange.start.column;
         var r = new Range(selRange.start.row, selRange.start.column, selRange.end.row, selRange.end.column);
         editor.session.replace(r, code);
-      } else if (Range && lastInsertedRange) {
-        startRow = lastInsertedRange.startRow;
-        startCol = lastInsertedRange.startCol;
-        var r = new Range(lastInsertedRange.startRow, lastInsertedRange.startCol, lastInsertedRange.endRow, lastInsertedRange.endCol);
-        editor.session.replace(r, code);
-      } else if (savedSnippetCursor) {
-        startRow = savedSnippetCursor.row;
-        startCol = savedSnippetCursor.column;
+      } else {
+        var pos = (editor.getCursorPosition && editor.getCursorPosition()) || savedSnippetCursor;
+        if (!pos) return;
+        startRow = pos.row;
+        startCol = pos.column;
         if (Range) {
           var r = new Range(startRow, startCol, startRow, startCol);
           editor.session.replace(r, code);
@@ -181,13 +178,6 @@
           if (typeof editor.insert === "function") editor.insert(code);
           else if (typeof editor.session.insert === "function") editor.session.insert({ row: startRow, column: startCol }, code);
         }
-      } else {
-        var pos = editor.getCursorPosition && editor.getCursorPosition();
-        if (!pos) return;
-        startRow = pos.row;
-        startCol = pos.column;
-        if (typeof editor.insert === "function") editor.insert(code);
-        else if (typeof editor.session.insert === "function") editor.session.insert({ row: pos.row, column: pos.column }, code);
       }
 
       var lines = code.split("\n");
@@ -206,6 +196,7 @@
   }
 
   function snippetDropdownOpened() {
+    lastInsertedRange = null;
     var editor = getEditor();
     if (!editor) return;
     var pos = editor.getCursorPosition && editor.getCursorPosition();

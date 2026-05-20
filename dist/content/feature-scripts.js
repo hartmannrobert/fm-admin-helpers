@@ -54,9 +54,10 @@
 
     function isOnScriptFormPage() {
       const href = String(location.href || "");
-      return href.includes("autodeskplm360.net") &&
-        href.includes("script.form") &&
-        /\bID=\d+/.test(href);
+      return href.includes("autodeskplm360.net") && (
+        (href.includes("script.form") && /\bID=\d+/.test(href)) ||
+        href.includes("system-configuration/scripting")
+      );
     }
 
     function setScriptFormPageTitle() {
@@ -500,8 +501,7 @@
     function restoreAceEditorState() {
       const href = String(location.href || "");
       const idMatch = href.match(/script\.form\?ID=(\d+)/i) || href.match(/[?&]ID=(\d+)/i);
-      const scriptId = idMatch ? idMatch[1] : null;
-      if (!scriptId) return;
+      const scriptId = idMatch ? idMatch[1] : "__scripting__";
       let raw;
       try {
         raw = sessionStorage.getItem("fmAceRestoreState_" + scriptId);
@@ -550,8 +550,8 @@
       btn.addEventListener("click", function () {
         const href = String(location.href || "");
         const idMatch = href.match(/script\.form\?ID=(\d+)/i) || href.match(/[?&]ID=(\d+)/i);
-        const scriptId = idMatch ? idMatch[1] : null;
-        if (scriptId) {
+        const scriptId = idMatch ? idMatch[1] : "__scripting__";
+        if (scriptId !== "__scripting__") {
           try { sessionStorage.setItem("fmScriptFormIdAfterSave", scriptId); } catch (e) { /* ignore */ }
         }
         function triggerSave() {
@@ -561,7 +561,7 @@
         Promise.all([getAceEditorState(), getScriptEditorContent()]).then(function (results) {
           const state = results[0];
           const text = results[1];
-          if (state && scriptId) {
+          if (state) {
             try { sessionStorage.setItem("fmAceRestoreState_" + scriptId, JSON.stringify(state)); } catch (e) { /* ignore */ }
           }
           if (typeof navigator.clipboard !== "undefined" && navigator.clipboard.writeText) {

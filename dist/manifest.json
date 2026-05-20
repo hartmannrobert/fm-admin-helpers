@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Fusion Manage Helper",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "action": {
     "default_title": "FM",
     "default_popup": "popup/popup.html"
@@ -23,10 +23,15 @@
   ],
   "content_scripts": [
     {
-      "matches": ["https://*.autodeskplm360.net/script.form*"],
+      "matches": [
+        "https://*.autodeskplm360.net/script.form*",
+        "https://*.autodeskplm360.net/plm/admin/system-configuration/scripting*",
+        "https://*.autodeskplm360.net/plm/*"
+      ],
       "js": ["content/ace-capture.js"],
       "run_at": "document_start",
-      "world": "MAIN"
+      "world": "MAIN",
+      "all_frames": true
     },
     {
       "matches": [
