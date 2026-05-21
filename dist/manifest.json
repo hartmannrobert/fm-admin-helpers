@@ -51,6 +51,7 @@
         "content/feature-scripts.js",
         "content/feature-security.js",
         "content/feature-workspace.js",
+        "content/feature-bom-views.js",
         "content/bootstrap.js"
       ],
       "css": ["content.css"],

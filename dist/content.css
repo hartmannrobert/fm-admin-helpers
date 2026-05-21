@@ -1243,11 +1243,11 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 22px;
-  margin-left: 4px;
+  width: 24px;
+  height: 16px;
+  margin-left: 6px;
   border: none;
-  border-radius: 11px;
+  border-radius: 5px;
   color: #3c7396;
   text-decoration: none !important;
   border-bottom: none !important;
@@ -1257,8 +1257,8 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
 }
 
 .fm-ws-pill-icon.material-icons {
-  font-size: 18px;
-  line-height: 18px;
+  font-size: 16px;
+  line-height: 16px;
 }
 
 .fm-ws-pill:hover {
@@ -2204,4 +2204,317 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
   margin: 0 !important;
   padding: 0 !important;
   cursor: default !important;
+}
+
+/* ---------------------------
+   14. BOM Views — tabbed layout
+   Anchor: #layoutContainer (always the bomViewsPanel ID in FM).
+   Specificity (1,2,0) beats FM's .fieldPanel (0,1,0) — no !important needed
+   except .fm-bom-hidden and Dojo inline-style overrides.
+   --------------------------- */
+
+/* ── Panel: override Dojo inline sizing (inline styles need !important) ── */
+#layoutContainer.fm-bom-transformed {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+#layoutContainer.fm-bom-transformed .bomViewsBody {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Hide Dojo loading-spinner blocker that lives as first child of bomViewsBody */
+#layoutContainer.fm-bom-transformed .bomViewsBody .blocker { display: none !important; }
+
+/* ── Sticky cluster: bomViewsHeader + tab bar move as one unit ── */
+.fm-bom-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 53;
+  background: #f0f0f0;
+}
+
+/* ── Tab bar ── */
+.fm-bom-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 6px 8px 0;
+  border-bottom: 2px solid #c8c8c8;
+  background: #f0f0f0;
+}
+
+.fm-bom-tab {
+  padding: 5px 14px;
+  border: 1px solid #c8c8c8;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background: #e0e0e0;
+  color: #333;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.4;
+  transition: background 0.12s ease;
+}
+
+.fm-bom-tab:hover { background: #d0d0d0; }
+
+.fm-bom-tab.fm-bom-tab-active {
+  background: #fff;
+  border-color: #c8c8c8;
+  font-weight: 600;
+  position: relative;
+  bottom: -2px;
+  padding-bottom: 7px;
+}
+
+/* ── View show / hide ── */
+.fm-bom-hidden { display: none !important; }
+
+#layoutContainer.fm-bom-transformed .viewPanel {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Per-view sticky wrapper: viewHeader + column-header row ── */
+#layoutContainer.fm-bom-transformed .fm-bom-view-sticky {
+  position: sticky;
+  top: var(--fm-bom-sticky-h, 72px);
+  z-index: 52;
+  background: #fafafa;
+  border-bottom: 1px solid #e4e4e4;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* ── View header toolbar (inside sticky wrapper, not sticky itself) ── */
+#layoutContainer.fm-bom-transformed .viewHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+#layoutContainer.fm-bom-transformed .viewHeader .viewVisibility { display: none; }
+#layoutContainer.fm-bom-transformed .viewHeader label.viewName   { display: none; }
+
+#layoutContainer.fm-bom-transformed .viewHeader .viewNameInput {
+  flex: 1 1 auto;
+  min-width: 80px;
+  max-width: 220px;
+  font-size: 12px;
+  padding: 2px 5px;
+  height: 22px;
+  box-sizing: border-box;
+}
+
+#layoutContainer.fm-bom-transformed .viewHeader label.defaultView {
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#layoutContainer.fm-bom-transformed .viewHeader input.defaultView {
+  margin: 0 2px 0 0;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+#layoutContainer.fm-bom-transformed .viewHeader .fm-bom-add-field-btn {
+  flex-shrink: 0;
+  height: 22px;
+  min-width: 22px;
+  padding: 0 6px;
+  font-size: 14px;
+  line-height: 1;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+#layoutContainer.fm-bom-transformed .viewHeader .cloneView,
+#layoutContainer.fm-bom-transformed .viewHeader .deleteView {
+  flex-shrink: 0;
+}
+
+/* ── View body ── */
+#layoutContainer.fm-bom-transformed .viewPanel  { width: 100% !important; box-sizing: border-box; }
+#layoutContainer.fm-bom-transformed .viewBody   { display: block; overflow: hidden; width: 100% !important; box-sizing: border-box; }
+#layoutContainer.fm-bom-transformed .viewFields { display: block; width: 100% !important; box-sizing: border-box; }
+
+#layoutContainer.fm-bom-transformed .viewFieldsScroll {
+  overflow: hidden !important;
+  width: 100% !important;
+  height: auto !important;
+  box-sizing: border-box;
+}
+
+#layoutContainer.fm-bom-transformed .fieldPanelAdd { display: none; }
+
+/* ── FLEX layout for the fields pane ── */
+#layoutContainer.fm-bom-transformed .viewFieldsPane {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 5px 0 0 0;
+}
+
+/* Column header row (inside .fm-bom-view-sticky, mirrors fieldPanel flex widths) */
+#layoutContainer.fm-bom-transformed .fm-bom-thead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 22px;
+  background: #ebebeb;
+  border-top: 1px solid #d8d8d8;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+#layoutContainer.fm-bom-transformed .fm-bom-thead > span {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#layoutContainer.fm-bom-transformed .fm-bom-thead > span:nth-child(1) { width: 20px; flex: 0 0 20px; }
+#layoutContainer.fm-bom-transformed .fm-bom-thead > span:nth-child(2) { width: 200px; flex: 0 0 200px; }
+#layoutContainer.fm-bom-transformed .fm-bom-thead > span:nth-child(3) { width: 26px; flex: 0 0 26px; }
+#layoutContainer.fm-bom-transformed .fm-bom-thead > span:nth-child(4) { width: 150px; flex: 0 0 150px; }
+#layoutContainer.fm-bom-transformed .fm-bom-thead > span:nth-child(5) { width: 26px; flex: 0 0 26px; }
+
+/* Field panel = flex row */
+#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  height: 30px !important;
+  min-height: 30px;
+  max-height: 30px;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #fff;
+  border-bottom: 1px solid #e4e4e4;
+  box-sizing: border-box;
+  cursor: default;
+  transition: background 0.1s ease;
+}
+
+#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel:hover { background: #f5f8ff; }
+#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel.fm-bom-dragging { opacity: 0.45; }
+#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel.fm-bom-drop-above {
+  border-top: 3px solid #4a90d9 !important;
+  background: #eef4ff;
+}
+#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel.fm-bom-drop-below {
+  border-bottom: 3px solid #4a90d9 !important;
+  background: #eef4ff;
+}
+
+/* fm-bom-row: flex sub-container taking all space after drag handle */
+#layoutContainer .fm-bom-row {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Hide empty fieldWrapper */
+#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldWrapper { display: none !important; }
+
+/* ── Drag handle ── */
+.fm-bom-drag-handle {
+  width: 20px;
+  flex-shrink: 0;
+  color: #bbb;
+  font-size: 14px;
+  text-align: center;
+  cursor: grab;
+  user-select: none;
+  line-height: 30px;
+}
+.fm-bom-drag-handle:active { cursor: grabbing; }
+
+/* ── Source field ── */
+/* Adjust width below; field names like "Revision Pinning [Standard BOM]" need ~200px */
+#layoutContainer .fm-bom-row .fieldSourceInput {
+  width: 200px !important;
+  min-width: 0 !important;
+  max-width: 200px !important;
+  flex: 0 0 200px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  height: 22px;
+  line-height: 22px;
+  box-sizing: border-box;
+}
+
+/* ── Change source button ── */
+#layoutContainer .fm-bom-row .changeSource {
+  width: 26px !important;
+  flex: 0 0 26px !important;
+  text-align: center;
+  padding: 0 !important;
+  height: 22px;
+  line-height: 22px;
+  box-sizing: border-box;
+}
+
+/* ── Display name input ── */
+/* Adjust width below to taste */
+#layoutContainer .fm-bom-row input[type="text"] {
+  width: 150px !important;
+  min-width: 0 !important;
+  max-width: 150px !important;
+  flex: 0 0 150px !important;
+  height: 22px;
+  font-size: 11px;
+  padding: 1px 4px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+/* ── Delete button ── */
+#layoutContainer .fm-bom-row .deleteField {
+  width: 26px;
+  flex-shrink: 0;
+  text-align: center;
+  padding: 0 !important;
+  height: 22px;
+  line-height: 22px;
+  box-sizing: border-box;
+}
+
+#layoutContainer .fm-bom-row .deleteField img {
+  width: 12px;
+  height: 12px;
+  display: block;
+  margin: auto;
 }

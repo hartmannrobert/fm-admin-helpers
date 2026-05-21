@@ -63,6 +63,8 @@ function mainTick() {
   FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
 
   FM.safeRun("workspaceManagerShortcuts", () => FM.runWorkspaceManagerShortcutsTick?.());
+
+  FM.safeRun("bomViews", () => FM.runBomViewsTick?.());
 }
 
 (function () {
