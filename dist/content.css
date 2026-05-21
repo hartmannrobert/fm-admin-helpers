@@ -2240,14 +2240,38 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 /* .fm-bom-sticky-header no longer used — tab bar sits outside bomViewsBody in normal flow */
 
 /* ── Tab bar ── */
-.fm-bom-tab-bar {
+.fm-bom-tab-nav {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  padding: 6px 8px 0;
+  align-items: stretch;
   border-bottom: 2px solid #c8c8c8;
   background: #f0f0f0;
 }
+.fm-bom-tab-bar {
+  display: flex;
+  flex: 1;
+  flex-wrap: nowrap;
+  gap: 2px;
+  padding: 6px 4px 0;
+  border-bottom: none;
+  background: transparent;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.fm-bom-tab-bar::-webkit-scrollbar { display: none; }
+.fm-bom-tab-arrow {
+  flex-shrink: 0;
+  width: 22px;
+  border: none;
+  background: #f0f0f0;
+  color: #555;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px 2px;
+  align-self: center;
+}
+.fm-bom-tab-arrow:hover { background: #e0e0e0; color: #222; }
 
 .fm-bom-tab {
   padding: 5px 14px;

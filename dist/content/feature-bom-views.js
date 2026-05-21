@@ -229,17 +229,49 @@
     }
   }
 
+  function updateTabArrows(bomPanel) {
+    const tabBar  = bomPanel.querySelector('.fm-bom-tab-bar');
+    const leftBtn = bomPanel.querySelector('.fm-bom-tab-arrow-left');
+    const rightBtn = bomPanel.querySelector('.fm-bom-tab-arrow-right');
+    if (!tabBar || !leftBtn || !rightBtn) return;
+    leftBtn.style.visibility  = tabBar.scrollLeft <= 0 ? 'hidden' : 'visible';
+    rightBtn.style.visibility = tabBar.scrollLeft >= tabBar.scrollWidth - tabBar.clientWidth - 1 ? 'hidden' : 'visible';
+  }
+
   function rebuildTabBar(bomPanel) {
     const body = bomPanel.querySelector('.bomViewsBody');
     if (!body) return;
     const views = Array.from(body.querySelectorAll(':scope > .viewPanel'));
 
-    // Tab bar sits between bomViewsHeader and bomViewsBody — outside the scroll area
+    // Nav wrapper holds arrows + scrollable tab bar; sits between bomViewsHeader and bomViewsBody
     let tabBar = bomPanel.querySelector('.fm-bom-tab-bar');
     if (!tabBar) {
+      const nav = document.createElement('div');
+      nav.className = 'fm-bom-tab-nav';
+
+      const leftBtn = document.createElement('button');
+      leftBtn.type = 'button';
+      leftBtn.className = 'fm-bom-tab-arrow fm-bom-tab-arrow-left';
+      leftBtn.innerHTML = '&#8249;';
+      leftBtn.style.visibility = 'hidden';
+
       tabBar = document.createElement('div');
       tabBar.className = 'fm-bom-tab-bar';
-      bomPanel.insertBefore(tabBar, body);
+
+      const rightBtn = document.createElement('button');
+      rightBtn.type = 'button';
+      rightBtn.className = 'fm-bom-tab-arrow fm-bom-tab-arrow-right';
+      rightBtn.innerHTML = '&#8250;';
+      rightBtn.style.visibility = 'hidden';
+
+      nav.appendChild(leftBtn);
+      nav.appendChild(tabBar);
+      nav.appendChild(rightBtn);
+      bomPanel.insertBefore(nav, body);
+
+      leftBtn.addEventListener('click',  () => { tabBar.scrollBy({ left: -160, behavior: 'smooth' }); });
+      rightBtn.addEventListener('click', () => { tabBar.scrollBy({ left:  160, behavior: 'smooth' }); });
+      tabBar.addEventListener('scroll', () => updateTabArrows(bomPanel));
     }
 
     const existingTabs = tabBar.querySelectorAll('.fm-bom-tab');
@@ -278,6 +310,7 @@
     });
 
     activateTab(bomPanel, newActive);
+    updateTabArrows(bomPanel);
   }
 
   // ─── Panel ───────────────────────────────────────────────────────────────────
@@ -332,7 +365,7 @@
   function syncScrollHeights(panel) {
     const bomBody  = panel.querySelector('.bomViewsBody');
     const header   = panel.querySelector('.bomViewsHeader');
-    const tabBar   = panel.querySelector('.fm-bom-tab-bar');
+    const tabNav   = panel.querySelector('.fm-bom-tab-nav');
     if (!bomBody) return;
 
     // Re-clear every tick — Dojo re-applies position:absolute/top after our one-time clear.
@@ -342,7 +375,7 @@
 
     const bodyH = panel.clientHeight
       - (header  ? header.offsetHeight  : 0)
-      - (tabBar  ? tabBar.offsetHeight  : 0);
+      - (tabNav  ? tabNav.offsetHeight  : 0);
     if (bodyH > 50 && bomBody.style.height !== bodyH + 'px')
       bomBody.style.height = bodyH + 'px';
     if (bomBody.scrollTop !== 0) bomBody.scrollTop = 0;
@@ -363,7 +396,7 @@
   function runBomViewsTick() {
     if (!isBomAdminPage()) return;
     document.querySelectorAll('.bomViewsPanel').forEach(p => transformBomPanel(p));
-    document.querySelectorAll(`.bomViewsPanel[${PANEL_MARKER}]`).forEach(p => syncScrollHeights(p));
+    document.querySelectorAll(`.bomViewsPanel[${PANEL_MARKER}]`).forEach(p => { syncScrollHeights(p); updateTabArrows(p); });
     const ufc = document.getElementById('unassignedFieldsContainer');
     if (ufc) ufc.style.height = 'calc(100% - 30px)';
   }
