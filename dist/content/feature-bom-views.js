@@ -143,9 +143,13 @@
     const viewFields = vp.querySelector('.viewFields');
     vp.style.width              = '';
     vp.style.maxWidth           = '';
+    vp.style.position           = '';
+    vp.style.top                = '';
+    vp.style.left               = '';
+    vp.style.height             = '';
     viewFieldsPane.style.width  = '';
     viewFieldsScroll.style.width = '';
-    if (viewBody)   { viewBody.style.width = ''; }
+    if (viewBody)   { viewBody.style.width = ''; viewBody.style.position = ''; viewBody.style.top = ''; }
     if (viewFields) { viewFields.style.width = ''; }
 
     // Move addField button into the toolbar, after the Default label
@@ -304,11 +308,20 @@
     body.querySelectorAll(':scope > .viewPanel').forEach(vp => transformViewPanel(vp));
     rebuildTabBar(panel);
 
+    // After initial Dojo lazy-load window, treat new viewPanels as user-added.
+    setTimeout(() => { panel.dataset.fmBomReady = '1'; }, 600);
+
     const viewObs = new MutationObserver(() => {
       const fresh = body.querySelectorAll(`:scope > .viewPanel:not([${VIEW_MARKER}])`);
       fresh.forEach(vp => transformViewPanel(vp));
       if (fresh.length > 0) {
         rebuildTabBar(panel);
+        if (panel.dataset.fmBomReady === '1') {
+          const allViews = Array.from(body.querySelectorAll(':scope > .viewPanel'));
+          const newIdx = allViews.indexOf(fresh[fresh.length - 1]);
+          activateTab(panel, newIdx >= 0 ? newIdx : allViews.length - 1);
+          requestAnimationFrame(() => syncScrollHeights(panel));
+        }
       }
     });
     viewObs.observe(body, { childList: true });
@@ -322,11 +335,17 @@
     const tabBar   = panel.querySelector('.fm-bom-tab-bar');
     if (!bomBody) return;
 
+    // Re-clear every tick — Dojo re-applies position:absolute/top after our one-time clear.
+    bomBody.style.position = '';
+    bomBody.style.top      = '';
+    bomBody.style.left     = '';
+
     const bodyH = panel.clientHeight
       - (header  ? header.offsetHeight  : 0)
       - (tabBar  ? tabBar.offsetHeight  : 0);
     if (bodyH > 50 && bomBody.style.height !== bodyH + 'px')
       bomBody.style.height = bodyH + 'px';
+    if (bomBody.scrollTop !== 0) bomBody.scrollTop = 0;
 
     const bodyBottom = bomBody.getBoundingClientRect().bottom;
     panel.querySelectorAll('.viewPanel.fm-bom-active').forEach(vp => {
