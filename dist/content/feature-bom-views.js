@@ -61,57 +61,67 @@
     if (pane.dataset.fmBomDnd) return;
     pane.dataset.fmBomDnd = '1';
 
-    let dragged = null;
+    let dragged = null, ghost = null, placeholder = null, offsetY = 0;
 
-    pane.addEventListener('dragstart', e => {
-      if (!e.target.closest('.fm-bom-drag-handle')) return; // only from handle
+    function getRows() { return Array.from(pane.querySelectorAll('.fieldPanel')); }
+
+    function movePlaceholder(clientY) {
+      const rows = getRows().filter(r => r !== dragged);
+      for (const row of rows) {
+        const rect = row.getBoundingClientRect();
+        if (clientY < rect.top + rect.height / 2) {
+          pane.insertBefore(placeholder, row);
+          return;
+        }
+      }
+      pane.appendChild(placeholder);
+    }
+
+    function endDrag() {
+      if (ghost) { ghost.remove(); ghost = null; }
+      if (placeholder) { placeholder.remove(); placeholder = null; }
+      if (dragged) { dragged.classList.remove('fm-bom-dragging'); dragged = null; }
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+
+    function onMove(e) {
+      if (!dragged) return;
+      ghost.style.top = (e.clientY - offsetY) + 'px';
+      movePlaceholder(e.clientY);
+    }
+
+    function onUp() {
+      if (placeholder && placeholder.parentNode === pane && dragged) {
+        pane.insertBefore(dragged, placeholder);
+      }
+      endDrag();
+    }
+
+    pane.addEventListener('mousedown', e => {
+      if (e.target.closest('.changeSource, .deleteField, input')) return;
       const fp = e.target.closest('.fieldPanel');
       if (!fp) return;
+      e.preventDefault();
+
       dragged = fp;
       fp.classList.add('fm-bom-dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', '');
-      // Use the handle as drag ghost — compact, not full panel width
-      const handle = fp.querySelector('.fm-bom-drag-handle');
-      if (handle) e.dataTransfer.setDragImage(handle, 10, 10);
-    });
 
-    pane.addEventListener('dragend', () => {
-      if (dragged) dragged.classList.remove('fm-bom-dragging');
-      pane.querySelectorAll('.fm-bom-drop-above,.fm-bom-drop-below').forEach(el =>
-        el.classList.remove('fm-bom-drop-above', 'fm-bom-drop-below'));
-      dragged = null;
-    });
-
-    pane.addEventListener('dragover', e => {
-      e.preventDefault();
-      const fp = e.target.closest('.fieldPanel');
-      if (!fp || fp === dragged) return;
-      pane.querySelectorAll('.fm-bom-drop-above,.fm-bom-drop-below').forEach(el =>
-        el.classList.remove('fm-bom-drop-above', 'fm-bom-drop-below'));
       const rect = fp.getBoundingClientRect();
-      fp.classList.add(e.clientY < rect.top + rect.height / 2
-        ? 'fm-bom-drop-above' : 'fm-bom-drop-below');
-      e.dataTransfer.dropEffect = 'move';
-    });
+      offsetY = e.clientY - rect.top;
 
-    pane.addEventListener('dragleave', e => {
-      // Only clear indicator when leaving to an element outside any fieldPanel.
-      // Without this, moving between children of the same row clears the indicator.
-      if (!e.relatedTarget || !e.relatedTarget.closest('.fieldPanel')) {
-        pane.querySelectorAll('.fm-bom-drop-above,.fm-bom-drop-below').forEach(el =>
-          el.classList.remove('fm-bom-drop-above', 'fm-bom-drop-below'));
-      }
-    });
+      placeholder = document.createElement('div');
+      placeholder.className = 'fm-bom-row-placeholder';
+      pane.insertBefore(placeholder, fp.nextSibling);
 
-    pane.addEventListener('drop', e => {
-      e.preventDefault();
-      const target = e.target.closest('.fieldPanel');
-      if (!target || target === dragged || !dragged) return;
-      const rect = target.getBoundingClientRect();
-      pane.insertBefore(dragged, e.clientY < rect.top + rect.height / 2
-        ? target : target.nextSibling);
-      target.classList.remove('fm-bom-drop-above', 'fm-bom-drop-below');
+      ghost = document.createElement('div');
+      ghost.className = 'fm-bom-drag-ghost';
+      ghost.textContent = fp.querySelector('.fieldSourceInput')?.textContent?.trim() || '…';
+      ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;pointer-events:none;z-index:9999`;
+      document.body.appendChild(ghost);
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
     });
   }
 
@@ -133,10 +143,9 @@
     const viewFields = vp.querySelector('.viewFields');
     vp.style.width              = '';
     vp.style.maxWidth           = '';
-    viewFieldsPane.style.width   = '';
-    viewFieldsScroll.style.width  = '';
-    viewFieldsScroll.style.height = '';
-    if (viewBody)   { viewBody.style.width = '';   viewBody.style.height = ''; }
+    viewFieldsPane.style.width  = '';
+    viewFieldsScroll.style.width = '';
+    if (viewBody)   { viewBody.style.width = ''; }
     if (viewFields) { viewFields.style.width = ''; }
 
     // Move addField button into the toolbar, after the Default label
@@ -184,7 +193,10 @@
           if (node.nodeType !== 1 || !node.classList.contains('fieldPanel')) return;
           if (node.getAttribute(ROW_MARKER)) return; // drag-drop reorder, skip
           transformFieldRow(node);
-          setTimeout(() => viewFieldsPane.appendChild(node), 80);
+          setTimeout(() => {
+            viewFieldsPane.appendChild(node);
+            viewFieldsScroll.scrollTop = viewFieldsScroll.scrollHeight;
+          }, 80);
         });
       });
     });
@@ -213,42 +225,17 @@
     }
   }
 
-  // ─── Sticky cluster (bomViewsHeader + tab bar in one sticky wrapper) ──────────
-
-  function wrapStickyHeader(panel) {
-    if (panel.querySelector('.fm-bom-sticky-header')) return;
-    const bomViewsHeader = panel.querySelector('.bomViewsHeader');
-    if (!bomViewsHeader) return;
-    const sticky = document.createElement('div');
-    sticky.className = 'fm-bom-sticky-header';
-    panel.insertBefore(sticky, bomViewsHeader);
-    sticky.appendChild(bomViewsHeader);
-    const tabBar = panel.querySelector('.fm-bom-tab-bar');
-    if (tabBar) sticky.appendChild(tabBar);
-  }
-
-  function updateStickyOffsets(panel) {
-    const sticky = panel.querySelector('.fm-bom-sticky-header');
-    const h = sticky ? sticky.offsetHeight : 0;
-    panel.style.setProperty('--fm-bom-sticky-h', h + 'px');
-  }
-
   function rebuildTabBar(bomPanel) {
     const body = bomPanel.querySelector('.bomViewsBody');
     if (!body) return;
     const views = Array.from(body.querySelectorAll(':scope > .viewPanel'));
 
-    // Tab bar lives inside the sticky cluster; create or find it there
-    let sticky = bomPanel.querySelector('.fm-bom-sticky-header');
+    // Tab bar sits between bomViewsHeader and bomViewsBody — outside the scroll area
     let tabBar = bomPanel.querySelector('.fm-bom-tab-bar');
     if (!tabBar) {
       tabBar = document.createElement('div');
       tabBar.className = 'fm-bom-tab-bar';
-      if (sticky) {
-        sticky.appendChild(tabBar);
-      } else {
-        bomPanel.insertBefore(tabBar, body);
-      }
+      bomPanel.insertBefore(tabBar, body);
     }
 
     const existingTabs = tabBar.querySelectorAll('.fm-bom-tab');
@@ -262,8 +249,7 @@
     }
 
     const prevActive = Array.from(existingTabs).findIndex(t => t.classList.contains('fm-bom-tab-active'));
-    const newActive  = prevActive >= 0 && prevActive < views.length
-      ? prevActive : Math.max(0, views.length - 1);
+    const newActive  = prevActive >= 0 && prevActive < views.length ? prevActive : 0;
 
     tabBar.innerHTML = '';
     views.forEach((vp, i) => {
@@ -311,18 +297,18 @@
     body.style.height    = '';
     body.style.minHeight = '';
     body.style.maxHeight = '';
+    body.style.position  = '';
+    body.style.top       = '';
+    body.style.left      = '';
 
     body.querySelectorAll(':scope > .viewPanel').forEach(vp => transformViewPanel(vp));
     rebuildTabBar(panel);
-    wrapStickyHeader(panel);
-    requestAnimationFrame(() => updateStickyOffsets(panel));
 
     const viewObs = new MutationObserver(() => {
       const fresh = body.querySelectorAll(`:scope > .viewPanel:not([${VIEW_MARKER}])`);
       fresh.forEach(vp => transformViewPanel(vp));
       if (fresh.length > 0) {
         rebuildTabBar(panel);
-        activateTab(panel, body.querySelectorAll(':scope > .viewPanel').length - 1);
       }
     });
     viewObs.observe(body, { childList: true });
@@ -330,10 +316,37 @@
 
   // ─── Tick ────────────────────────────────────────────────────────────────────
 
+  function syncScrollHeights(panel) {
+    const bomBody  = panel.querySelector('.bomViewsBody');
+    const header   = panel.querySelector('.bomViewsHeader');
+    const tabBar   = panel.querySelector('.fm-bom-tab-bar');
+    if (!bomBody) return;
+
+    const bodyH = panel.clientHeight
+      - (header  ? header.offsetHeight  : 0)
+      - (tabBar  ? tabBar.offsetHeight  : 0);
+    if (bodyH > 50 && bomBody.style.height !== bodyH + 'px')
+      bomBody.style.height = bodyH + 'px';
+
+    const bodyBottom = bomBody.getBoundingClientRect().bottom;
+    panel.querySelectorAll('.viewPanel.fm-bom-active').forEach(vp => {
+      const sticky = vp.querySelector('.fm-bom-view-sticky');
+      const scroll = vp.querySelector('.viewFieldsScroll');
+      if (!scroll) return;
+      const top = sticky
+        ? sticky.getBoundingClientRect().bottom
+        : vp.getBoundingClientRect().top;
+      const h = Math.max(50, Math.floor(bodyBottom - top));
+      if (scroll.style.height !== h + 'px') scroll.style.height = h + 'px';
+    });
+  }
+
   function runBomViewsTick() {
     if (!isBomAdminPage()) return;
     document.querySelectorAll('.bomViewsPanel').forEach(p => transformBomPanel(p));
-    document.querySelectorAll(`.bomViewsPanel[${PANEL_MARKER}]`).forEach(p => updateStickyOffsets(p));
+    document.querySelectorAll(`.bomViewsPanel[${PANEL_MARKER}]`).forEach(p => syncScrollHeights(p));
+    const ufc = document.getElementById('unassignedFieldsContainer');
+    if (ufc) ufc.style.height = 'calc(100% - 30px)';
   }
 
   FM.runBomViewsTick = runBomViewsTick;

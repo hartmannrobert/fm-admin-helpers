@@ -2216,7 +2216,8 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 /* ── Panel: override Dojo inline sizing (inline styles need !important) ── */
 #layoutContainer.fm-bom-transformed {
   display: block !important;
-  width: 100% !important;
+  width: 70% !important;
+  height: 100%;
   max-width: none !important;
   min-width: 0 !important;
   box-sizing: border-box;
@@ -2225,22 +2226,18 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 #layoutContainer.fm-bom-transformed .bomViewsBody {
   display: block !important;
   width: 100% !important;
-  height: auto !important;
-  max-height: none !important;
-  overflow: hidden;
+  padding: 2px !important;
+  overflow: hidden !important;
   box-sizing: border-box;
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
 }
 
 /* Hide Dojo loading-spinner blocker that lives as first child of bomViewsBody */
 #layoutContainer.fm-bom-transformed .bomViewsBody .blocker { display: none !important; }
 
-/* ── Sticky cluster: bomViewsHeader + tab bar move as one unit ── */
-.fm-bom-sticky-header {
-  position: sticky;
-  top: 0;
-  z-index: 53;
-  background: #f0f0f0;
-}
+/* .fm-bom-sticky-header no longer used — tab bar sits outside bomViewsBody in normal flow */
 
 /* ── Tab bar ── */
 .fm-bom-tab-bar {
@@ -2264,7 +2261,6 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
   cursor: pointer;
   white-space: nowrap;
   line-height: 1.4;
-  transition: background 0.12s ease;
 }
 
 .fm-bom-tab:hover { background: #d0d0d0; }
@@ -2272,10 +2268,8 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 .fm-bom-tab.fm-bom-tab-active {
   background: #fff;
   border-color: #c8c8c8;
+  border-top: 2px solid #4a90d9;
   font-weight: 600;
-  position: relative;
-  bottom: -2px;
-  padding-bottom: 7px;
 }
 
 /* ── View show / hide ── */
@@ -2288,9 +2282,6 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 
 /* ── Per-view sticky wrapper: viewHeader + column-header row ── */
 #layoutContainer.fm-bom-transformed .fm-bom-view-sticky {
-  position: sticky;
-  top: var(--fm-bom-sticky-h, 72px);
-  z-index: 52;
   background: #fafafa;
   border-bottom: 1px solid #e4e4e4;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
@@ -2331,6 +2322,7 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 #layoutContainer.fm-bom-transformed .viewHeader input.defaultView {
   margin: 0 2px 0 0;
   vertical-align: middle;
+  position: static;
   cursor: pointer;
 }
 
@@ -2356,9 +2348,9 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 #layoutContainer.fm-bom-transformed .viewFields { display: block; width: 100% !important; box-sizing: border-box; }
 
 #layoutContainer.fm-bom-transformed .viewFieldsScroll {
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   width: 100% !important;
-  height: auto !important;
   box-sizing: border-box;
 }
 
@@ -2412,25 +2404,26 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
   height: 30px !important;
   min-height: 30px;
   max-height: 30px;
-  padding: 0 !important;
+  padding: 2px !important;
   margin: 0 !important;
   overflow: hidden !important;
   background: #fff;
   border-bottom: 1px solid #e4e4e4;
   box-sizing: border-box;
-  cursor: default;
-  transition: background 0.1s ease;
+  cursor: grab;
 }
 
 #layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel:hover { background: #f5f8ff; }
-#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel.fm-bom-dragging { opacity: 0.45; }
-#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel.fm-bom-drop-above {
-  border-top: 3px solid #4a90d9 !important;
+#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel:last-child { margin-bottom: 2px !important; }
+#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel.fm-bom-dragging { opacity: 0.35; cursor: grabbing; }
+
+.fm-bom-row-placeholder {
+  height: 30px;
+  box-sizing: border-box;
   background: #eef4ff;
-}
-#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel.fm-bom-drop-below {
-  border-bottom: 3px solid #4a90d9 !important;
-  background: #eef4ff;
+  border: 2px dashed #4a90d9;
+  border-radius: 2px;
+  pointer-events: none;
 }
 
 /* fm-bom-row: flex sub-container taking all space after drag handle */
@@ -2460,6 +2453,22 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 }
 .fm-bom-drag-handle:active { cursor: grabbing; }
 
+/* Drag ghost — floats under cursor during pointer-event DnD */
+.fm-bom-drag-ghost {
+  height: 30px;
+  line-height: 30px;
+  padding: 0 8px;
+  background: #4a90d9;
+  color: #fff;
+  font-size: 11px;
+  border-radius: 3px;
+  opacity: 0.85;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── Source field ── */
 /* Adjust width below; field names like "Revision Pinning [Standard BOM]" need ~200px */
 #layoutContainer .fm-bom-row .fieldSourceInput {
@@ -2472,7 +2481,9 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
   white-space: nowrap;
   font-size: 11px;
   height: 22px;
-  line-height: 22px;
+  line-height: normal;
+  display: flex;
+  align-items: center;
   box-sizing: border-box;
 }
 
