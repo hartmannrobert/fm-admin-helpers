@@ -1,60 +1,208 @@
+/* ── Design tokens (ported from Fusion Manage Guide popup) ───────────────────── */
 :root {
-    color-scheme: light dark;
-  }
-  
-  body {
-    margin: 0;
-    width: 320px;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  }
-  
-  .hd {
-    padding: 12px 12px 8px 12px;
-    border-bottom: 1px solid rgba(120, 120, 120, 0.35);
-  }
-  
-  .title {
-    font-size: 14px;
-    font-weight: 700;
-  }
-  
-  .sub {
-    margin-top: 2px;
-    font-size: 12px;
-    opacity: 0.75;
-  }
-  
-  .panel {
-    padding: 12px;
-  }
-  
-  .row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 8px 0;
-    font-size: 13px;
-  }
-  
-  .hint {
-    margin: 4px 0 0 0;
-    font-size: 11px;
-    opacity: 0.8;
-  }
+  --fmg-blue: #2563eb;
+  --fmg-blue-hover: #1d4ed8;
+  --fmg-blue-light: #eff6ff;
+  --fmg-blue-border: #bfdbfe;
+  --fmg-green: #16a34a;
+  --fmg-green-light: #f0fdf4;
+  --fmg-green-border: #86efac;
+  --fmg-amber: #b45309;
+  --fmg-amber-light: #fffbeb;
+  --fmg-red: #dc2626;
+  --fmg-border: #e2e8f0;
+  --fmg-border-strong: #cbd5e1;
+  --fmg-surface: #ffffff;
+  --fmg-surface-dim: #f8fafc;
+  --fmg-surface-active: #f1f5f9;
+  --fmg-text: #0f172a;
+  --fmg-text-body: #334155;
+  --fmg-text-muted: #64748b;
+  --fmg-text-subtle: #94a3b8;
+}
 
-  .divider {
-    height: 1px;
-    margin: 10px 0;
-    background: rgba(120, 120, 120, 0.35);
-  }
-  
-  button {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(120, 120, 120, 0.45);
-    background: transparent;
-    cursor: pointer;
-  }
-  
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 320px;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  color: var(--fmg-text);
+  background: var(--fmg-surface);
+}
+
+/* ── Popup shell ───────────────────────────────────────────────────────────── */
+.fmg-popup {
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.fmg-popup__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--fmg-border);
+  background: var(--fmg-surface);
+}
+
+.fmg-popup__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--fmg-blue);
+  flex-shrink: 0;
+}
+
+.fmg-popup__logo svg {
+  display: block;
+}
+
+.fmg-popup__heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.fmg-popup__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fmg-text);
+  line-height: 1.2;
+}
+
+.fmg-popup__subtitle {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--fmg-text-muted);
+}
+
+/* ── Section ───────────────────────────────────────────────────────────────── */
+.fmg-popup__section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--fmg-border);
+}
+
+.fmg-popup__section:last-child {
+  border-bottom: none;
+}
+
+.fmg-popup__section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fmg-text-subtle);
+  margin-bottom: 8px;
+}
+
+/* ── Feature/workflow list ─────────────────────────────────────────────────── */
+.fmg-popup__workflow-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Admin / toggle row ────────────────────────────────────────────────────── */
+.fmg-popup__admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--fmg-border);
+  background: var(--fmg-surface-dim);
+  font-size: 12px;
+  color: var(--fmg-text-body);
+  transition: border-color 120ms, background 120ms;
+}
+
+.fmg-popup__admin-row:hover {
+  border-color: var(--fmg-blue-border);
+  background: var(--fmg-blue-light);
+}
+
+.fmg-popup__admin-label {
+  font-weight: 500;
+}
+
+.fmg-popup__admin-hint {
+  font-size: 11px;
+  color: var(--fmg-text-muted);
+  margin-top: 2px;
+}
+
+.fmg-popup__toggle {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--fmg-blue);
+  cursor: pointer;
+}
+
+/* ── Button ────────────────────────────────────────────────────────────────── */
+.fmg-popup__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--fmg-border-strong);
+  background: var(--fmg-surface-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fmg-text-body);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+  white-space: nowrap;
+}
+
+.fmg-popup__btn:hover {
+  background: var(--fmg-surface-active);
+}
+
+.fmg-popup__btn--primary {
+  background: var(--fmg-blue);
+  border-color: var(--fmg-blue);
+  color: #fff;
+}
+
+.fmg-popup__btn--primary:hover {
+  background: var(--fmg-blue-hover);
+  border-color: var(--fmg-blue-hover);
+}
+
+.fmg-popup__btn--full {
+  width: 100%;
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+.fmg-popup__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-top: 1px solid var(--fmg-border);
+  background: var(--fmg-surface-dim);
+}
+
+.fmg-popup__footer-link {
+  font-size: 11px;
+  color: var(--fmg-text-muted);
+  text-decoration: none;
+}
+
+.fmg-popup__footer-link:hover {
+  color: var(--fmg-text-body);
+}

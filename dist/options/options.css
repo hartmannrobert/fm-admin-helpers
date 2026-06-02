@@ -1,52 +1,123 @@
+/* ── Design tokens (ported from Fusion Manage Guide popup) ───────────────────── */
 :root {
-  color-scheme: light dark;
+  --fmg-blue: #2563eb;
+  --fmg-blue-hover: #1d4ed8;
+  --fmg-blue-light: #eff6ff;
+  --fmg-blue-border: #bfdbfe;
+  --fmg-red: #dc2626;
+  --fmg-border: #e2e8f0;
+  --fmg-border-strong: #cbd5e1;
+  --fmg-surface: #ffffff;
+  --fmg-surface-dim: #f8fafc;
+  --fmg-surface-active: #f1f5f9;
+  --fmg-text: #0f172a;
+  --fmg-text-body: #334155;
+  --fmg-text-muted: #64748b;
+  --fmg-text-subtle: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-.hd {
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(120, 120, 120, 0.35);
-}
-
-.title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.sub {
-  margin: 8px 0 0 0;
+  padding: 24px 16px;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 13px;
-  opacity: 0.85;
+  color: var(--fmg-text);
+  background: var(--fmg-surface-dim);
 }
 
-.panel {
-  padding: 20px;
-  max-width: 720px;
+/* ── Shell ─────────────────────────────────────────────────────────────────── */
+.fmg-popup {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--fmg-surface);
+  border: 1px solid var(--fmg-border);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-.storage-scope-section {
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(120, 120, 120, 0.3);
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.fmg-popup__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--fmg-border);
+  background: var(--fmg-surface);
 }
 
-.storage-scope-title {
-  margin: 0 0 8px 0;
-  font-size: 15px;
-  font-weight: 600;
+.fmg-popup__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--fmg-blue);
+  flex-shrink: 0;
 }
 
-.storage-scope-hint {
-  margin: 0 0 12px 0;
+.fmg-popup__logo svg {
+  display: block;
 }
 
+.fmg-popup__heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.fmg-popup__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fmg-text);
+  line-height: 1.2;
+}
+
+.fmg-popup__subtitle {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fmg-text-muted);
+}
+
+/* ── Section ───────────────────────────────────────────────────────────────── */
+.fmg-popup__section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--fmg-border);
+}
+
+.fmg-popup__section:last-child {
+  border-bottom: none;
+}
+
+.fmg-popup__section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fmg-text-subtle);
+  margin-bottom: 10px;
+}
+
+.hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fmg-text-muted);
+  margin: 0 0 12px;
+}
+
+.hint code {
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.95em;
+}
+
+/* ── Storage scope radios ──────────────────────────────────────────────────── */
 .storage-scope-radios {
   display: flex;
   flex-direction: column;
@@ -60,36 +131,16 @@ body {
   cursor: pointer;
   font-size: 13px;
   line-height: 1.4;
+  color: var(--fmg-text-body);
 }
 
 .scope-label input {
   margin-top: 2px;
   flex-shrink: 0;
+  accent-color: var(--fmg-blue);
 }
 
-.form-section,
-.list-section {
-  margin-bottom: 24px;
-}
-
-.form-section h2,
-.list-section h2 {
-  margin: 0 0 12px 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.hint {
-  margin: 0 0 12px 0;
-  font-size: 12px;
-  opacity: 0.85;
-}
-
-.hint code {
-  font-family: ui-monospace, monospace;
-  font-size: 0.95em;
-}
-
+/* ── Form fields ───────────────────────────────────────────────────────────── */
 .field {
   display: block;
   margin-bottom: 12px;
@@ -98,82 +149,113 @@ body {
 .field span {
   display: block;
   margin-bottom: 4px;
+  font-size: 13px;
   font-weight: 500;
+  color: var(--fmg-text-body);
 }
 
 .field span em {
   font-weight: normal;
-  opacity: 0.8;
+  color: var(--fmg-text-muted);
 }
 
 .field input,
 .field textarea {
   width: 100%;
-  max-width: 560px;
   padding: 8px 10px;
-  border: 1px solid rgba(120, 120, 120, 0.45);
+  background: var(--fmg-surface);
+  border: 1px solid var(--fmg-border-strong);
   border-radius: 6px;
   font-family: inherit;
   font-size: 13px;
-  box-sizing: border-box;
+  color: var(--fmg-text);
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--fmg-blue);
+  box-shadow: 0 0 0 3px var(--fmg-blue-light);
 }
 
 .field textarea {
-  font-family: ui-monospace, monospace;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
   resize: vertical;
-  min-height: 120px;
+  min-height: 140px;
 }
 
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
 .actions {
   display: flex;
   gap: 10px;
   margin-top: 16px;
 }
 
-.actions button {
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid rgba(120, 120, 120, 0.45);
-  background: transparent;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.actions button[type="submit"] {
-  font-weight: 600;
-}
-
 .import-export {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
-.import-export button {
-  padding: 6px 12px;
+.fmg-popup__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(120, 120, 120, 0.45);
-  background: transparent;
+  border: 1px solid var(--fmg-border-strong);
+  background: var(--fmg-surface-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fmg-text-body);
   cursor: pointer;
-  font-size: 13px;
+  transition: background 120ms, border-color 120ms;
+  white-space: nowrap;
 }
 
+.fmg-popup__btn:hover {
+  background: var(--fmg-surface-active);
+}
+
+.fmg-popup__btn--primary {
+  background: var(--fmg-blue);
+  border-color: var(--fmg-blue);
+  color: #fff;
+}
+
+.fmg-popup__btn--primary:hover {
+  background: var(--fmg-blue-hover);
+  border-color: var(--fmg-blue-hover);
+}
+
+/* ── Snippet list (workflow-row style) ─────────────────────────────────────── */
 .snippet-list {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .snippet-list li {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   padding: 10px 12px;
-  margin-bottom: 6px;
-  border: 1px solid rgba(120, 120, 120, 0.35);
-  border-radius: 6px;
-  background: rgba(120, 120, 120, 0.06);
+  border-radius: 7px;
+  border: 1px solid var(--fmg-border);
+  background: var(--fmg-surface-dim);
+  transition: border-color 120ms, background 120ms;
+}
+
+.snippet-list li:hover {
+  border-color: var(--fmg-blue-border);
+  background: var(--fmg-blue-light);
 }
 
 .snippet-list li .info {
@@ -182,13 +264,19 @@ body {
 }
 
 .snippet-list li .name {
+  font-size: 12px;
   font-weight: 600;
+  color: var(--fmg-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .snippet-list li .id {
-  font-size: 12px;
-  opacity: 0.75;
-  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--fmg-text-muted);
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  margin-top: 1px;
 }
 
 .snippet-list li .btns {
@@ -197,18 +285,45 @@ body {
   flex-shrink: 0;
 }
 
-.snippet-list li button {
-  padding: 6px 10px;
-  border-radius: 4px;
-  border: 1px solid rgba(120, 120, 120, 0.45);
-  background: transparent;
+.snippet-list li .btns button {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fmg-text-body);
+  background: var(--fmg-surface);
+  border: 1px solid var(--fmg-border-strong);
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 12px;
+  transition: background 120ms, border-color 120ms;
+}
+
+.snippet-list li .btns button:hover {
+  background: var(--fmg-surface-active);
 }
 
 .snippet-list .empty {
-  padding: 16px;
+  display: block;
+  padding: 20px 16px;
   text-align: center;
-  opacity: 0.8;
-  font-size: 13px;
+  color: var(--fmg-text-muted);
+  font-size: 12px;
+  background: var(--fmg-surface-dim);
+  border: 1px dashed var(--fmg-border);
+  border-radius: 7px;
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+.fmg-popup__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border-top: 1px solid var(--fmg-border);
+  background: var(--fmg-surface-dim);
+}
+
+.fmg-popup__footer-link {
+  font-size: 11px;
+  color: var(--fmg-text-muted);
+  text-decoration: none;
 }

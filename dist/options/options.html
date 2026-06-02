@@ -9,17 +9,25 @@
 </head>
 
 <body>
-  <header class="hd">
-    <h1 class="title">My script snippets</h1>
-    <p class="sub">Add snippets that appear in the script editor “Insert snippet” dropdown. They are stored locally and
-      are not overwritten by extension updates.</p>
-  </header>
+  <main class="fmg-popup">
+    <header class="fmg-popup__header">
+      <div class="fmg-popup__logo" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M9 2L15.5 6V12L9 16L2.5 12V6L9 2Z" stroke="white" stroke-width="1.5" fill="none" stroke-linejoin="round" />
+          <circle cx="9" cy="9" r="2.5" fill="white" />
+        </svg>
+      </div>
+      <div class="fmg-popup__heading">
+        <h1 class="fmg-popup__title">My script snippets</h1>
+        <p class="fmg-popup__subtitle">Snippets that appear in the script editor “Insert snippet” dropdown. Stored
+          locally, not overwritten by extension updates.</p>
+      </div>
+    </header>
 
-  <main class="panel">
-    <section class="storage-scope-section" aria-labelledby="snippet-storage-scope-title">
-      <h2 id="snippet-storage-scope-title" class="storage-scope-title">Snippet library storage</h2>
-      <p class="hint storage-scope-hint">Extension storage is shared across all tenants in this browser. IndexedDB keeps
-        a separate library per tenant. Use Export / Import to copy snippets between the two.</p>
+    <section class="fmg-popup__section" aria-labelledby="snippet-storage-scope-title">
+      <div id="snippet-storage-scope-title" class="fmg-popup__section-label">Snippet library storage</div>
+      <p class="hint storage-scope-hint">Extension storage is shared across all tenants in this browser. IndexedDB
+        keeps a separate library per tenant. Use Export / Import to copy snippets between the two.</p>
       <div class="storage-scope-radios">
         <label class="scope-label">
           <input type="radio" name="fm-snippet-storage-scope" value="extension" />
@@ -31,9 +39,11 @@
         </label>
       </div>
     </section>
-    <section class="form-section">
-      <p class="hint">Pasted code: literal backslash-n (<code>\n</code>) is converted to newlines. Name must be unique.
-      </p>
+
+    <section class="fmg-popup__section">
+      <div class="fmg-popup__section-label">Add / edit snippet</div>
+      <p class="hint">Pasted code: literal backslash-n (<code>\n</code>) is converted to newlines. Name must be
+        unique.</p>
       <form id="snippet-form">
         <label class="field">
           <span>Name <em>(required, unique)</em></span>
@@ -44,21 +54,26 @@
           <textarea id="snippet-code" rows="10" required></textarea>
         </label>
         <div class="actions">
-          <button type="submit" id="btn-save">Save</button>
-          <button type="button" id="btn-cancel">Cancel</button>
+          <button type="submit" id="btn-save" class="fmg-popup__btn fmg-popup__btn--primary">Save</button>
+          <button type="button" id="btn-cancel" class="fmg-popup__btn">Cancel</button>
         </div>
       </form>
     </section>
 
-    <section class="list-section">
+    <section class="fmg-popup__section">
+      <div class="fmg-popup__section-label">Saved snippets</div>
       <div class="import-export">
-        <button type="button" id="btn-import-default">Import default</button>
-        <button type="button" id="btn-export">Export as JSON</button>
-        <button type="button" id="btn-import">Import from JSON</button>
+        <button type="button" id="btn-import-default" class="fmg-popup__btn">Import default</button>
+        <button type="button" id="btn-export" class="fmg-popup__btn">Export as JSON</button>
+        <button type="button" id="btn-import" class="fmg-popup__btn">Import from JSON</button>
         <input type="file" id="import-file" accept=".json,application/json" hidden />
       </div>
       <ul id="snippet-list" class="snippet-list"></ul>
     </section>
+
+    <footer class="fmg-popup__footer">
+      <span class="fmg-popup__footer-link">Fusion Manage Helper · v1.0</span>
+    </footer>
   </main>
 
   <script src="../content/utils.js"></script>

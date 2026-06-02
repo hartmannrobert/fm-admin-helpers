@@ -7,29 +7,51 @@
     <title>Fusion Manage Admin Controls</title>
   </head>
   <body>
-    <header class="hd">
-      <div class="title">Control Center</div>
-      <div class="sub">Fusion Manage Admin Helpers</div>
-    </header>
+    <main class="fmg-popup">
+      <header class="fmg-popup__header">
+        <div class="fmg-popup__logo" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M9 2L15.5 6V12L9 16L2.5 12V6L9 2Z" stroke="white" stroke-width="1.5" fill="none" stroke-linejoin="round" />
+            <circle cx="9" cy="9" r="2.5" fill="white" />
+          </svg>
+        </div>
+        <div class="fmg-popup__heading">
+          <h1 class="fmg-popup__title">Control Center</h1>
+          <p class="fmg-popup__subtitle">Fusion Manage Admin Helpers</p>
+        </div>
+      </header>
 
-    <main class="panel">
-        <label class="row">
-            <span>Shortcut Buttons</span>
-            <input id="opt-buttons" type="checkbox" />
-          </label>
-          
-          <label class="row">
-            <span>Administration Helpers</span>
-            <input id="opt-other" type="checkbox" />
-          </label>
+      <section class="fmg-popup__section">
+        <div class="fmg-popup__section-label">Features</div>
+        <div class="fmg-popup__workflow-list">
+          <div class="fmg-popup__admin-row">
+            <div>
+              <div class="fmg-popup__admin-label">Shortcut Buttons</div>
+            </div>
+            <input id="opt-buttons" type="checkbox" class="fmg-popup__toggle" />
+          </div>
+          <div class="fmg-popup__admin-row">
+            <div>
+              <div class="fmg-popup__admin-label">Administration Helpers</div>
+            </div>
+            <input id="opt-other" type="checkbox" class="fmg-popup__toggle" />
+          </div>
+          <div class="fmg-popup__admin-row">
+            <div>
+              <div class="fmg-popup__admin-label">Workspace Manager Shortcuts</div>
+            </div>
+            <input id="opt-workspace-shortcuts" type="checkbox" class="fmg-popup__toggle" />
+          </div>
+        </div>
+      </section>
 
-          <label class="row">
-            <span>Workspace Manager Shortcuts</span>
-            <input id="opt-workspace-shortcuts" type="checkbox" />
-          </label>
-      <div class="divider"></div>
+      <section class="fmg-popup__section">
+        <button id="btn-close" type="button" class="fmg-popup__btn fmg-popup__btn--full">Close</button>
+      </section>
 
-      <button id="btn-close" type="button">Close</button>
+      <footer class="fmg-popup__footer">
+        <span class="fmg-popup__footer-link">Fusion Manage Helper · v1.0</span>
+      </footer>
     </main>
 
     <script src="popup.js"></script>
