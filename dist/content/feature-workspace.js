@@ -455,7 +455,7 @@ window.FM.ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP || {
 
   function isFeatureEnabled() {
     if (window.FM && typeof window.FM.isEnabled === "function") {
-      return window.FM.isEnabled("enabledWorkspaceShortcuts");
+      return window.FM.isEnabled("enabledWorkspace");
     }
     return true;
   }

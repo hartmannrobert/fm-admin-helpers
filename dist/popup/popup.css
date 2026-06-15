@@ -85,6 +85,38 @@ body {
   color: var(--fmg-text-muted);
 }
 
+/* ── Status pill (mirrors the toolbar-icon badge) ─────────────────────────── */
+.fmg-popup__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--fmg-green-light);
+  color: var(--fmg-green);
+  border: 1px solid var(--fmg-green-border);
+}
+
+.fmg-popup__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fmg-green);
+}
+
+.fmg-popup__status--off {
+  background: var(--fmg-surface-active);
+  color: var(--fmg-text-muted);
+  border-color: var(--fmg-border-strong);
+}
+
+.fmg-popup__status--off .fmg-popup__status-dot {
+  background: var(--fmg-text-subtle);
+}
+
 /* ── Section ───────────────────────────────────────────────────────────────── */
 .fmg-popup__section {
   padding: 12px 16px;
@@ -141,12 +173,81 @@ body {
   margin-top: 2px;
 }
 
+/* ── Pill / switch toggle ──────────────────────────────────────────────────── */
 .fmg-popup__toggle {
   flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--fmg-border-strong);
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.fmg-popup__toggle::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
   width: 16px;
   height: 16px;
-  accent-color: var(--fmg-blue);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.25);
+  transition: transform 140ms ease;
+}
+
+.fmg-popup__toggle:checked {
+  background: var(--fmg-blue);
+}
+
+.fmg-popup__toggle:checked::before {
+  transform: translateX(14px);
+}
+
+.fmg-popup__toggle:focus-visible {
+  outline: 2px solid var(--fmg-blue-border);
+  outline-offset: 2px;
+}
+
+/* ── Disclosure header (expand/collapse individual features) ───────────────── */
+.fmg-popup__disclosure {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
   cursor: pointer;
+  font: inherit;
+}
+
+.fmg-popup__disclosure .fmg-popup__section-label {
+  margin-bottom: 0;
+}
+
+.fmg-popup__chevron {
+  color: var(--fmg-text-subtle);
+  font-size: 11px;
+  transition: transform 140ms ease;
+}
+
+.fmg-popup__disclosure[aria-expanded="true"] .fmg-popup__chevron {
+  transform: rotate(90deg);
+}
+
+.fmg-popup__workflow-list--collapsed {
+  display: none;
+}
+
+.fmg-popup__disclosure[aria-expanded="true"] + .fmg-popup__workflow-list {
+  margin-top: 8px;
 }
 
 /* ── Button ────────────────────────────────────────────────────────────────── */

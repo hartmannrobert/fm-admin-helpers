@@ -1,7 +1,11 @@
 const DEFAULTS = {
     enabledButtons: true,
-    enabledOther: true,
-    enabledWorkspaceShortcuts: true
+    enabledWorkspace: true,
+    enabledScripting: true,
+    enabledSecurity: true,
+    enabledFieldIds: true,
+    enabledBomViews: true,
+    enabledAdminUi: true
   };
   
   function postConfig(cfg) {

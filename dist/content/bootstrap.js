@@ -3,7 +3,15 @@ window.FM = window.FM || {};
 
 // Do not assume enabled before we receive config from storage (avoids new-tab
 // showing "active" when user had unchecked the control center).
-const CONFIG_DEFAULTS = { enabledButtons: true, enabledOther: true, enabledWorkspaceShortcuts: true };
+const CONFIG_DEFAULTS = {
+  enabledButtons: true,    // Shortcut Buttons
+  enabledWorkspace: true,  // Workspace Manager (shortcuts + open-in-new-tab)
+  enabledScripting: true,  // Scripting Tools (editor + picklists)
+  enabledSecurity: true,   // Security Admin (user search + roles/groups + move-all)
+  enabledFieldIds: true,   // Field Identifiers (field IDs + filter + admin grid)
+  enabledBomViews: true,   // BOM Views
+  enabledAdminUi: true     // Admin UI Tweaks (titles + section/collapse toggles)
+};
 FM.config = FM.config ?? null;
 
 window.addEventListener("message", (ev) => {
@@ -27,44 +35,58 @@ FM.injectMaterialIcons?.();
 
 // Main tick now uses the grouped feature API from fm-features.js
 function mainTick() {
+  if (FM.config === null) return; // wait for config before touching the page
+
+  // ── Shortcut Buttons ────────────────────────────────────────────────────────
   if (FM.isEnabled("enabledButtons")) {
     FM.safeRun("buttons", () => FM.initShortcuts?.());
   }
 
-  if (!FM.isEnabled("enabledOther")) return;
+  // ── Field Identifiers ───────────────────────────────────────────────────────
+  if (FM.isEnabled("enabledFieldIds")) {
+    FM.safeRun("itemDetailsAdminMode", () => FM.applyItemDetailsAdminModeIfActive?.());
+    FM.safeRun("fieldId", () => FM.runFieldIdFeature?.());
+    FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
+  }
 
-  FM.safeRun("itemDetailsAdminMode", () => FM.applyItemDetailsAdminModeIfActive?.());
-  FM.safeRun("fieldId", () => FM.runFieldIdFeature?.());
+  // ── Scripting Tools ─────────────────────────────────────────────────────────
+  if (FM.isEnabled("enabledScripting")) {
+    FM.safeRun("scriptsAndPicklists", () => {
+      // Prefer the combined helper if present; fall back to per-feature ticks
+      if (typeof FM.tickFeatures === "function") {
+        FM.tickFeatures();
+        return;
+      }
+      FM.features?.scripts?.tick?.();
+      FM.features?.picklists?.tick?.();
+    });
+    FM.safeRun("picklistsActions", () => FM.runPicklistsTick?.());
+  }
 
-  // Scripts + Picklists grouped features (from fm-features.js)
-  FM.safeRun("scriptsAndPicklists", () => {
-    // Prefer the combined helper if present; fall back to per-feature ticks
-    if (typeof FM.tickFeatures === "function") {
-      FM.tickFeatures();
-      return;
-    }
-    FM.features?.scripts?.tick?.();
-    FM.features?.picklists?.tick?.();
-  });
+  // ── Security Admin ──────────────────────────────────────────────────────────
+  if (FM.isEnabled("enabledSecurity")) {
+    FM.safeRun("adminUsersSearch", () => FM.runAdminUsersSearchTick?.());
+    FM.safeRun("adminMover", () => FM.runSecurityRolesGroupsLayoutTick?.());
+    FM.safeRun("securityMoveAllButton", () => FM.ensureBulkMoveButtonsInCenter?.());
+  }
 
-  FM.safeRun("adminUsersSearch", () => FM.runAdminUsersSearchTick?.());
-  FM.safeRun("adminMover", () => FM.runSecurityRolesGroupsLayoutTick?.());
+  // ── Admin UI Tweaks ─────────────────────────────────────────────────────────
+  if (FM.isEnabled("enabledAdminUi")) {
+    FM.safeRun("adminTabTitles", () => FM.applyAdminTabTitle?.());
+    FM.safeRun("sectionToggle", () => FM.runSectionToggleFeature?.());
+    FM.safeRun("injectCollapseExpandButtons", () => FM.injectCollapseExpandButtons()?.());
+  }
 
-  FM.safeRun("adminTabTitles", () => FM.applyAdminTabTitle?.());
-  FM.safeRun("sectionToggle", () => FM.runSectionToggleFeature?.());
+  // ── Workspace Manager ───────────────────────────────────────────────────────
+  if (FM.isEnabled("enabledWorkspace")) {
+    FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
+    FM.safeRun("workspaceManagerShortcuts", () => FM.runWorkspaceManagerShortcutsTick?.());
+  }
 
-  FM.safeRun("injectCollapseExpandButtons", () => FM.injectCollapseExpandButtons()?.());
-
-  FM.safeRun("picklistsActions", () => FM.runPicklistsTick?.());
-
-  FM.safeRun("securityMoveAllButton", () => FM.ensureBulkMoveButtonsInCenter?.());
-
-  FM.safeRun("runFieldFilterFeature", () => FM.runFieldFilterFeature?.());
-  FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
-
-  FM.safeRun("workspaceManagerShortcuts", () => FM.runWorkspaceManagerShortcutsTick?.());
-
-  FM.safeRun("bomViews", () => FM.runBomViewsTick?.());
+  // ── BOM Views ───────────────────────────────────────────────────────────────
+  if (FM.isEnabled("enabledBomViews")) {
+    FM.safeRun("bomViews", () => FM.runBomViewsTick?.());
+  }
 }
 
 (function () {

@@ -1,26 +1,89 @@
-const DEFAULTS = { enabledButtons: true, enabledOther: true, enabledWorkspaceShortcuts: true };
+// popup.js — Control Center
+// Each feature group maps a checkbox id to a chrome.storage.local flag.
+const FEATURES = [
+  { id: "opt-buttons",   key: "enabledButtons" },
+  { id: "opt-workspace", key: "enabledWorkspace" },
+  { id: "opt-scripting", key: "enabledScripting" },
+  { id: "opt-security",  key: "enabledSecurity" },
+  { id: "opt-fieldids",  key: "enabledFieldIds" },
+  { id: "opt-bomviews",  key: "enabledBomViews" },
+  { id: "opt-adminui",   key: "enabledAdminUi" },
+];
+
+const DEFAULTS = Object.fromEntries(FEATURES.map((f) => [f.key, true]));
 const $ = (id) => document.getElementById(id);
 
+// Reload open PLM tabs so disabled features stop injecting (they only add DOM on
+// tick; turning a feature OFF needs a reload to remove already-injected markup).
+function reloadPlmTabs() {
+  if (!chrome.tabs || !chrome.tabs.query) return;
+  chrome.tabs.query({ url: "https://*.autodeskplm360.net/*" }, (tabs) => {
+    (tabs || []).forEach((t) => {
+      if (t.id != null) chrome.tabs.reload(t.id);
+    });
+  });
+}
+
+// Reflect current state: master button label + header status pill (mirrors the
+// toolbar-icon badge — green/Active when any feature on, grey/Disabled when all off).
+function updateMasterLabel() {
+  const anyOn = FEATURES.some((f) => $(f.id).checked);
+
+  const btn = $("btn-toggle-all");
+  btn.textContent = anyOn ? "Disable All" : "Enable All";
+  btn.dataset.action = anyOn ? "disable" : "enable";
+
+  const pill = $("status-pill");
+  const text = $("status-text");
+  if (pill && text) {
+    pill.classList.toggle("fmg-popup__status--off", !anyOn);
+    text.textContent = anyOn ? "Active" : "Disabled";
+  }
+}
+
+// Initial paint from storage.
 chrome.storage.local.get(DEFAULTS, (cfg) => {
-  $("opt-buttons").checked = cfg.enabledButtons !== false;
-  $("opt-other").checked = cfg.enabledOther !== false;
-  $("opt-workspace-shortcuts").checked = cfg.enabledWorkspaceShortcuts !== false;
+  FEATURES.forEach((f) => { $(f.id).checked = cfg[f.key] !== false; });
+  updateMasterLabel();
 });
 
-$("opt-buttons").addEventListener("change", (e) => {
-  chrome.storage.local.set({ enabledButtons: e.target.checked });
-});
-
-$("opt-other").addEventListener("change", (e) => {
-  chrome.storage.local.set({ enabledOther: e.target.checked });
-});
-
-$("opt-workspace-shortcuts").addEventListener("change", (e) => {
-  chrome.storage.local.set({ enabledWorkspaceShortcuts: e.target.checked });
+// Per-feature toggle: persist, reload on disable, refresh master label.
+FEATURES.forEach((f) => {
+  $(f.id).addEventListener("change", (e) => {
+    const enabled = e.target.checked;
+    chrome.storage.local.set({ [f.key]: enabled });
+    if (!enabled) reloadPlmTabs();
+    updateMasterLabel();
+  });
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  const closeBtn = document.getElementById("btn-close");
+  const masterBtn = $("btn-toggle-all");
+  if (masterBtn) {
+    masterBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const disabling = masterBtn.dataset.action === "disable";
+      const value = !disabling; // disable → false, enable → true
+      const patch = {};
+      FEATURES.forEach((f) => { $(f.id).checked = value; patch[f.key] = value; });
+      chrome.storage.local.set(patch);
+      if (disabling) reloadPlmTabs(); // only reload when removing features
+      updateMasterLabel();
+    });
+  }
+
+  const disclosure = $("features-disclosure");
+  const featuresList = $("features-list");
+  if (disclosure && featuresList) {
+    disclosure.addEventListener("click", (e) => {
+      e.preventDefault();
+      const expanded = disclosure.getAttribute("aria-expanded") === "true";
+      disclosure.setAttribute("aria-expanded", String(!expanded));
+      featuresList.classList.toggle("fmg-popup__workflow-list--collapsed", expanded);
+    });
+  }
+
+  const closeBtn = $("btn-close");
   if (closeBtn) {
     closeBtn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -29,4 +92,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-  

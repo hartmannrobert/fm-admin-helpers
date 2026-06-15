@@ -16,7 +16,10 @@
       "128": "icons/icon-128.png"
     }
   },
-  "permissions": ["storage", "activeTab"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "activeTab", "tabs"],
   "options_ui": {
     "page": "options/options.html"
   },

@@ -19,28 +19,70 @@
           <h1 class="fmg-popup__title">Control Center</h1>
           <p class="fmg-popup__subtitle">Fusion Manage Admin Helpers</p>
         </div>
+        <span id="status-pill" class="fmg-popup__status">
+          <span class="fmg-popup__status-dot"></span>
+          <span id="status-text" class="fmg-popup__status-text">Active</span>
+        </span>
       </header>
 
       <section class="fmg-popup__section">
-        <div class="fmg-popup__section-label">Features</div>
-        <div class="fmg-popup__workflow-list">
+        <button id="btn-toggle-all" type="button" class="fmg-popup__btn fmg-popup__btn--full fmg-popup__btn--primary">Disable All</button>
+      </section>
+
+      <section class="fmg-popup__section">
+        <button id="features-disclosure" type="button" class="fmg-popup__disclosure" aria-expanded="false" aria-controls="features-list">
+          <span class="fmg-popup__section-label">Individual Features</span>
+          <span class="fmg-popup__chevron" aria-hidden="true">▸</span>
+        </button>
+        <div id="features-list" class="fmg-popup__workflow-list fmg-popup__workflow-list--collapsed">
           <div class="fmg-popup__admin-row">
             <div>
               <div class="fmg-popup__admin-label">Shortcut Buttons</div>
+              <div class="fmg-popup__admin-hint">Quick-access buttons across PLM</div>
             </div>
             <input id="opt-buttons" type="checkbox" class="fmg-popup__toggle" />
           </div>
           <div class="fmg-popup__admin-row">
             <div>
-              <div class="fmg-popup__admin-label">Administration Helpers</div>
+              <div class="fmg-popup__admin-label">Workspace Manager</div>
+              <div class="fmg-popup__admin-hint">ID badges, shortcuts &amp; open-in-new-tab</div>
             </div>
-            <input id="opt-other" type="checkbox" class="fmg-popup__toggle" />
+            <input id="opt-workspace" type="checkbox" class="fmg-popup__toggle" />
           </div>
           <div class="fmg-popup__admin-row">
             <div>
-              <div class="fmg-popup__admin-label">Workspace Manager Shortcuts</div>
+              <div class="fmg-popup__admin-label">Scripting Tools</div>
+              <div class="fmg-popup__admin-hint">Script editor, snippets &amp; picklists</div>
             </div>
-            <input id="opt-workspace-shortcuts" type="checkbox" class="fmg-popup__toggle" />
+            <input id="opt-scripting" type="checkbox" class="fmg-popup__toggle" />
+          </div>
+          <div class="fmg-popup__admin-row">
+            <div>
+              <div class="fmg-popup__admin-label">Security Admin</div>
+              <div class="fmg-popup__admin-hint">User search, layout &amp; bulk move-all</div>
+            </div>
+            <input id="opt-security" type="checkbox" class="fmg-popup__toggle" />
+          </div>
+          <div class="fmg-popup__admin-row">
+            <div>
+              <div class="fmg-popup__admin-label">Field Identifiers</div>
+              <div class="fmg-popup__admin-hint">Field IDs on item details &amp; grids</div>
+            </div>
+            <input id="opt-fieldids" type="checkbox" class="fmg-popup__toggle" />
+          </div>
+          <div class="fmg-popup__admin-row">
+            <div>
+              <div class="fmg-popup__admin-label">BOM Views</div>
+              <div class="fmg-popup__admin-hint">Tabbed BOM views with drag-reorder</div>
+            </div>
+            <input id="opt-bomviews" type="checkbox" class="fmg-popup__toggle" />
+          </div>
+          <div class="fmg-popup__admin-row">
+            <div>
+              <div class="fmg-popup__admin-label">Admin UI Tweaks</div>
+              <div class="fmg-popup__admin-hint">Tab titles &amp; section collapse/expand</div>
+            </div>
+            <input id="opt-adminui" type="checkbox" class="fmg-popup__toggle" />
           </div>
         </div>
       </section>
