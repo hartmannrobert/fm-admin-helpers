@@ -55,6 +55,55 @@
     if (wrapper) wrapper.hidden = true;
   }
 
+  // ─── Native model sync ───────────────────────────────────────────────────────
+  // We run in the ISOLATED world and cannot touch the page's Dojo widgets
+  // (BomView.bomFields array, onChange dirty callback). Instead we drive the
+  // native HTML5 drag-drop handlers (BomView.handleDragStart / handleDrop),
+  // which reorder bomFields AND call onChange — keeping DOM, model and the Save
+  // button in sync. Field panels carry draggable=true with native listeners.
+
+  // Nearest sibling .fieldPanel in a direction, skipping `skip`.
+  function adjFieldPanel(node, dir, skip) {
+    let n = dir === 'previous' ? node.previousElementSibling : node.nextElementSibling;
+    while (n && (n === skip || !n.classList.contains('fieldPanel'))) {
+      n = dir === 'previous' ? n.previousElementSibling : n.nextElementSibling;
+    }
+    return n;
+  }
+
+  // Fire a synthetic native drag of `source` onto `target`. The native
+  // handleDrop decides insertBefore/insertAfter from the fields' original array
+  // positions, so `target` must be chosen per drag direction (see callers).
+  function nativeReorder(source, target) {
+    if (!source || !target || source === target) return false;
+    if (!source.classList.contains('fieldPanel') || !target.classList.contains('fieldPanel')) return false;
+    let dt;
+    try { dt = new DataTransfer(); } catch (_) { return false; }
+    const fire = (node, type) =>
+      node.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
+
+    // Suppress the native drop animations (BomView.handleDrop):
+    //  - slideRight grows `source` from width 0 — neutralized by a !important
+    //    width class that overrides jQuery's inline width tween.
+    //  - slideLeft shrinks a temporary clone (a duplicate of `source`, so it
+    //    carries the same id) right→left — we delete that clone outright.
+    source.classList.add('fm-bom-suppress-anim');
+    const sid = source.id;
+
+    fire(source, 'dragstart'); // native stores dragSource + writes dataTransfer
+    fire(target, 'dragover');  // native preventDefaults to allow the drop
+    fire(target, 'drop');      // native moves DOM + reorders bomFields + onChange()
+    fire(source, 'dragend');   // native clears drag styling/state
+
+    if (sid) {
+      source.ownerDocument.querySelectorAll('.fieldPanel').forEach(fp => {
+        if (fp !== source && fp.id === sid) fp.remove(); // drop the animating clone
+      });
+    }
+    setTimeout(() => source.classList.remove('fm-bom-suppress-anim'), 500);
+    return true;
+  }
+
   // ─── Drag-and-drop ───────────────────────────────────────────────────────────
 
   function setupDragDrop(pane) {
@@ -92,10 +141,22 @@
     }
 
     function onUp() {
+      // Translate the drop gap into a native (source, target) drag. Native
+      // handleDrop places source AFTER target when moving down, BEFORE target
+      // when moving up — so pick the neighbor on the side we travelled toward.
+      const source = dragged;
+      let target = null;
       if (placeholder && placeholder.parentNode === pane && dragged) {
-        pane.insertBefore(dragged, placeholder);
+        const above = adjFieldPanel(placeholder, 'previous', dragged);
+        const below = adjFieldPanel(placeholder, 'next', dragged);
+        const movingDown = above &&
+          (dragged.compareDocumentPosition(above) & Node.DOCUMENT_POSITION_FOLLOWING);
+        target = movingDown ? above : below;
       }
-      endDrag();
+      endDrag(); // remove ghost/placeholder before native does its own DOM move
+      if (source && target && source !== target) {
+        nativeReorder(source, target);
+      }
     }
 
     pane.addEventListener('mousedown', e => {
@@ -198,7 +259,15 @@
           if (node.getAttribute(ROW_MARKER)) return; // drag-drop reorder, skip
           transformFieldRow(node);
           setTimeout(() => {
-            viewFieldsPane.appendChild(node);
+            // Native addField() prepends the new field to BOTH the DOM and the
+            // bomFields array. Drive a native drag from front to end so the
+            // array (and thus the saved order) matches the displayed position —
+            // a plain appendChild would move the DOM only, leaving it saved at front.
+            const fields = Array.from(viewFieldsPane.querySelectorAll('.fieldPanel'));
+            const last = fields[fields.length - 1];
+            if (last && last !== node) {
+              nativeReorder(node, last);
+            }
             viewFieldsScroll.scrollTop = viewFieldsScroll.scrollHeight;
           }, 80);
         });

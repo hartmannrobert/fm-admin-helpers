@@ -1,0 +1,19 @@
+BomLayout.js url: https://adskhartmann.autodeskplm360.net/dojo/12.25.31-2931/plm/widgetModules/BomLayout.js
+Promise {<pending>}
+VM6847:5 fetch failed ReferenceError: copy is not defined
+    at <anonymous>:5:62
+
+
+
+    b)
+    widget @ viewPanel -> dijit._TemplatedMixin
+VM6897:4 widget @ bomViewsPanel -> dijit._TemplatedMixin
+VM6897:9 FieldPanel proto methods: (23) ['_getViewIDAttr', '_setViewIDAttr', '_getFieldIDAttr', '_setFieldIDAttr', '_getPersistedAttr', '_setPersistedAttr', '_setSourceFieldAttr', 'onDeleteAction', 'onSourceChangeAction', 'onChange', 'postCreate', '_updateIDs', 'changeDisplayNameInput', 'deleteField', 'openSourcePanel', 'clone', 'autoFocus', 'validate', 'constructor', 'getInherited', 'isInstanceOf', 'inherited', '__inherited']
+VM6897:10 FieldPanel own keys: (30) ['_attachPoints', '_attachEvents', 'srcNodeRef', '_connects', '_supportingWidgets', 'params', 'viewID', 'fieldID', 'displayName', 'displayOrder', 'sourceField', 'id', 'ownerDocument', 'ownerDocumentBody', 'domNode', '_inherited', 'fieldPanel', 'deleteButton', 'sourceFieldLabel', 'sourceFieldDiv', 'changeSourceButton', 'displayNameLabel', 'displayNameInput', '_rendered', '_created', 'onChange', 'onSourceChangeAction', 'onDeleteAction', 'persisted', 'focused']
+
+
+c) 
+inline drag attrs: (4) ['ondragstart=null', 'ondragover=null', 'ondrop=null', 'ondragend=null']
+VM7232:5 FieldPanel _connects: []
+VM7232:7 Uncaught ReferenceError: EOF is not defined
+    at <anonymous>:7:4

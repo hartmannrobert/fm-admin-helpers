@@ -2440,6 +2440,9 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 #layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel:hover { background: #f5f8ff; }
 #layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel:last-child { margin-bottom: 2px !important; }
 #layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel.fm-bom-dragging { opacity: 0.35; cursor: grabbing; }
+/* Override the native jQuery width tween (slideRight) after a reorder drop so the
+   field appears instantly instead of growing from zero width. */
+#layoutContainer.fm-bom-transformed .viewFieldsPane .fieldPanel.fm-bom-suppress-anim { width: auto !important; }
 
 .fm-bom-row-placeholder {
   height: 30px;
