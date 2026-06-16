@@ -68,6 +68,7 @@ function mainTick() {
     FM.safeRun("adminUsersSearch", () => FM.runAdminUsersSearchTick?.());
     FM.safeRun("adminMover", () => FM.runSecurityRolesGroupsLayoutTick?.());
     FM.safeRun("securityMoveAllButton", () => FM.ensureBulkMoveButtonsInCenter?.());
+    FM.safeRun("securityItemNewTab", () => FM.initSecurityItemNewTab?.());
   }
 
   // ── Admin UI Tweaks ─────────────────────────────────────────────────────────

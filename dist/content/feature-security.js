@@ -1115,3 +1115,115 @@ FM._rgFilter = (() => {
     // Insert above the single-move arrows
     wrapper.prepend(container);
   };
+
+// ---- Open roles/groups/users items in new tab (Cmd/Ctrl+click) ----
+
+function getAnyAdminTabTable() {
+  var t = document.querySelector('.itembody-users table');
+  if (t) return t;
+  return getSecurityTabTable();
+}
+
+// Runs at script load: if another tab stored a pending row nav, find+highlight+click it
+(function () {
+  var raw = localStorage.getItem('fmPendingItemNav');
+  if (!raw) return;
+  try {
+    var data = JSON.parse(raw);
+    localStorage.removeItem('fmPendingItemNav');
+    if (!data.rowText || Date.now() - (data.ts || 0) > 15000) return;
+
+    function waitAndAct(count) {
+      if (count > 40) return;
+      var table = getAnyAdminTabTable();
+      if (!table) { setTimeout(function () { waitAndAct(count + 1); }, 300); return; }
+
+      var rows = Array.from(table.querySelectorAll('tbody tr'));
+      var targetRow = null;
+      for (var i = 0; i < rows.length; i++) {
+        var cells = rows[i].querySelectorAll('td, th');
+        if (cells.length && cells[0].textContent.trim() === data.rowText) {
+          targetRow = rows[i];
+          break;
+        }
+      }
+
+      if (!targetRow) { setTimeout(function () { waitAndAct(count + 1); }, 300); return; }
+
+      targetRow.style.outline = '3px solid #f59e0b';
+      targetRow.style.backgroundColor = 'rgba(251,191,36,0.15)';
+      targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Match anchor by text across multiselect links first, then all anchors, then fallback [0]
+      var anchors = Array.from(targetRow.querySelectorAll('a.multiselect'));
+      var anchor = anchors.find(function (a) { return a.textContent.trim() === data.anchorText; });
+      if (!anchor) {
+        anchors = Array.from(targetRow.querySelectorAll('a'));
+        anchor = anchors.find(function (a) { return a.textContent.trim() === data.anchorText; }) || anchors[0];
+      }
+      if (anchor) {
+        anchor.click();
+        window.addEventListener('hashchange', function () {
+          targetRow.style.outline = '';
+          targetRow.style.backgroundColor = '';
+        }, { once: true });
+      }
+    }
+
+    setTimeout(function () { waitAndAct(0); }, 700);
+  } catch (_) {
+    localStorage.removeItem('fmPendingItemNav');
+  }
+})();
+
+FM.initSecurityItemNewTab = function () {
+  if (FM._secNewTabInit) return;
+  FM._secNewTabInit = true;
+
+  document.addEventListener('click', function (e) {
+    if (!e.metaKey && !e.ctrlKey) return;
+    var tab = getAdminUsersTab();
+    if (tab !== 'roles' && tab !== 'groups' && tab !== 'users') return;
+    var table = getAnyAdminTabTable();
+    if (!table) return;
+    var row = e.target.closest('tr');
+    if (!row || !table.contains(row) || row.querySelector('th')) return;
+
+    var anchorEl = e.target.closest('a') || e.target;
+    var anchorText = anchorEl.textContent.trim();
+
+    // Edit links: let FM navigate to get the item URL, capture hash change, restore + open in new tab
+    if (anchorText.toLowerCase() === 'edit') {
+      var origHref = location.href;
+      var captured = false;
+      var cleanup = setTimeout(function () {
+        window.removeEventListener('hashchange', onEditNav);
+      }, 3000);
+      function onEditNav() {
+        clearTimeout(cleanup);
+        if (captured) return;
+        captured = true;
+        var editUrl = location.href;
+        history.replaceState(null, '', origHref);
+        window.open(editUrl, '_blank');
+      }
+      window.addEventListener('hashchange', onEditNav, { once: true });
+      // Do NOT preventDefault/stopImmediatePropagation — FM's handler must run to produce the URL
+      return;
+    }
+
+    // All other row clicks: prevent FM navigating current tab, open list in new tab via pending nav
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    var rowText = row.cells[0] ? row.cells[0].textContent.trim() : '';
+    var hashBase = location.hash.replace(/^#/, '').replace(/([&?]item=[^&]*)/g, '');
+    var listUrl = location.origin + location.pathname + location.search + '#' + hashBase;
+
+    try {
+      localStorage.setItem('fmPendingItemNav', JSON.stringify({ rowText: rowText, anchorText: anchorText, ts: Date.now() }));
+    } catch (_) {}
+
+    window.open(listUrl, '_blank');
+  }, true);
+};

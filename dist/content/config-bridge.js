@@ -5,7 +5,8 @@ const DEFAULTS = {
     enabledSecurity: true,
     enabledFieldIds: true,
     enabledBomViews: true,
-    enabledAdminUi: true
+    enabledAdminUi: true,
+    fmLinkOpenMode: "same"
   };
   
   function postConfig(cfg) {

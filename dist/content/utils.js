@@ -113,19 +113,33 @@ FM.isNewTabIntentEvent = function (evt) {
 };
 
 /**
+ * Open URL respecting the global fmLinkOpenMode setting (same / new / split).
+ * Middle/shift-click modifiers always win and force a new tab.
+ * Split mode messages the background service worker to use Chrome's native split-tab API.
+ */
+FM.openUrl = function (url) {
+  if (!url) return;
+  var mode = (FM.config && FM.config.fmLinkOpenMode) || "same";
+  if (mode === "new") {
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+window.location.assign(url);
+};
+
+/**
  * Open URL with event-aware behavior:
- * - default: current tab
- * - middle/shift: new tab
- * - forceNewTab: always new tab (used by Settings/Admin shortcuts)
+ * - middle/shift: always new tab (browser modifier convention)
+ * - otherwise: delegates to FM.openUrl which respects fmLinkOpenMode
+ * - forceNewTab opt: always new tab regardless of mode
  */
 FM.openUrlWithEvent = function (url, evt, opts) {
   if (!url) return;
   var forceNewTab = !!(opts && opts.forceNewTab);
-  var openInNewTab = forceNewTab || FM.isNewTabIntentEvent(evt);
-  if (openInNewTab) {
+  if (forceNewTab || FM.isNewTabIntentEvent(evt)) {
     window.open(url, "_blank", "noopener,noreferrer");
     return;
   }
-  window.location.assign(url);
+  FM.openUrl(url);
 };
 

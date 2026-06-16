@@ -13,6 +13,20 @@ const FEATURES = [
 const DEFAULTS = Object.fromEntries(FEATURES.map((f) => [f.key, true]));
 const $ = (id) => document.getElementById(id);
 
+// Link behavior toggle ("same" | "new" | "split")
+function initLinkMode() {
+  chrome.storage.local.get({ fmLinkOpenMode: "same" }, (cfg) => {
+    var radios = document.querySelectorAll('input[name="link-mode"]');
+    radios.forEach((r) => { r.checked = r.value === cfg.fmLinkOpenMode; });
+  });
+  document.querySelectorAll('input[name="link-mode"]').forEach((r) => {
+    r.addEventListener("change", () => {
+      if (r.checked) chrome.storage.local.set({ fmLinkOpenMode: r.value });
+    });
+  });
+}
+document.addEventListener("DOMContentLoaded", initLinkMode);
+
 // Reload open PLM tabs so disabled features stop injecting (they only add DOM on
 // tick; turning a feature OFF needs a reload to remove already-injected markup).
 function reloadPlmTabs() {

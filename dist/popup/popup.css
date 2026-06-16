@@ -288,6 +288,57 @@ body {
   width: 100%;
 }
 
+/* ── Link behavior segmented control ──────────────────────────────────────── */
+.fmg-popup__seg {
+  display: flex;
+  border: 1px solid var(--fmg-border-strong);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.fmg-popup__seg-option {
+  flex: 1;
+  display: flex;
+  cursor: pointer;
+}
+
+.fmg-popup__seg-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.fmg-popup__seg-option span {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fmg-text-muted);
+  background: var(--fmg-surface-dim);
+  border-right: 1px solid var(--fmg-border-strong);
+  transition: background 120ms, color 120ms;
+  user-select: none;
+}
+
+.fmg-popup__seg-option:last-child span {
+  border-right: none;
+}
+
+.fmg-popup__seg-option input[type="radio"]:checked + span {
+  background: var(--fmg-blue);
+  color: #fff;
+}
+
+.fmg-popup__seg-option:hover input[type="radio"]:not(:checked) + span {
+  background: var(--fmg-surface-active);
+  color: var(--fmg-text-body);
+}
+
 /* ── Footer ────────────────────────────────────────────────────────────────── */
 .fmg-popup__footer {
   display: flex;

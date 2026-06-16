@@ -1368,9 +1368,16 @@
         if (!span) continue;
         const scriptName = (span.textContent || "").trim();
         const a = document.createElement("a");
-        a.href = `/script.form?ID=${encodeURIComponent(scriptId)}`;
+        const scriptUrl = `/script.form?ID=${encodeURIComponent(scriptId)}`;
+        a.href = scriptUrl;
         a.className = "fm-library-script-link";
         a.textContent = scriptName;
+        a.addEventListener("click", function (e) {
+          if (e.button !== 0 || e.metaKey || e.ctrlKey || e.altKey) return;
+          e.preventDefault();
+          if (typeof FM.openUrl === "function") FM.openUrl(scriptUrl);
+          else window.location.assign(scriptUrl);
+        });
         span.replaceWith(a);
         li.dataset.fmLibraryLinkDone = "1";
       }

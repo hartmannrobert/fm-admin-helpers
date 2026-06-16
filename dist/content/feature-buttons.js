@@ -391,6 +391,12 @@ FM.showSettingsShortcutsPopup = function (anchorButton) {
     a.className = "fm-ws-quicklinks-popup-link";
     if (linkKey && linkKey === current) a.classList.add("fm-quicklinks-popup-link-active");
     a.title = title;
+    a.addEventListener("click", function (e) {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.altKey) return;
+      e.preventDefault();
+      if (typeof FM.openUrl === "function") FM.openUrl(url);
+      else window.location.assign(url);
+    });
     var icon = document.createElement("span");
     icon.className = "material-icons fm-ws-quicklinks-popup-icon";
     icon.textContent = iconName;
@@ -493,6 +499,12 @@ FM.showWorkspaceQuicklinksPopup = function (anchorButton) {
       var a = document.createElement("a");
       a.href = item.url;
       a.className = "fm-ws-quicklinks-popup-link";
+      a.addEventListener("click", function (e) {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.altKey) return;
+        e.preventDefault();
+        if (typeof FM.openUrl === "function") FM.openUrl(item.url);
+        else window.location.assign(item.url);
+      });
       var icon = document.createElement("span");
       icon.className = "material-icons fm-ws-quicklinks-popup-icon";
       icon.textContent = item.icon;
@@ -559,6 +571,12 @@ FM.showAdminShortcutsPopup = function (anchorElement) {
     a.className = "fm-admin-shortcuts-popup-link" + (linkClass ? " " + linkClass : "");
     a.textContent = label;
     if (title) a.title = title;
+    a.addEventListener("click", function (e) {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.altKey) return;
+      e.preventDefault();
+      if (typeof FM.openUrl === "function") FM.openUrl(href);
+      else window.location.assign(href);
+    });
     popup.appendChild(a);
   }
 
