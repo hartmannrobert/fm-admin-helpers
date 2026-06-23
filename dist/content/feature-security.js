@@ -1142,10 +1142,15 @@ function getAnyAdminTabTable() {
       var targetRow = null;
       for (var i = 0; i < rows.length; i++) {
         var cells = rows[i].querySelectorAll('td, th');
-        if (cells.length && cells[0].textContent.trim() === data.rowText) {
-          targetRow = rows[i];
-          break;
+        var isMatch = false;
+        if (data.rowCells && data.rowCells.length > 0) {
+          var cellTexts = Array.from(cells).map(function (c) { return c.textContent.trim(); });
+          isMatch = data.rowCells.length === cellTexts.length &&
+                    data.rowCells.every(function (t, idx) { return t === cellTexts[idx]; });
+        } else {
+          isMatch = cells.length > 0 && cells[0].textContent.trim() === data.rowText;
         }
+        if (isMatch) { targetRow = rows[i]; break; }
       }
 
       if (!targetRow) { setTimeout(function () { waitAndAct(count + 1); }, 300); return; }
@@ -1192,36 +1197,17 @@ FM.initSecurityItemNewTab = function () {
     var anchorEl = e.target.closest('a') || e.target;
     var anchorText = anchorEl.textContent.trim();
 
-    // Edit links: let FM navigate to get the item URL, capture hash change, restore + open in new tab
-    if (anchorText.toLowerCase() === 'edit') {
-      var origHref = location.href;
-      var captured = false;
-      var cleanup = setTimeout(function () {
-        window.removeEventListener('hashchange', onEditNav);
-      }, 3000);
-      function onEditNav() {
-        clearTimeout(cleanup);
-        if (captured) return;
-        captured = true;
-        var editUrl = location.href;
-        history.replaceState(null, '', origHref);
-        window.open(editUrl, '_blank');
-      }
-      window.addEventListener('hashchange', onEditNav, { once: true });
-      // Do NOT preventDefault/stopImmediatePropagation — FM's handler must run to produce the URL
-      return;
-    }
-
-    // All other row clicks: prevent FM navigating current tab, open list in new tab via pending nav
+    // All other row clicks (Edit, Permissions, Groups, etc.): prevent FM navigating current tab, open list in new tab via pending nav
     e.preventDefault();
     e.stopImmediatePropagation();
 
     var rowText = row.cells[0] ? row.cells[0].textContent.trim() : '';
+    var rowCells = Array.from(row.cells).map(function (c) { return c.textContent.trim(); });
     var hashBase = location.hash.replace(/^#/, '').replace(/([&?]item=[^&]*)/g, '');
     var listUrl = location.origin + location.pathname + location.search + '#' + hashBase;
 
     try {
-      localStorage.setItem('fmPendingItemNav', JSON.stringify({ rowText: rowText, anchorText: anchorText, ts: Date.now() }));
+      localStorage.setItem('fmPendingItemNav', JSON.stringify({ rowText: rowText, rowCells: rowCells, anchorText: anchorText, ts: Date.now() }));
     } catch (_) {}
 
     window.open(listUrl, '_blank');
