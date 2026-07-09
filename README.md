@@ -1,5 +1,3 @@
-## Documentation is out of date as for today and will be updated shortly with a packaged release. 
-
 # Fusion Manage Admin Helpers
 
 A modular Chrome Extension that enhances the Autodesk Fusion Manage admin UI with targeted productivity, usability, and navigation improvements.
