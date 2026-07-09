@@ -1185,8 +1185,8 @@ FM.initSecurityItemNewTab = function () {
   if (FM._secNewTabInit) return;
   FM._secNewTabInit = true;
 
-  document.addEventListener('click', function (e) {
-    if (!e.metaKey && !e.ctrlKey) return;
+  function handler(e) {
+    if (!e.metaKey && !e.ctrlKey && e.button !== 1) return;
     var tab = getAdminUsersTab();
     if (tab !== 'roles' && tab !== 'groups' && tab !== 'users') return;
     var table = getAnyAdminTabTable();
@@ -1211,5 +1211,8 @@ FM.initSecurityItemNewTab = function () {
     } catch (_) {}
 
     window.open(listUrl, '_blank');
-  }, true);
+  }
+
+  document.addEventListener('click', handler, true);
+  document.addEventListener('auxclick', handler, true);
 };

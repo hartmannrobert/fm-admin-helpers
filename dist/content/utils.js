@@ -108,8 +108,8 @@ FM.applyFusionManageThemeToDocument = function () {
 /** Browser-like alternate open intent for non-anchor controls. */
 FM.isNewTabIntentEvent = function (evt) {
   if (!evt) return false;
-  // Requested behavior: middle click or Shift+click should open in a new tab.
-  return evt.button === 1 || evt.shiftKey === true;
+  // Requested behavior: middle click, Shift+click, or Cmd/Ctrl+click should open in a new tab.
+  return evt.button === 1 || evt.shiftKey === true || evt.metaKey === true || evt.ctrlKey === true;
 };
 
 /**

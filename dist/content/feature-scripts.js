@@ -1417,7 +1417,7 @@
           const interactive = ev.target?.closest?.("a, button, input, textarea, select, label");
           if (interactive) return;
           if (ev.button === 2) return;
-          if (ev.altKey || ev.metaKey || ev.ctrlKey) return;
+          if (ev.altKey) return;
           if (ev.button !== 0 && ev.button !== 1) return;
           ev.preventDefault();
           ev.stopPropagation();

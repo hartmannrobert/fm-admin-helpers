@@ -294,7 +294,6 @@ window.FM.ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP || {
   //   right before the .MuiDataGrid-actionsCell menu.
 
   const QUICKLINKS_ATTR = "data-fm-ws-quicklinks";
-  const SLOT_CLASS = "fm-ws-links-slot";
   const BAR_CLASS = "fm-ws-links-bar";
   const PILL_CLASS = "fm-ws-pill";
 
@@ -357,10 +356,6 @@ window.FM.ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP || {
   function buildShortcutBar(wsId) {
     const urls = getAllCompactTargets(wsId);
 
-    const slot = document.createElement("span");
-    slot.setAttribute("data-fm-ws-links-slot", "1");
-    slot.className = SLOT_CLASS;
-
     const bar = document.createElement("span");
     bar.setAttribute(QUICKLINKS_ATTR, "1");
     bar.className = BAR_CLASS;
@@ -379,78 +374,158 @@ window.FM.ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP || {
       icon.textContent = def.icon;
 
       a.appendChild(icon);
+      a.addEventListener(
+        "click",
+        (e) => {
+          if (!e.metaKey && !e.ctrlKey) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          window.open(url, "_blank", "noopener,noreferrer");
+        },
+        true
+      );
       bar.appendChild(a);
     }
 
-    slot.appendChild(bar);
-    return slot;
+    return bar;
   }
 
-  function ensureWorkspaceIdBadge(cell, wsId) {
-    if (cell.querySelector(".fm-ws-id-badge")) return;
-    const title = cell.querySelector(".workspace-title");
-    if (!title) return;
+  // The MUI DataGrid row/header are plain flex rows, and the last unpinned
+  // column ("Type") auto-fills whatever space is left over based on the
+  // grid's own measured total column width. Adding brand-new flex siblings
+  // confuses that measurement and collapses/misaligns the trailing columns.
+  // So instead of inserting fake columns, we widen the two REAL columns that
+  // flank where we want new content ("__reorder__" for the ID, "name" for
+  // Shortcuts) and visually split each into labeled sub-regions inside.
 
-    const badge = document.createElement("span");
-    badge.className = "fm-ws-id-badge fm-ws-id-badge--prefix";
-    badge.textContent = String(wsId);
-    title.insertAdjacentElement("beforebegin", badge);
+  // The grid continuously re-balances column widths to fill its container
+  // (a live auto-fit), so setting header/cell pixel widths ourselves gets
+  // fought and reverted on the next re-render while our cell content
+  // doesn't, causing header/cell drift. Going through the grid's own
+  // public apiRef.setColumnWidth() updates its real internal state instead,
+  // so the auto-fit math (and the trailing "Type" column) stays consistent.
+  //
+  // apiRef hangs off the React fiber tree, which is only reachable from the
+  // page's own JS context — not from this isolated-world content script.
+  // content/workspace-grid-bridge.js (MAIN world) does the actual resizing
+  // on request and reports back the pre-resize width via a DOM event.
+
+  const ID_EXTRA_WIDTH = 30;
+  const SHORTCUTS_EXTRA_WIDTH = 360;
+
+  let reorderColBaseline = null;
+  let nameColBaseline = null;
+
+  document.addEventListener("fm-ws-grid-columns-resized", function (ev) {
+    const detail = ev.detail || {};
+    if (typeof detail.__reorder__ === "number") reorderColBaseline = detail.__reorder__;
+    if (typeof detail.name === "number") nameColBaseline = detail.name;
+  });
+
+  function requestColumnResize(fields) {
+    document.dispatchEvent(
+      new CustomEvent("fm-ws-grid-resize-columns", {
+        detail: {
+          fields: fields.map((field) => ({
+            field,
+            extraWidth: field === "__reorder__" ? ID_EXTRA_WIDTH : SHORTCUTS_EXTRA_WIDTH,
+          })),
+        },
+      })
+    );
   }
 
-  function injectShortcutsIntoRow(rowEl) {
-    const cell = rowEl.querySelector(".workspace-name-cell");
-    if (!cell) return;
+  function ensureReorderHeaderLabeled() {
+    const header = document.querySelector('.MuiDataGrid-columnHeader[data-field="__reorder__"]');
+    const titleContent = header?.querySelector(".MuiDataGrid-columnHeaderTitleContainerContent");
+    if (!titleContent || titleContent.querySelector(".fm-ws-id-header-label")) return;
+
+    const label = document.createElement("span");
+    label.className = "fm-ws-id-header-label";
+    label.textContent = "ID";
+    titleContent.appendChild(label);
+  }
+
+  function ensureNameHeaderSplit() {
+    const header = document.querySelector('.MuiDataGrid-columnHeader[data-field="name"]');
+    const titleContent = header?.querySelector(".MuiDataGrid-columnHeaderTitleContainerContent");
+    if (!titleContent || titleContent.classList.contains("fm-ws-name-header-split")) return;
+
+    const existingTitle = titleContent.querySelector(".MuiDataGrid-columnHeaderTitle");
+    if (!existingTitle) return;
+    titleContent.classList.add("fm-ws-name-header-split");
+
+    const nameWrap = document.createElement("div");
+    nameWrap.className = "fm-ws-name-subheader";
+    nameWrap.style.flexBasis = `${nameColBaseline}px`;
+    nameWrap.appendChild(existingTitle);
+
+    const shortcutsWrap = document.createElement("div");
+    shortcutsWrap.className = "fm-ws-shortcuts-subheader MuiDataGrid-columnHeaderTitle";
+    shortcutsWrap.style.flexBasis = `${SHORTCUTS_EXTRA_WIDTH}px`;
+    shortcutsWrap.textContent = "Shortcuts";
+
+    titleContent.appendChild(nameWrap);
+    titleContent.appendChild(shortcutsWrap);
+  }
+
+  const CELL_SPLIT_ATTR = "data-fm-split";
+
+  function injectIdIntoRow(rowEl) {
+    const cell = rowEl.querySelector('.MuiDataGrid-cell[data-field="__reorder__"]');
+    if (!cell || cell.getAttribute(CELL_SPLIT_ATTR) === "1") return;
 
     const wsId = extractWorkspaceIdFromRow(rowEl);
     if (!wsId) return;
 
-    if (cell.querySelector('[data-fm-ws-links-slot="1"]')) return;
+    const content = cell.querySelector(".MuiDataGrid-cellContent");
+    if (!content) return;
+    cell.setAttribute(CELL_SPLIT_ATTR, "1");
 
-    const slot = buildShortcutBar(wsId);
+    const badge = document.createElement("span");
+    badge.className = "fm-ws-id-badge";
+    badge.textContent = String(wsId);
+    content.appendChild(badge);
+  }
 
-    const menu = cell.querySelector(".MuiDataGrid-actionsCell");
-    if (menu) {
-      menu.insertAdjacentElement("beforebegin", slot);
-    } else {
-      cell.appendChild(slot);
+  function injectShortcutsIntoRow(rowEl) {
+    const nameCell = rowEl.querySelector('.MuiDataGrid-cell[data-field="name"]');
+    if (!nameCell) return;
+
+    const wsId = extractWorkspaceIdFromRow(rowEl);
+    if (!wsId) return;
+
+    let region = nameCell.querySelector(".fm-ws-shortcuts-region");
+    if (!region) {
+      const content = nameCell.querySelector(".MuiDataGrid-cellContent");
+      if (!content) return;
+      content.classList.add("fm-ws-name-cell-split");
+
+      const nameRegion = content.querySelector(".workspace-name-cell");
+      if (nameRegion) {
+        nameRegion.style.flexBasis = `${nameColBaseline}px`;
+        nameRegion.style.maxWidth = `${nameColBaseline}px`;
+      }
+
+      region = document.createElement("div");
+      region.className = "fm-ws-shortcuts-region";
+      region.style.flexBasis = `${SHORTCUTS_EXTRA_WIDTH}px`;
+      content.appendChild(region);
     }
+
+    if (region.querySelector(`.${BAR_CLASS}`)) return;
+    region.appendChild(buildShortcutBar(wsId));
+  }
+
+  function injectIdAll() {
+    const rows = document.querySelectorAll('.workspace-row[data-id^="workspace-"]');
+    for (const row of rows) injectIdIntoRow(row);
   }
 
   function injectAll() {
     const rows = document.querySelectorAll('.workspace-row[data-id^="workspace-"]');
     for (const row of rows) injectShortcutsIntoRow(row);
-  }
-
-  function injectIdBadgesAll() {
-    const rows = document.querySelectorAll('.workspace-row[data-id^="workspace-"]');
-    for (const row of rows) {
-      const cell = row.querySelector(".workspace-name-cell");
-      if (!cell) continue;
-      const wsId = extractWorkspaceIdFromRow(row);
-      if (!wsId) continue;
-      ensureWorkspaceIdBadge(cell, wsId);
-    }
-  }
-
-  const NAME_COL_WIDTH_PX = 900;
-  const WIDTH_APPLIED_ATTR = "data-fm-ws-width-applied";
-
-  // Set the initial width once per freshly rendered DOM node so the user
-  // can resize the column afterwards without us fighting them on every tick.
-  function applyNameColumnWidthOnce() {
-    const widthPx = `${NAME_COL_WIDTH_PX}px`;
-
-    const header = document.querySelector('.MuiDataGrid-columnHeader[data-field="name"]');
-    if (header && header.getAttribute(WIDTH_APPLIED_ATTR) !== "1") {
-      header.style.width = widthPx;
-      header.setAttribute(WIDTH_APPLIED_ATTR, "1");
-    }
-
-    document.querySelectorAll('.MuiDataGrid-cell[data-field="name"]').forEach((cell) => {
-      if (cell.getAttribute(WIDTH_APPLIED_ATTR) === "1") return;
-      cell.style.setProperty("--width", widthPx);
-      cell.setAttribute(WIDTH_APPLIED_ATTR, "1");
-    });
   }
 
   function isFeatureEnabled() {
@@ -462,10 +537,18 @@ window.FM.ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP || {
 
   window.FM.runWorkspaceManagerShortcutsTick = function () {
     try {
-      injectIdBadgesAll();
-      if (!isFeatureEnabled()) return;
-      applyNameColumnWidthOnce();
-      injectAll();
+      const enabled = isFeatureEnabled();
+      requestColumnResize(enabled ? ["__reorder__", "name"] : ["__reorder__"]);
+
+      if (reorderColBaseline != null) {
+        ensureReorderHeaderLabeled();
+        injectIdAll();
+      }
+      if (!enabled) return;
+      if (nameColBaseline != null) {
+        ensureNameHeaderSplit();
+        injectAll();
+      }
     } catch (e) {
       console.warn("[FM] workspaceManagerShortcuts failed", e);
     }

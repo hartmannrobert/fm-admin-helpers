@@ -111,6 +111,40 @@
   color: #606060;
 }
 
+/* Fusion Team nav settings button (it-id="NAVIGATION", autodesk360.com) */
+[it-id="NAVIGATION"] .fm-ft-nav-btn {
+  width: 18px;
+  height: 18px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  margin: 2px 0 0 20px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #808080;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+[it-id="NAVIGATION"] .fm-ft-nav-btn .material-icons {
+  font-size: 20px;
+  line-height: 22.4px;
+  width: 20px;
+  height: 20px;
+  color: #808080;
+}
+
+[it-id="NAVIGATION"] .fm-ft-nav-btn:hover,
+[it-id="NAVIGATION"] .fm-ft-nav-btn:focus,
+[it-id="NAVIGATION"] .fm-ft-nav-btn:active {
+  background: transparent;
+  box-shadow: rgba(255, 255, 255, 0.25) 0px 0px 0px 10px;
+}
+
 /* Fusion Manage dark mode (header moon/sun via data-fm-manage-theme on html + #fm-shortcuts, set by FM.applyFusionManageThemeToDocument) */
 html[data-fm-manage-theme="dark"] #fm-shortcuts.fm-shortcuts-in-header .fm-btn {
   color: #577390;
@@ -748,14 +782,6 @@ html[data-fm-manage-theme="dark"] #command-bar-react .fm-btn.fm-admin-toggle:hov
   user-select: text;
 }
 
-/* Workspace ID prefix sits directly next to the workspace title */
-.workspace-name-cell .fm-ws-id-badge--prefix {
-  flex: 0 0 auto;
-  padding: 0 8px 0 0;
-  font-variant-numeric: tabular-nums;
-}
-
-
 /* Item Details ADMIN mode: field ID next to collapsed value */
 .fm-item-detail-field-id {
   display: inline-block;
@@ -1205,23 +1231,20 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
   vertical-align: middle;
 }
 
-.fm-ws-links-slot,
 .fm-ws-links-bar {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   white-space: nowrap;
-  vertical-align: middle;
-}
-
-.fm-ws-links-slot {
-  margin-left: 10px;
 }
 
 /* New Admin UI workspace row — badge + title sit together on the left,
-   pills bar (when present) right-aligned, actions menu directly after. */
+   actions menu pinned to the right edge of the (fixed-width) Name region. */
 .workspace-name-cell {
   display: flex !important;
   align-items: center;
   width: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
   justify-content: flex-start !important;
   gap: 0;
 }
@@ -1229,14 +1252,68 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
 .workspace-name-cell .workspace-title {
   flex: 0 0 auto;
   text-align: left;
-}
-
-.workspace-name-cell .fm-ws-links-slot {
-  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workspace-name-cell .MuiDataGrid-actionsCell {
-  margin-left: 4px !important;
+  margin-left: auto !important;
+}
+
+/* The Name column is widened and split in two: the original Name region
+   (fixed to its natural width) plus a Shortcuts region appended after it.
+   This avoids adding real extra grid columns, which breaks the grid's own
+   auto-fill sizing of the trailing "Type" column. Same split pattern is
+   mirrored in the header via .fm-ws-name-header-split. */
+.fm-ws-name-cell-split {
+  display: flex;
+  width: 100%;
+}
+
+.fm-ws-shortcuts-region {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-left: 10px;
+  margin-left: 4px;
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.fm-ws-name-header-split {
+  display: flex;
+  width: 100%;
+}
+
+.fm-ws-name-subheader,
+.fm-ws-shortcuts-subheader {
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fm-ws-shortcuts-subheader {
+  padding-left: 10px;
+  margin-left: 4px;
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.fm-ws-id-header-label {
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+.MuiDataGrid-cell[data-field="__reorder__"] .MuiDataGrid-cellContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.MuiDataGrid-cell[data-field="__reorder__"] .fm-ws-id-badge {
+  margin-left: 6px;
 }
 
 .fm-ws-pill {

@@ -26,7 +26,8 @@
   "host_permissions": [
     "https://*.autodeskplm360.net/plm/*",
     "https://*.autodeskplm360.net/admin*",
-    "https://*.autodeskplm360.net/script.form*"
+    "https://*.autodeskplm360.net/script.form*",
+    "https://*.autodesk360.com/*"
   ],
   "web_accessible_resources": [
     {
@@ -43,6 +44,15 @@
       ],
       "js": ["content/ace-capture.js"],
       "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://*.autodeskplm360.net/plm/admin/workspace-manager*"
+      ],
+      "js": ["content/workspace-grid-bridge.js"],
+      "run_at": "document_idle",
       "world": "MAIN",
       "all_frames": true
     },
@@ -65,6 +75,20 @@
         "content/feature-security.js",
         "content/feature-workspace.js",
         "content/feature-bom-views.js",
+        "content/bootstrap.js"
+      ],
+      "css": ["content.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://*.autodesk360.com/*"
+      ],
+      "js": [
+        "content/config-bridge.js",
+        "content/utils.js",
+        "content/feature-buttons.js",
         "content/bootstrap.js"
       ],
       "css": ["content.css"],

@@ -154,7 +154,24 @@ FM.buildScriptsUrl = function () {
 };
 
 FM.isFusionEnvironment = function () {
-  return !!document.getElementById("fusion-header-fuison-link");
+  return !!document.getElementById("fusion-header-fuison-link") || location.hostname.indexOf("autodesk360.com") >= 0;
+};
+
+/** Insert the settings-shortcuts button into a Fusion Team page's #NAVIGATION, right after .help-menu-dropdown. */
+FM.ensureFusionTeamSettingsButton = function () {
+  if (location.hostname.indexOf("autodesk360.com") < 0) return;
+  var nav = document.querySelector('[it-id="NAVIGATION"]');
+  if (!nav) return;
+  var helpItem = nav.querySelector(".help-menu-dropdown");
+  if (!helpItem || !helpItem.parentNode) return;
+  var btn = document.getElementById("fm-btn-fusion-team-settings");
+  if (!btn) {
+    btn = FM.createIconButton({ id: "fm-btn-fusion-team-settings", icon: "settings", title: "Settings shortcuts", action: "openSettingsShortcuts" });
+    btn.classList.add("fm-ft-nav-btn");
+  }
+  if (btn.parentNode !== helpItem.parentNode || btn.previousSibling !== helpItem) {
+    helpItem.parentNode.insertBefore(btn, helpItem.nextSibling);
+  }
 };
 
 FM.buildRolesUrl = function () {
@@ -689,7 +706,9 @@ FM.setupShortcutsDelegation = function () {
     var inCommandBar = document.getElementById("command-bar-react") && document.getElementById("command-bar-react").contains(actionEl);
     var wrapperBtnsEl = document.getElementById("itemviewer-wrapper-buttons");
     var inItemviewerBar = wrapperBtnsEl && wrapperBtnsEl.contains(actionEl);
-    if (!inShortcuts && !inCommandBar && !inItemviewerBar) return;
+    var fusionTeamNav = document.querySelector('[it-id="NAVIGATION"]');
+    var inFusionTeamNav = fusionTeamNav && fusionTeamNav.contains(actionEl);
+    if (!inShortcuts && !inCommandBar && !inItemviewerBar && !inFusionTeamNav) return;
     if (evt.button === 2) return;
     const action = actionEl.getAttribute("data-fm-action");
     switch (action) {

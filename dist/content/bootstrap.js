@@ -40,6 +40,7 @@ function mainTick() {
   // ── Shortcut Buttons ────────────────────────────────────────────────────────
   if (FM.isEnabled("enabledButtons")) {
     FM.safeRun("buttons", () => FM.initShortcuts?.());
+    FM.safeRun("fusionTeamSettingsButton", () => FM.ensureFusionTeamSettingsButton?.());
   }
 
   // ── Field Identifiers ───────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ function mainTick() {
   if (FM.isEnabled("enabledAdminUi")) {
     FM.safeRun("adminTabTitles", () => FM.applyAdminTabTitle?.());
     FM.safeRun("sectionToggle", () => FM.runSectionToggleFeature?.());
-    FM.safeRun("injectCollapseExpandButtons", () => FM.injectCollapseExpandButtons()?.());
+    FM.safeRun("injectCollapseExpandButtons", () => FM.injectCollapseExpandButtons?.()?.());
   }
 
   // ── Workspace Manager ───────────────────────────────────────────────────────
