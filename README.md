@@ -44,15 +44,22 @@ The focus is on:
 - Enabling power-user and bulk actions where the standard UI is restrictive
 - Preserving Fusion Manage’s native behavior and supportability
 
+Most features run on Fusion Manage (`*.autodeskplm360.net`). A small subset — currently the Settings Shortcut button — also runs on Fusion Team (`*.autodesk360.com`) to bridge admins over to the matching Fusion Manage tenant.
+
 ---
 
 ## Setup Instructions
 
-This extension is distributed as source code and must be loaded as an unpacked Chrome extension. The loadable package lives in the **`dist`** folder within the repository.
+This extension is distributed as source code and must be loaded as an unpacked Chrome extension. The loadable package is just the **`dist`** folder — you don't need the rest of the repository (docs, source images, etc.) to run it.
 
 ### Installation Steps
 
-1. **Download the repository**
+1. **Download the extension**
+
+   - Go to the [Releases page](../../releases/latest) and download the `dist.zip` asset from the latest release
+   - Unzip it — you should get a folder containing `manifest.json` and the `content/`, `popup/`, `options/` subfolders
+
+   > Prefer working from source instead? Clone the repository and use the **`dist`** folder inside it in step 4 below.
 
 2. **Open the Chrome Extensions page**
 
@@ -68,7 +75,7 @@ This extension is distributed as source code and must be loaded as an unpacked C
 4. **Load the unpacked extension**
 
    - Click **Load unpacked**
-   - Select the **`dist` folder** inside the repository (the folder that contains `manifest.json`)
+   - Select the folder that contains `manifest.json` (the unzipped release folder, or the repository's `dist` folder)
 
 5. **Verify installation**
 
@@ -101,7 +108,9 @@ This extension is distributed as source code and must be loaded as an unpacked C
 
 ### Updating the Extension
 
-After pulling updates or modifying extension files under **`dist/`**:
+**If installed from a release zip:** download the new release, unzip it over (or replace) the old folder, then go to `chrome://extensions` and click the **Refresh** icon on the extension card. Reload any open Fusion Manage / Fusion Team tabs afterward.
+
+**If working from source:** after pulling updates or modifying files under **`dist/`**:
 
 1. Go to `chrome://extensions`
 2. Click the **Refresh** icon on the extension card
@@ -128,6 +137,7 @@ After pulling updates or modifying extension files under **`dist/`**:
 - **Settings Shortcut**
 
   - Clicking the settings shortcuts button opens up a sub-menu that allows the user to jump the most used areas of the administration. These are the general settings, the workspace manager, scripts and the security settings with users, groups and roles.
+  - This shortcut is also available on Fusion Team (`autodesk360.com`) pages, placed in the top navigation bar next to the Help and Alerts icons, so admins can jump straight into the matching Fusion Manage tenant's administration without switching tabs first.
 
   <p align="center">
     <img
@@ -139,7 +149,7 @@ After pulling updates or modifying extension files under **`dist/`**:
 
 - **Field ID Toggle**
 
-  - When the user is within the item details tab, a toggle appears that if activated, replaces the field values with their given unique FieldID and also adds the option to copy the given FieldID to the clipboard when clicking on it.
+  - When the user is within the item details or the grid tab, a toggle appears that if activated, replaces the field values with their given unique FieldID and also adds the option to copy the given FieldID to the clipboard when clicking on it.
 
   <p align="center">
     <img
@@ -149,34 +159,18 @@ After pulling updates or modifying extension files under **`dist/`**:
     />
   </p>
 
-- **Administration Shortcuts**
-
-  - When in the admin UI, the user has the option to jump to the workspace manager, scripts or the roles easily. In addition, when the user is in sub section of the workspace manager, like the item details, a new menu option will appear. This dropdown contains the regular Admin Shortcuts that are known from the frontend, as well as two more options. One for adding a new item to the workspace, in case the user wants to test out the creation dialogue, and another option that opens up the workspace view.
-
-  <p align="center">
-    <img
-        src="images/Admin-UI-Shortcuts.png"
-        width="600"
-        style="border:1px solid #d0d7de; border-radius:6px;"
-    />
-  </p>
-
 ### Workspace Manager Improvements
 
-- **Filter Workspaces**
-  - Auto Expand when 2 or less workspaces match the criteria
+
 - **Layout Optimization**
 
   - Display Workspace ID for easier copy possibility
   - Quicklink Buttons to open the given setting in a new tab
 
-- **Compact List Mode**
-  - Moves the most important settings into the header of the workspace for easy access
-  - Disables the auto-expand when 2 or less hits on filtering the workspace
 
 <p align="center">
     <img
-        src="images/Workspace-Manager-Expert-Mode.png"
+        src="images/Workspace-Manager.png"
         width="600"
         style="border:1px solid #d0d7de; border-radius:6px;"
     />
@@ -209,10 +203,15 @@ After pulling updates or modifying extension files under **`dist/`**:
 - **Table Filtering for Roles, Groups, Users**
 
   - Hide Roles, Groups or Users that do not match the filter criteria
+  - Filter can be set for every column individually, like Email or organization
 
 - **Layout Optimization**
 
   - Reordered action columns for better usability
+  - Using the middle mouse button or CMD+Click opens up the given permission, role etc. in a new tab to keep the filter alive
+
+- **Export User List**
+  - Added an option to export the currently filter user list as a csv document
 
 <p align="center">
     <img

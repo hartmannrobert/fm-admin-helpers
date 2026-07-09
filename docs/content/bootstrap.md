@@ -18,7 +18,7 @@
 
 - `FM.isEnabled(key)` — returns `false` while config is `null`; otherwise `true` unless the flag is explicitly `false`.
 - `FM.safeRun(name, fn)` — try/catch wrapper that logs `[FM] Feature failed: <name>` on error (also defined in `utils.js`; here guarded with `||` so it only sets if not already present).
-- `mainTick()` — single pass that dispatches all feature ticks. `enabledButtons` gates `FM.initShortcuts`. If `enabledOther` is disabled it returns early (skipping all "other" features). Otherwise runs: item details admin mode, field ID, scripts/picklists (prefers `FM.tickFeatures()`, falls back to `FM.features.scripts.tick()` / `FM.features.picklists.tick()`), admin users search, security roles/groups layout (admin mover), admin tab titles, section toggle, collapse/expand buttons, picklist actions, security bulk-move button, field filter, workspace manager open-in-new-tab, workspace manager shortcuts, and BOM views.
+- `mainTick()` — single pass that dispatches all feature ticks, each gated by its own `enabled*` flag (`enabledButtons`, `enabledFieldIds`, `enabledScripting`, `enabledSecurity`, `enabledAdminUi`, `enabledWorkspace`, `enabledBomViews`). `enabledButtons` gates both `FM.initShortcuts` (Fusion Manage shortcuts UI) and `FM.ensureFusionTeamSettingsButton` (Fusion Team nav settings button).
 - IIFE scheduler — manages `dirty`/`scheduled`/`lastRun`, `MIN_GAP_MS = 350`, `FALLBACK_INTERVAL_MS = 1200`, and the `MutationObserver` on `document.documentElement` (`childList: true, subtree: true`).
 
 ## Interactions
@@ -26,7 +26,7 @@
 - **postMessage (in):** `window` message of `type: "FM_CONFIG"` from `config-bridge.js`; ignores messages where `ev.source !== window`.
 - **Custom events (out/in):** dispatches `FM_CONFIG_APPLIED` on `window` after applying config; also listens for it to trigger a re-tick.
 - **Globals (out):** sets `FM.config`, `FM.isEnabled`, `FM.safeRun`.
-- **Globals (in / calls):** `FM.injectMaterialIcons`, `FM.initShortcuts`, `FM.applyItemDetailsAdminModeIfActive`, `FM.runFieldIdFeature`, `FM.tickFeatures`, `FM.features.scripts/picklists.tick`, `FM.runAdminUsersSearchTick`, `FM.runSecurityRolesGroupsLayoutTick`, `FM.applyAdminTabTitle`, `FM.runSectionToggleFeature`, `FM.injectCollapseExpandButtons`, `FM.runPicklistsTick`, `FM.ensureBulkMoveButtonsInCenter`, `FM.runFieldFilterFeature`, `FM.runWorkspaceManagerOpenInNewTab`, `FM.runWorkspaceManagerShortcutsTick`, `FM.runBomViewsTick`.
+- **Globals (in / calls):** `FM.injectMaterialIcons`, `FM.initShortcuts`, `FM.ensureFusionTeamSettingsButton`, `FM.applyItemDetailsAdminModeIfActive`, `FM.runFieldIdFeature`, `FM.tickFeatures`, `FM.features.scripts/picklists.tick`, `FM.runAdminUsersSearchTick`, `FM.runSecurityRolesGroupsLayoutTick`, `FM.applyAdminTabTitle`, `FM.runSectionToggleFeature`, `FM.injectCollapseExpandButtons`, `FM.runPicklistsTick`, `FM.ensureBulkMoveButtonsInCenter`, `FM.runFieldFilterFeature`, `FM.runWorkspaceManagerOpenInNewTab`, `FM.runWorkspaceManagerShortcutsTick`, `FM.runBomViewsTick`.
 - **DOM:** observes `document.documentElement` for mutations.
 
 ## Notes
@@ -34,5 +34,5 @@
 - `FM.config === null` is a deliberate "unknown" state: `isEnabled` returns `false` so a freshly loaded tab never flashes features as active before the real config (which may have toggles unchecked) arrives.
 - The workspace shortcut flag (`enabledWorkspaceShortcuts`) is a top-level config key but is not directly checked in `mainTick`; gating for workspace shortcuts is handled inside `FM.runWorkspaceManagerShortcutsTick`.
 - The MutationObserver never calls `mainTick` directly — it only sets `dirty` and schedules, to keep work coalesced and throttled.
-- `FM.injectCollapseExpandButtons()?.()` invokes the function and then optional-chain-calls its return value — only effective if `injectCollapseExpandButtons` returns a callable; otherwise the second call is a no-op (likely an intentional double-call pattern or a latent quirk).
+- `FM.injectCollapseExpandButtons?.()?.()` optional-chains both the call itself and its return value, so it's also safe on hosts (e.g. `autodesk360.com`) where `feature-admin-titles.js` — and therefore `FM.injectCollapseExpandButtons` — isn't loaded at all.
 - `mainTick` runs many features every tick (up to ~once per 350ms); each feature tick must be cheap and idempotent.

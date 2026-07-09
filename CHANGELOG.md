@@ -8,6 +8,13 @@ All notable changes to Fusion Manage Admin Helpers are documented here.
 
 ### Added
 
+#### Settings Shortcut on Fusion Team
+The Settings Shortcut gear button now also appears on Fusion Team (`autodesk360.com`) pages, placed in the top nav bar right after the Help icon. Clicking it opens the same shortcuts popup as on Fusion Manage (General Settings, Workspace Manager, Scripts, Users/Members, Groups, Roles), with links built against the matching Fusion Manage tenant (e.g. `acme.autodesk360.com` → `acme.autodeskplm360.net`).
+
+**Why this matters** — Fusion Team users who need to jump into Fusion Manage administration previously had to know or guess the tenant's PLM360 URL. This surfaces the same one-click shortcuts already available on the Fusion Manage side.
+
+---
+
 #### Cmd/Ctrl+Click to Open Roles & Groups Items in New Tab
 On the Security Admin **Roles** and **Groups** tabs, Cmd+click (Mac) or Ctrl+click (Windows) on any row opens that item in a new tab without navigating away from the list. Filters and scroll position on the current tab are fully preserved.
 

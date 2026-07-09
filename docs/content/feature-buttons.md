@@ -2,7 +2,7 @@
 
 **World:** ISOLATED
 
-**Purpose:** Injects the extension's shortcut UI into both the new Fusion header (after `#fusion-header-search`) and the legacy admin global navigation. It builds tenant-aware deep links (Workspace Manager, Scripts, Roles, Users, Groups, General Settings, Workflow Editor, workspace items/add-item), renders settings/quicklinks/admin-shortcut popups, and provides the "Toggle FieldID" admin-mode toggle that hides item-detail value cells and reveals their field identifiers. All functions are attached directly to the global `FM` object (no IIFE wrapper).
+**Purpose:** Injects the extension's shortcut UI into both the new Fusion header (after `#fusion-header-search`) and the legacy admin global navigation, and — on Fusion Team (`autodesk360.com`) — into that product's own nav bar. It builds tenant-aware deep links (Workspace Manager, Scripts, Roles, Users, Groups, General Settings, Workflow Editor, workspace items/add-item), renders settings/quicklinks/admin-shortcut popups, and provides the "Toggle FieldID" admin-mode toggle that hides item-detail value cells and reveals their field identifiers. All functions are attached directly to the global `FM` object (no IIFE wrapper).
 
 ## Responsibilities
 
@@ -14,6 +14,7 @@
 - Implement the "Toggle FieldID" admin-mode button: hide each item-detail value cell and inject a clickable field-ID span (click copies the field ID to clipboard); also works on `.plm-matrix` cells.
 - Persist FieldID admin-mode in `sessionStorage` and re-apply it idempotently on each tick.
 - Keep buttons present/placed across SPA navigation via a dedicated MutationObserver plus `popstate`/`hashchange` listeners.
+- On Fusion Team (`autodesk360.com`), insert a standalone settings-shortcut button into that product's nav bar (`[it-id="NAVIGATION"]`, right after `.help-menu-dropdown`) — this is a separate, minimal placement path that does not use `#fm-shortcuts`/`getOrCreateButtonsContainer`.
 
 ## Key functions / API
 
@@ -23,7 +24,8 @@
 - `FM.createIconButton({id,icon,label,title,action})` — builds a `.fm-btn` with a `data-fm-action`.
 - `FM.createShortcutLi(...)` / `FM.createAdminModeToggle()` — legacy nav `<li>` link and the pill-style FieldID toggle button.
 - `FM.buildWorkspaceManagerUrl/buildScriptsUrl/buildRolesUrl/buildUsersUrl/buildGroupsUrl/buildGeneralSettingsUrl/buildWorkspaceAdminUrl/buildWorkspaceItemsUrl/buildWorkspaceAddItemUrl/buildWorkflowUrl` — tenant-aware URL builders.
-- `FM.isFusionEnvironment()` — detects Fusion vs legacy environment (drives Users/Groups/Roles URL shape).
+- `FM.isFusionEnvironment()` — detects Fusion vs legacy environment (drives Users/Groups/Roles URL shape); true when `#fusion-header-fuison-link` exists OR the current hostname is on `autodesk360.com`.
+- `FM.ensureFusionTeamSettingsButton()` — no-op off `autodesk360.com`; otherwise finds `[it-id="NAVIGATION"] .help-menu-dropdown` and inserts/repositions a `.fm-ft-nav-btn` settings-shortcut button right after it.
 - `FM.getWorkspaceIdFromItemsUrl(url)` / `FM.getWorkspaceIdFromAdminUrl(url)` — extract workspace ID from front-end items URLs and admin workspace-manager URLs.
 - `FM.getItemDetailsAdminMode()` / `FM.setItemDetailsAdminMode(on)` — read/write the FieldID toggle in `sessionStorage`.
 - `FM.fieldIdFromRowKey(rowKey)` — extracts trailing field ID from a `row-key`/`cell-key`.
@@ -38,15 +40,16 @@
 
 ## Interactions
 
-- **Tick loop:** `bootstrap.js` `mainTick()` calls `FM.initShortcuts?.()` via `FM.safeRun("buttons", ...)` gated on `FM.isEnabled("enabledButtons")`. The FieldID overlay is also re-applied each tick via `FM.applyItemDetailsAdminModeIfActive` (gated on `enabledOther`).
+- **Tick loop:** `bootstrap.js` `mainTick()` calls `FM.initShortcuts?.()` and `FM.ensureFusionTeamSettingsButton?.()` via `FM.safeRun(...)`, both gated on `FM.isEnabled("enabledButtons")`. The FieldID overlay is also re-applied each tick via `FM.applyItemDetailsAdminModeIfActive` (gated on `enabledOther`).
 - **External FM helpers (other files):** `FM.tenantNameFromLocation`, `FM.openUrlWithEvent`, `FM.isWorkspaceContext`, `FM.isOnFieldIdTogglePage`, `FM.isOnFrontendItemDetailsPage`, `FM.getWorkspaceNameFromDom`, `FM.getWorkspaceQuicklinks` (from feature-workspace.js), `FM.applyFusionManageThemeToDocument`, `FM.ensurePlacement` (self).
-- **DOM anchors:** `#fusion-header-search`, `#fusion-header-right`, `#global_navigation` (`li.systemlink-admin`), `#command-bar-react`, `#itemviewer-wrapper-buttons`, `.item-details-render` rows, `.plm-matrix td[cell-key]`.
+- **DOM anchors:** `#fusion-header-search`, `#fusion-header-right`, `#global_navigation` (`li.systemlink-admin`), `#command-bar-react`, `#itemviewer-wrapper-buttons`, `.item-details-render` rows, `.plm-matrix td[cell-key]`, `[it-id="NAVIGATION"] .help-menu-dropdown` (Fusion Team only — note `it-id` is a plain attribute, not the element's `id`).
 - **Storage:** `sessionStorage` key `fm-item-details-admin-mode`. Clipboard via `navigator.clipboard.writeText`.
 - **Events:** capturing `pointerdown` for action dispatch; capturing `click` for field-ID copy; `popstate`/`hashchange` for re-placement; a `MutationObserver` (`FM._shortcutsObserver`) watching nav/header/body.
 
 ## Notes
 
-- The action delegation only fires when the clicked `[data-fm-action]` element is inside the shortcuts container, `#command-bar-react`, or `#itemviewer-wrapper-buttons`; right-clicks (`button === 2`) are ignored.
+- The action delegation only fires when the clicked `[data-fm-action]` element is inside the shortcuts container, `#command-bar-react`, `#itemviewer-wrapper-buttons`, or the Fusion Team `[it-id="NAVIGATION"]` nav bar; right-clicks (`button === 2`) are ignored.
+- `FM.ensureFusionTeamSettingsButton` and the wider `autodesk360.com` content-script bundle only load `config-bridge.js`, `utils.js`, `feature-buttons.js`, and `bootstrap.js` (see `manifest.json`) — `FM.initShortcuts`/`ensurePlacement`/`ensureButtonsPresent` still run on that host but no-op harmlessly since none of their DOM anchors (`#fusion-header-search`, `#global_navigation`, etc.) exist there.
 - Grid-overlay FieldID mode is handled per-frame elsewhere (each frame reads `getItemDetailsAdminMode()`), so the toggle handler does not call apply/unapply for grid pages — only for front-end item-details pages.
 - `applyItemDetailsAdminMode` stashes the original inline `style` in `data-fm-admin-original-style` and hides cells off-screen rather than removing them, preserving Dojo/Angular references; `unapply` restores from that attribute.
 - The admin shortcuts dropdown label depends on the workspace name being present in the DOM; if missing it hides the `<li>` once (`data-fm-shortcuts-label-retried`) and re-triggers `ensurePlacement` after 80ms to retry, falling back to "Admin Shortcuts".

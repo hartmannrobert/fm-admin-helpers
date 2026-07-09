@@ -10,7 +10,7 @@ Per-file docs for the content scripts. See [CLAUDE.md](../../CLAUDE.md) for arch
 
 ## Features
 - [feature-scripts.md](feature-scripts.md) — script editor enhancements + picklists
-- [feature-buttons.md](feature-buttons.md) — shortcut buttons injection
+- [feature-buttons.md](feature-buttons.md) — shortcut buttons injection (Fusion Manage + Fusion Team settings-shortcut button)
 - [feature-workspace.md](feature-workspace.md) — workspace manager improvements
 - [feature-security.md](feature-security.md) — security admin filter/reorder/bulk-move
 - [feature-fieldid.md](feature-fieldid.md) — field identifier display on item details
