@@ -117,29 +117,6 @@ body {
   font-size: 0.95em;
 }
 
-/* ── Storage scope radios ──────────────────────────────────────────────────── */
-.storage-scope-radios {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.scope-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--fmg-text-body);
-}
-
-.scope-label input {
-  margin-top: 2px;
-  flex-shrink: 0;
-  accent-color: var(--fmg-blue);
-}
-
 /* ── Form fields ───────────────────────────────────────────────────────────── */
 .field {
   display: block;

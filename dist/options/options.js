@@ -31,47 +31,8 @@
   var btnExport = document.getElementById("btn-export");
   var btnImport = document.getElementById("btn-import");
   var importFile = document.getElementById("import-file");
-  var scopeRadios = document.querySelectorAll('input[name="fm-snippet-storage-scope"]');
-  var scopeOriginLabelEl = document.getElementById("fm-scope-origin-label");
 
   var editingName = null;
-
-  function updateOriginScopeLabelText() {
-    if (!scopeOriginLabelEl) return;
-    var sub = window.FM && typeof window.FM.tenantSubdomainForSnippetsUi === "function"
-      ? String(window.FM.tenantSubdomainForSnippetsUi() || "").trim()
-      : "";
-    scopeOriginLabelEl.textContent = sub ? sub + " (IndexedDB)" : "This tenant (IndexedDB)";
-  }
-
-  function syncScopeRadios() {
-    updateOriginScopeLabelText();
-    var st = window.FM && window.FM.snippetStorage;
-    if (!st || typeof st.getSnippetStorageScope !== "function") return;
-    st.getSnippetStorageScope().then(function (scope) {
-      for (var r = 0; r < scopeRadios.length; r++) {
-        var el = scopeRadios[r];
-        el.checked = el.value === scope;
-      }
-    }).catch(function () {});
-  }
-
-  function onScopeRadioChange(ev) {
-    var t = ev && ev.target;
-    if (!t || t.name !== "fm-snippet-storage-scope" || !t.checked) return;
-    var st = window.FM && window.FM.snippetStorage;
-    if (!st || typeof st.setSnippetStorageScope !== "function") return;
-    var next = t.value;
-    st.setSnippetStorageScope(next).then(function () {
-      getStored(renderList);
-    }).catch(function () {
-      syncScopeRadios();
-    });
-  }
-
-  for (var ri = 0; ri < scopeRadios.length; ri++) {
-    scopeRadios[ri].addEventListener("change", onScopeRadioChange);
-  }
 
   function clearForm() {
     editingName = null;
@@ -287,6 +248,5 @@
     });
   }
 
-  syncScopeRadios();
   getStored(renderList);
 })();

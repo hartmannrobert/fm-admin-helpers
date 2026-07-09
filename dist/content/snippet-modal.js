@@ -2,7 +2,7 @@
  * In-page modal for managing custom script snippets. Opens when the popup sends "fm-open-snippet-modal"
  * or the page dispatches "fm-open-snippet-modal-request". Prefill from the script Ace editor via
  * "fm-snippet-load-from-editor" (detail.code); selection is read in the content script using FM.getAceEditorSelectedText.
- * Uses FM.snippetStorage (extension-wide chrome.storage.local or per-origin IndexedDB; user-selectable). Name is the unique identifier.
+ * Uses FM.snippetStorage (chrome.storage.local, shared across all tenants). Name is the unique identifier.
  * Layout: left = form/editor (flex-grow), right = snippet list (clamp width so names stay readable).
  *
  * --- Draft state model (session-scoped, survives modal close while this tab/content script lives) ---
@@ -274,33 +274,7 @@
     menuImport.type = "button";
     menuImport.setAttribute("role", "menuitem");
     menuImport.textContent = "Import from JSON";
-    var menuScopeExtension = document.createElement("button");
-    menuScopeExtension.type = "button";
-    menuScopeExtension.setAttribute("role", "menuitemradio");
-    menuScopeExtension.setAttribute("aria-checked", "false");
-    menuScopeExtension.title = "Same snippet library for every Fusion Manage tenant in this browser";
-    menuScopeExtension.textContent = "All tenants";
-    var menuScopeOrigin = document.createElement("button");
-    menuScopeOrigin.type = "button";
-    menuScopeOrigin.setAttribute("role", "menuitemradio");
-    menuScopeOrigin.setAttribute("aria-checked", "false");
-    function updateTenantOriginMenuLabels() {
-      var sub = window.FM && typeof window.FM.tenantSubdomainForSnippetsUi === "function"
-        ? String(window.FM.tenantSubdomainForSnippetsUi() || "").trim()
-        : "";
-      menuScopeOrigin.textContent = sub ? sub : "This tenant";
-      menuScopeOrigin.title = sub
-        ? "Snippets stored only for tenant \"" + sub + "\" on this browser (IndexedDB)"
-        : "Snippets stored only for the current Fusion Manage tenant on this browser (IndexedDB)";
-    }
-    updateTenantOriginMenuLabels();
-    var menuStorageSep = document.createElement("div");
-    menuStorageSep.className = "fm-sm-dropdown-sep";
-    menuStorageSep.setAttribute("role", "separator");
     dropdownMenu.setAttribute("aria-label", "Snippet manager actions");
-    dropdownMenu.appendChild(menuScopeExtension);
-    dropdownMenu.appendChild(menuScopeOrigin);
-    dropdownMenu.appendChild(menuStorageSep);
     dropdownMenu.appendChild(menuImportDefault);
     dropdownMenu.appendChild(menuExport);
     dropdownMenu.appendChild(menuImport);
@@ -1406,19 +1380,8 @@
       ev.stopPropagation();
       dropdownMenu.classList.toggle("open");
       if (dropdownMenu.classList.contains("open")) {
-        syncStorageMenuFromScope();
         positionDropdownMenu();
       }
-    });
-    menuScopeExtension.addEventListener("click", function (ev) {
-      ev.stopPropagation();
-      closeDropdownMenu();
-      applyStorageScopeChange("extension");
-    });
-    menuScopeOrigin.addEventListener("click", function (ev) {
-      ev.stopPropagation();
-      closeDropdownMenu();
-      applyStorageScopeChange("origin");
     });
     menuImportDefault.addEventListener("click", function () {
       closeDropdownMenu();
@@ -1598,54 +1561,7 @@
       tableWrap.scrollTop = 0;
     }
 
-    function syncStorageMenuFromScope() {
-      updateTenantOriginMenuLabels();
-      var st = window.FM && window.FM.snippetStorage;
-      if (!st || typeof st.getSnippetStorageScope !== "function") return;
-      st.getSnippetStorageScope().then(function (scope) {
-        menuScopeExtension.setAttribute("aria-checked", scope === "extension" ? "true" : "false");
-        menuScopeOrigin.setAttribute("aria-checked", scope === "origin" ? "true" : "false");
-      }).catch(function () { });
-    }
-
-    function applyStorageScopeChange(newScope) {
-      var st = window.FM && window.FM.snippetStorage;
-      if (!st || typeof st.setSnippetStorageScope !== "function" || typeof st.getSnippetStorageScope !== "function") return;
-      function revertMenu() {
-        syncStorageMenuFromScope();
-      }
-      st.getSnippetStorageScope().then(function (current) {
-        if (current === newScope) return;
-        if (hasUnsavedDraftWork()) {
-          if (!window.confirm("Switching storage reloads snippets from the new location and discards unsaved changes in this window. Continue?")) {
-            revertMenu();
-            return;
-          }
-        }
-        st.setSnippetStorageScope(newScope).then(function () {
-          notifySnippetsChanged();
-          getStored(function (list) {
-            refreshPersistedAndReconcile(list);
-            discardUnsavedSessionState();
-            renderAll();
-            syncStorageMenuFromScope();
-            try {
-              state.scrollTop = 0;
-              tableWrap.scrollTop = 0;
-              renderVirtualized();
-              updateSaveButtonEnabled();
-            } catch (e2) { /* ignore */ }
-          });
-        }).catch(function () {
-          revertMenu();
-        });
-      }).catch(function () {
-        revertMenu();
-      });
-    }
-
     function onModalReopen() {
-      syncStorageMenuFromScope();
       resetEphemeralOnModalHide();
     }
 
@@ -1661,7 +1577,6 @@
     panel.addEventListener("click", function (ev) { ev.stopPropagation(); });
 
     getStored(function (list) {
-      syncStorageMenuFromScope();
       refreshPersistedAndReconcile(list);
       renderAll();
       requestAnimationFrame(function () {

@@ -24,22 +24,6 @@
       </div>
     </header>
 
-    <section class="fmg-popup__section" aria-labelledby="snippet-storage-scope-title">
-      <div id="snippet-storage-scope-title" class="fmg-popup__section-label">Snippet library storage</div>
-      <p class="hint storage-scope-hint">Extension storage is shared across all tenants in this browser. IndexedDB
-        keeps a separate library per tenant. Use Export / Import to copy snippets between the two.</p>
-      <div class="storage-scope-radios">
-        <label class="scope-label">
-          <input type="radio" name="fm-snippet-storage-scope" value="extension" />
-          <span id="fm-scope-extension-label">All tenants (extension storage)</span>
-        </label>
-        <label class="scope-label">
-          <input type="radio" name="fm-snippet-storage-scope" value="origin" />
-          <span id="fm-scope-origin-label">This tenant (IndexedDB)</span>
-        </label>
-      </div>
-    </section>
-
     <section class="fmg-popup__section">
       <div class="fmg-popup__section-label">Add / edit snippet</div>
       <p class="hint">Pasted code: literal backslash-n (<code>\n</code>) is converted to newlines. Name must be
