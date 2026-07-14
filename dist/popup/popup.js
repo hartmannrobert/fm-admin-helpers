@@ -27,14 +27,14 @@ function initLinkMode() {
 }
 document.addEventListener("DOMContentLoaded", initLinkMode);
 
-// Reload open PLM tabs so disabled features stop injecting (they only add DOM on
-// tick; turning a feature OFF needs a reload to remove already-injected markup).
+// Reload only the active PLM tab so disabled features stop injecting (they only
+// add DOM on tick; turning a feature OFF needs a reload to remove already-injected
+// markup). Only current active tab reload, not all matching tabs.
 function reloadPlmTabs() {
   if (!chrome.tabs || !chrome.tabs.query) return;
-  chrome.tabs.query({ url: "https://*.autodeskplm360.net/*" }, (tabs) => {
-    (tabs || []).forEach((t) => {
-      if (t.id != null) chrome.tabs.reload(t.id);
-    });
+  chrome.tabs.query({ active: true, currentWindow: true, url: "https://*.autodeskplm360.net/*" }, (tabs) => {
+    const t = tabs && tabs[0];
+    if (t && t.id != null) chrome.tabs.reload(t.id);
   });
 }
 
