@@ -2636,31 +2636,27 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
   width: min(1200px, 95vw);
 }
 
-/* Preset buttons injected next to the Data Type select: force the cell into a
-   row so the select doesn't stretch full-width and push the bar to a new line */
-td.fieldValue:has(> #dataTypeSelect) {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-}
-
+/* Preset buttons injected next to the Data Type select: keep the select from
+   stretching full-width so the bar sits on the same line in normal inline
+   flow. Deliberately NOT display:flex on the <td> — that breaks the native
+   table's row layout (and the dashed row-separator borders that depend on it). */
 #dataTypeSelect {
   width: auto;
-  flex: 0 0 auto;
+  vertical-align: middle;
 }
 
 .fm-field-defaults-bar {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  float: right;
   margin-left: 10px;
   vertical-align: middle;
-  flex: 0 0 auto;
 }
 
 .fm-field-defaults-bar .fm-field-defaults-btn {
-  padding: 2px 10px;
-  font-size: 12px;
+  padding: 2px 7px;
+  font-size: 11px;
   line-height: 1.6;
   min-width: 0;
   width: auto;
