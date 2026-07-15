@@ -31,7 +31,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["data/default-snippets.json"],
+      "resources": ["data/default-snippets.json", "data/field-defaults.json"],
       "matches": ["https://*.autodeskplm360.net/*"]
     }
   ],
@@ -75,6 +75,7 @@
         "content/feature-security.js",
         "content/feature-workspace.js",
         "content/feature-bom-views.js",
+        "content/feature-field-defaults.js",
         "content/bootstrap.js"
       ],
       "css": ["content.css"],

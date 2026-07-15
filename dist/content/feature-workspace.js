@@ -297,6 +297,28 @@ window.FM.ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP || {
   const BAR_CLASS = "fm-ws-links-bar";
   const PILL_CLASS = "fm-ws-pill";
 
+  // MUI's DataGrid re-renders rows during a live row-reorder drag (drop-target
+  // highlight, hover state), which wipes the nodes we inject below. If our tick
+  // re-injects them while the native HTML5 drag is still open, the resulting
+  // DOM/height churn desyncs the grid's own drop-target row math from what's on
+  // screen, so drops land on the wrong (or same) index. Suspend injection for the
+  // duration of the drag and let the grid settle before touching the DOM again.
+  let reorderDragActive = false;
+  document.addEventListener(
+    "dragstart",
+    (ev) => {
+      if (ev.target?.closest?.(".MuiDataGrid-rowReorderCell")) reorderDragActive = true;
+    },
+    true
+  );
+  document.addEventListener(
+    "dragend",
+    () => {
+      reorderDragActive = false;
+    },
+    true
+  );
+
   function buildAdminHashUrl(args) {
     const item = args?.item;
     const wid = encodeURIComponent(String(args?.workspaceID));
@@ -536,6 +558,7 @@ window.FM.ADMIN_ITEM_PATH_MAP = window.FM.ADMIN_ITEM_PATH_MAP || {
   }
 
   window.FM.runWorkspaceManagerShortcutsTick = function () {
+    if (reorderDragActive) return;
     try {
       const enabled = isFeatureEnabled();
       requestColumnResize(enabled ? ["__reorder__", "name"] : ["__reorder__"]);

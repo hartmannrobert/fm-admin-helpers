@@ -1,0 +1,96 @@
+{
+  "Integer": {
+    "fields": {
+      "displayLength": { "selector": "[name=\"displayLength\"]" },
+      "fieldLength":    { "selector": "[name=\"fieldLength\"]" }
+    },
+    "presets": [
+      { "label": "Standard", "values": { "displayLength": 10, "fieldLength": 10 } },
+      { "label": "Wide",     "values": { "displayLength": 18, "fieldLength": 18 } }
+    ]
+  },
+  "Float": {
+    "fields": {
+      "displayLength":   { "selector": "[name=\"displayLength\"]" },
+      "fieldLength":     { "selector": "[name=\"fieldLength\"]" },
+      "fieldPrecision":  { "selector": "[name=\"fieldPrecision\"]" }
+    },
+    "presets": [
+      { "label": "Standard", "values": { "displayLength": 9, "fieldLength": 12, "fieldPrecision": 3 } }
+    ]
+  },
+  "Money": {
+    "fields": {
+      "displayLength":   { "selector": "[name=\"displayLength\"]" },
+      "fieldLength":     { "selector": "[name=\"fieldLength\"]" },
+      "fieldPrecision":  { "selector": "[name=\"fieldPrecision\"]" }
+    },
+    "presets": [
+      { "label": "Standard", "values": { "displayLength": 12, "fieldLength": 12, "fieldPrecision": 2 } }
+    ]
+  },
+  "Single Line Text": {
+    "fields": {
+      "displayLength": { "selector": "[name=\"displayLength\"]" },
+      "fieldLength":    { "selector": "[name=\"fieldLength\"]" }
+    },
+    "presets": [
+      { "label": "20",  "values": { "displayLength": 20, "fieldLength": 20 } },
+      { "label": "50",  "values": { "displayLength": 50, "fieldLength": 50 } },
+      { "label": "200", "values": { "displayLength": 200, "fieldLength": 200 } }
+    ]
+  },
+  "Paragraph": {
+    "fields": {
+      "displayLength": { "selector": "[name=\"displayLength\"]" },
+      "maxLength":      { "selector": "[name=\"fieldValidatorVar(maxlength__maxlength____)\"]" }
+    },
+    "presets": [
+      { "label": "Standard", "values": { "displayLength": 200, "maxLength": 100000 } }
+    ]
+  },
+  "Paragraph w/o Line Breaks": {
+    "fields": {
+      "displayLength": { "selector": "[name=\"displayLength\"]" },
+      "maxLength":      { "selector": "[name=\"fieldValidatorVar(maxlength__maxlength____)\"]" }
+    },
+    "presets": [
+      { "label": "Standard", "values": { "displayLength": 200, "maxLength": 100000 } }
+    ]
+  },
+  "URL": {
+    "fields": {
+      "displayLength": { "selector": "[name=\"displayLength\"]" },
+      "maxLength":      { "selector": "[name=\"fieldValidatorVar(maxlength__maxlength____)\"]" }
+    },
+    "presets": [
+      { "label": "Standard", "values": { "displayLength": 100, "maxLength": 250 } }
+    ]
+  },
+  "Email": {
+    "fields": {
+      "displayLength": { "selector": "[name=\"displayLength\"]" },
+      "maxLength":      { "selector": "[name=\"fieldValidatorVar(maxlength__maxlength____)\"]" }
+    },
+    "presets": [
+      { "label": "Standard", "values": { "displayLength": 30, "maxLength": 255 } }
+    ]
+  },
+  "CSV": {
+    "fields": {
+      "displayLength": { "selector": "[name=\"displayLength\"]" },
+      "maxLength":      { "selector": "[name=\"fieldValidatorVar(maxlength__maxlength____)\"]" }
+    },
+    "presets": [
+      { "label": "Standard", "values": { "displayLength": 40, "maxLength": 250 } }
+    ]
+  },
+  "Pick List": {
+    "fields": {
+      "displayLength": { "selector": "[name=\"displayLength\"]" }
+    },
+    "presets": [
+      { "label": "Standard", "values": { "displayLength": 200 } }
+    ]
+  }
+}

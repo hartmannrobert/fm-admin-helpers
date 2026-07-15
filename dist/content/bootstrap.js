@@ -10,7 +10,8 @@ const CONFIG_DEFAULTS = {
   enabledSecurity: true,   // Security Admin (user search + roles/groups + move-all)
   enabledFieldIds: true,   // Field Identifiers (field IDs + filter + admin grid)
   enabledBomViews: true,   // BOM Views
-  enabledAdminUi: true     // Admin UI Tweaks (titles + section/collapse toggles)
+  enabledAdminUi: true,    // Admin UI Tweaks (titles + section/collapse toggles)
+  enabledFieldDefaults: true // Field Editor Presets (display length / max length buttons)
 };
 FM.config = FM.config ?? null;
 
@@ -88,6 +89,11 @@ function mainTick() {
   // ── BOM Views ───────────────────────────────────────────────────────────────
   if (FM.isEnabled("enabledBomViews")) {
     FM.safeRun("bomViews", () => FM.runBomViewsTick?.());
+  }
+
+  // ── Field Editor Presets ─────────────────────────────────────────────────────
+  if (FM.isEnabled("enabledFieldDefaults")) {
+    FM.safeRun("fieldDefaults", () => FM.features?.fieldDefaults?.tick?.());
   }
 }
 

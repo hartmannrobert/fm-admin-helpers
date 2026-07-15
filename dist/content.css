@@ -1308,8 +1308,6 @@ td .fm-open-newtab-btn:hover .fm-open-newtab-icon.material-icons {
 .MuiDataGrid-cell[data-field="__reorder__"] .MuiDataGrid-cellContent {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-top: 8px;
 }
 
 .MuiDataGrid-cell[data-field="__reorder__"] .fm-ws-id-badge {
@@ -2632,4 +2630,48 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
   height: 12px;
   display: block;
   margin: auto;
+}
+/* Field Editor Presets: widen the create/edit-field dialog, cap to viewport */
+#editPaneContainer {
+  width: min(1200px, 95vw);
+}
+
+/* Preset buttons injected next to the Data Type select: force the cell into a
+   row so the select doesn't stretch full-width and push the bar to a new line */
+td.fieldValue:has(> #dataTypeSelect) {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+#dataTypeSelect {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.fm-field-defaults-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+
+.fm-field-defaults-bar .fm-field-defaults-btn {
+  padding: 2px 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  min-width: 0;
+  width: auto;
+}
+
+/* Widen key inputs in the admin "Create/Edit Field" form (#contentformdiv) to
+   300px, capped by available space so they don't overflow narrow windows. */
+#contentformdiv select#pickListSelect,
+#contentformdiv input[name="fieldName"],
+#contentformdiv input[name="fieldID"],
+#contentformdiv textarea[name="fieldDesc"] {
+  width: 300px !important;
+  max-width: 100%;
 }
