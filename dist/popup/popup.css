@@ -163,6 +163,12 @@ body {
   background: var(--fmg-blue-light);
 }
 
+.fmg-popup__admin-row--sub {
+  margin-left: 16px;
+  padding: 8px 12px;
+  background: transparent;
+}
+
 .fmg-popup__admin-label {
   font-weight: 500;
 }

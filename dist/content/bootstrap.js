@@ -11,7 +11,8 @@ const CONFIG_DEFAULTS = {
   enabledFieldIds: true,   // Field Identifiers (field IDs + filter + admin grid)
   enabledBomViews: true,   // BOM Views
   enabledAdminUi: true,    // Admin UI Tweaks (titles + section/collapse toggles)
-  enabledFieldDefaults: true // Field Editor Presets (display length / max length buttons)
+  enabledFieldDefaults: true, // Field Editor Presets (display length / max length buttons)
+  enabledFieldDefaultsAutoApply: true // Auto-fill the default preset when Data Type / Pick List changes
 };
 FM.config = FM.config ?? null;
 
@@ -84,6 +85,7 @@ function mainTick() {
   if (FM.isEnabled("enabledWorkspace")) {
     FM.safeRun("runWorkspaceManagerOpenInNewTab", () => FM.runWorkspaceManagerOpenInNewTab?.());
     FM.safeRun("workspaceManagerShortcuts", () => FM.runWorkspaceManagerShortcutsTick?.());
+    FM.safeRun("workspaceAccessFilter", () => FM.runWorkspaceAccessFilterTick?.());
   }
 
   // ── BOM Views ───────────────────────────────────────────────────────────────

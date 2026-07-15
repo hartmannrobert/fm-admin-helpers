@@ -9,6 +9,7 @@ const FEATURES = [
   { id: "opt-bomviews",  key: "enabledBomViews" },
   { id: "opt-adminui",   key: "enabledAdminUi" },
   { id: "opt-fielddefaults", key: "enabledFieldDefaults" },
+  { id: "opt-fielddefaults-autoapply", key: "enabledFieldDefaultsAutoApply" },
 ];
 
 const DEFAULTS = Object.fromEntries(FEATURES.map((f) => [f.key, true]));

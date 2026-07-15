@@ -42,7 +42,7 @@ The focus is on:
 - Enabling power-user and bulk actions where the standard UI is restrictive
 - Preserving Fusion Manage’s native behavior and supportability
 
-Most features run on Fusion Manage (`*.autodeskplm360.net`). A small subset — currently the Settings Shortcut button — also runs on Fusion Team (`*.autodesk360.com`) to bridge admins over to the matching Fusion Manage tenant.
+Most features run on Fusion Manage (`*.autodeskplm360.net`). A small subset also runs on Fusion Team (`*.autodesk360.com`): the Settings Shortcut button (bridges admins over to the matching Fusion Manage tenant) and, on the Manage Groups page, filtering already-assigned workspaces out of the add-workspace dropdown.
 
 ---
 
@@ -279,6 +279,9 @@ This extension is distributed as source code and must be loaded as an unpacked C
 
 ### Other Improvements
 
+- **Field Editor Presets & Auto-fill**
+  - Preset buttons next to the Data Type dropdown on the admin "Create/Edit Field" form fill display length / field length / precision / max length with common values.
+  - The default preset auto-fills when you change Data Type (or pick a lookup table, for Pick List fields) — toggle "Auto-fill Presets" in the popup Control Center to turn off the automatic fill and keep only the buttons.
 - **Change Tab Names within Administration for better overview**
   - Applies to Scripts, Workspace Manager and Security Settings
     <p align="center">

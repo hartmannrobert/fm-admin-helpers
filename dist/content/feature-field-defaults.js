@@ -82,6 +82,7 @@ FM.features.fieldDefaults = (function () {
   }
 
   function scheduleApplyForType(typeName) {
+    if (!FM.isEnabled("enabledFieldDefaultsAutoApply")) return;
     cancelPendingApplies();
     RETRY_DELAYS_MS.forEach(function (delay) {
       pendingTimers.push(setTimeout(function () {

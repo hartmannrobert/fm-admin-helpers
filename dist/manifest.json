@@ -90,6 +90,7 @@
         "content/config-bridge.js",
         "content/utils.js",
         "content/feature-buttons.js",
+        "content/feature-workspace-access.js",
         "content/bootstrap.js"
       ],
       "css": ["content.css"],
