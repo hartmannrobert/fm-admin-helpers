@@ -38,7 +38,8 @@
       { "label": "20",  "values": { "displayLength": 20, "fieldLength": 20 } },
       { "label": "50",  "values": { "displayLength": 50, "fieldLength": 50 } },
       { "label": "200", "values": { "displayLength": 200, "fieldLength": 200 } }
-    ]
+    ],
+    "defaultPreset": "200"
   },
   "Paragraph": {
     "fields": {

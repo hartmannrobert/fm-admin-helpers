@@ -44,6 +44,13 @@ FM.features.fieldDefaults = (function () {
     lastTypeName = null;
   }
 
+  function applyPreset(typeConfig, preset) {
+    Object.keys(preset.values).forEach(function (fieldKey) {
+      var fieldDef = typeConfig.fields[fieldKey];
+      if (fieldDef) setFieldValue(fieldDef.selector, preset.values[fieldKey]);
+    });
+  }
+
   function buildBar(typeConfig, select) {
     var bar = document.createElement("span");
     bar.id = BAR_ID;
@@ -55,15 +62,60 @@ FM.features.fieldDefaults = (function () {
       btn.className = "submitinput fm-field-defaults-btn";
       btn.addEventListener("click", function (e) {
         e.preventDefault();
-        Object.keys(preset.values).forEach(function (fieldKey) {
-          var fieldDef = typeConfig.fields[fieldKey];
-          if (fieldDef) setFieldValue(fieldDef.selector, preset.values[fieldKey]);
-        });
+        applyPreset(typeConfig, preset);
       });
       bar.appendChild(btn);
     });
     select.parentNode.insertBefore(bar, select.nextSibling);
     return bar;
+  }
+
+  // The page rebuilds/clears the attribute inputs asynchronously after a data
+  // type change (visible flash-then-empty), so a single synchronous apply
+  // gets overwritten. Retry for a short window, canceling if the type changes again.
+  var RETRY_DELAYS_MS = [0, 150, 350, 600, 1000, 1500];
+  var pendingTimers = [];
+
+  function cancelPendingApplies() {
+    pendingTimers.forEach(function (id) { clearTimeout(id); });
+    pendingTimers = [];
+  }
+
+  function scheduleApplyForType(typeName) {
+    cancelPendingApplies();
+    RETRY_DELAYS_MS.forEach(function (delay) {
+      pendingTimers.push(setTimeout(function () {
+        loadData().then(function (data) {
+          var typeConfig = data[typeName];
+          if (!typeConfig) return;
+          var presets = typeConfig.presets || [];
+          if (!presets.length) return;
+          var preset = presets.filter(function (p) {
+            return p.label === typeConfig.defaultPreset;
+          })[0] || presets[0];
+          applyPreset(typeConfig, preset);
+        });
+      }, delay));
+    });
+  }
+
+  function bindAutoDefault(select) {
+    if (select.__fmDefaultsBound) return;
+    select.__fmDefaultsBound = true;
+    select.addEventListener("change", function () {
+      scheduleApplyForType(getSelectedTypeName(select));
+    });
+  }
+
+  // For "Pick List", the displayLength input only exists in the DOM once a
+  // lookup table has been picked in #pickListSelect, so re-apply the Pick
+  // List defaults on that selection too (not just on the data type change).
+  function bindPickListAutoDefault(pickListSelect) {
+    if (pickListSelect.__fmDefaultsBound) return;
+    pickListSelect.__fmDefaultsBound = true;
+    pickListSelect.addEventListener("change", function () {
+      scheduleApplyForType("Pick List");
+    });
   }
 
   function tick() {
@@ -72,6 +124,11 @@ FM.features.fieldDefaults = (function () {
       removeBar();
       return;
     }
+
+    bindAutoDefault(select);
+
+    var pickListSelect = document.getElementById("pickListSelect");
+    if (pickListSelect) bindPickListAutoDefault(pickListSelect);
 
     var typeName = getSelectedTypeName(select);
 
