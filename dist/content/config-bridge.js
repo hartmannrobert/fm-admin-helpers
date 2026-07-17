@@ -6,6 +6,8 @@ const DEFAULTS = {
     enabledFieldIds: true,
     enabledBomViews: true,
     enabledAdminUi: true,
+    enabledFieldDefaults: true,
+    enabledFieldDefaultsAutoApply: true,
     fmLinkOpenMode: "same"
   };
   

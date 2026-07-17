@@ -2631,8 +2631,10 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
   display: block;
   margin: auto;
 }
-/* Field Editor Presets: widen the create/edit-field dialog, cap to viewport */
-#editPaneContainer {
+/* Field Editor Presets: widen the create/edit-field dialog, cap to viewport.
+   Gated on html.fm-field-defaults-enabled (toggled in bootstrap.js) since CSS
+   files load unconditionally regardless of the feature flag. */
+html.fm-field-defaults-enabled #editPaneContainer {
   width: min(1200px, 95vw);
 }
 
@@ -2664,10 +2666,10 @@ tr:has(> td.fieldName .fm-snippets-wrap) > td.fieldValue {
 
 /* Widen key inputs in the admin "Create/Edit Field" form (#contentformdiv) to
    300px, capped by available space so they don't overflow narrow windows. */
-#contentformdiv select#pickListSelect,
-#contentformdiv input[name="fieldName"],
-#contentformdiv input[name="fieldID"],
-#contentformdiv textarea[name="fieldDesc"] {
+html.fm-field-defaults-enabled #contentformdiv select#pickListSelect,
+html.fm-field-defaults-enabled #contentformdiv input[name="fieldName"],
+html.fm-field-defaults-enabled #contentformdiv input[name="fieldID"],
+html.fm-field-defaults-enabled #contentformdiv textarea[name="fieldDesc"] {
   width: 300px !important;
   max-width: 100%;
 }

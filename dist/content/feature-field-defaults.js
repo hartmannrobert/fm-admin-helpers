@@ -62,6 +62,7 @@ FM.features.fieldDefaults = (function () {
       btn.className = "submitinput fm-field-defaults-btn";
       btn.addEventListener("click", function (e) {
         e.preventDefault();
+        if (!FM.isEnabled("enabledFieldDefaults")) return;
         applyPreset(typeConfig, preset);
       });
       bar.appendChild(btn);
@@ -82,7 +83,7 @@ FM.features.fieldDefaults = (function () {
   }
 
   function scheduleApplyForType(typeName) {
-    if (!FM.isEnabled("enabledFieldDefaultsAutoApply")) return;
+    if (!FM.isEnabled("enabledFieldDefaults") || !FM.isEnabled("enabledFieldDefaultsAutoApply")) return;
     cancelPendingApplies();
     RETRY_DELAYS_MS.forEach(function (delay) {
       pendingTimers.push(setTimeout(function () {

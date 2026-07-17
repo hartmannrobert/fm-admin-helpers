@@ -20,7 +20,7 @@ window.addEventListener("message", (ev) => {
   if (ev.source !== window) return;
   const msg = ev.data;
   if (!msg || msg.type !== "FM_CONFIG") return;
-  FM.config = { ...CONFIG_DEFAULTS, ...(msg.payload || {}) };
+  FM.config = { ...CONFIG_DEFAULTS, ...(FM.config || {}), ...(msg.payload || {}) };
   window.dispatchEvent(new CustomEvent("FM_CONFIG_APPLIED"));
 });
 
@@ -94,6 +94,11 @@ function mainTick() {
   }
 
   // ── Field Editor Presets ─────────────────────────────────────────────────────
+  // Toggled unconditionally (not inside the isEnabled block below) so CSS scoped
+  // to this class in content.css reacts live, without needing a page reload.
+  FM.safeRun("fieldDefaultsWidthClass", () => {
+    document.documentElement.classList.toggle("fm-field-defaults-enabled", FM.isEnabled("enabledFieldDefaults"));
+  });
   if (FM.isEnabled("enabledFieldDefaults")) {
     FM.safeRun("fieldDefaults", () => FM.features?.fieldDefaults?.tick?.());
   }
