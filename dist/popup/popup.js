@@ -10,6 +10,7 @@ const FEATURES = [
   { id: "opt-adminui",   key: "enabledAdminUi" },
   { id: "opt-fielddefaults", key: "enabledFieldDefaults" },
   { id: "opt-fielddefaults-autoapply", key: "enabledFieldDefaultsAutoApply" },
+  { id: "opt-revisionsort", key: "enabledRevisionSort" },
 ];
 
 const DEFAULTS = Object.fromEntries(FEATURES.map((f) => [f.key, true]));

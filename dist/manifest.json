@@ -76,6 +76,7 @@
         "content/feature-workspace.js",
         "content/feature-bom-views.js",
         "content/feature-field-defaults.js",
+        "content/feature-revision-sort.js",
         "content/bootstrap.js"
       ],
       "css": ["content.css"],

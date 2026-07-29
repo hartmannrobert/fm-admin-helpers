@@ -2673,3 +2673,59 @@ html.fm-field-defaults-enabled #contentformdiv textarea[name="fieldDesc"] {
   width: 300px !important;
   max-width: 100%;
 }
+
+/* Revision/state dropdown sort toggle (feature-revision-sort.js) */
+.fm-revision-sort-paper {
+  position: relative;
+  padding-right: 30px !important;
+}
+
+.fm-revision-sort-paper ul[role="menu"] {
+  border: 0 !important;
+}
+
+.fm-revision-sort-toggle {
+  position: absolute;
+  top: 6px;
+  right: 3px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #5f6368;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: none;
+  outline: none;
+  font: inherit;
+  line-height: 1;
+}
+
+.fm-revision-sort-toggle:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.fm-revision-sort-toggle .material-icons {
+  font-size: 16px;
+}
+
+.fm-revision-sort-toggle.fm-revision-sort-active {
+  color: #1976d2;
+}
+
+ul.fm-revision-sort-flex {
+  display: flex;
+  flex-direction: column;
+}
+
+ul.fm-revision-sort-flex > li {
+  flex: 0 0 auto;
+}

@@ -8,6 +8,7 @@ const DEFAULTS = {
     enabledAdminUi: true,
     enabledFieldDefaults: true,
     enabledFieldDefaultsAutoApply: true,
+    enabledRevisionSort: true,
     fmLinkOpenMode: "same"
   };
   

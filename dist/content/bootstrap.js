@@ -12,7 +12,8 @@ const CONFIG_DEFAULTS = {
   enabledBomViews: true,   // BOM Views
   enabledAdminUi: true,    // Admin UI Tweaks (titles + section/collapse toggles)
   enabledFieldDefaults: true, // Field Editor Presets (display length / max length buttons)
-  enabledFieldDefaultsAutoApply: true // Auto-fill the default preset when Data Type / Pick List changes
+  enabledFieldDefaultsAutoApply: true, // Auto-fill the default preset when Data Type / Pick List changes
+  enabledRevisionSort: true // Revision/state dropdown sort-order toggle
 };
 FM.config = FM.config ?? null;
 
@@ -101,6 +102,11 @@ function mainTick() {
   });
   if (FM.isEnabled("enabledFieldDefaults")) {
     FM.safeRun("fieldDefaults", () => FM.features?.fieldDefaults?.tick?.());
+  }
+
+  // ── Revision Sort ────────────────────────────────────────────────────────────
+  if (FM.isEnabled("enabledRevisionSort")) {
+    FM.safeRun("revisionSort", () => FM.runRevisionSortTick?.());
   }
 }
 
