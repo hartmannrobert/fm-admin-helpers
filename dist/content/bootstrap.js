@@ -92,6 +92,7 @@ function mainTick() {
   // ── BOM Views ───────────────────────────────────────────────────────────────
   if (FM.isEnabled("enabledBomViews")) {
     FM.safeRun("bomViews", () => FM.runBomViewsTick?.());
+    FM.safeRun("bomSourcePopup", () => FM.runBomSourcePopupTick?.());
   }
 
   // ── Field Editor Presets ─────────────────────────────────────────────────────

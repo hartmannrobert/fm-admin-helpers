@@ -2729,3 +2729,101 @@ ul.fm-revision-sort-flex {
 ul.fm-revision-sort-flex > li {
   flex: 0 0 auto;
 }
+
+/* ---------------------------
+   BOM field-source popup (workspace manager → BOM tab)
+   --------------------------- */
+
+/* Popup box is sized inline from feature-bom-source-popup.js; here we only make
+   the panel a flex column so the field list takes the leftover height and
+   scrolls, with header/footer pinned. flex-basis 0 + height:auto is deliberate:
+   the page's own height on the list must not become the flex basis. */
+#adminBomSourcePopup {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* The page pins the panel's own width/height, so it has to be forced to fill
+   the (resized) popup box — otherwise the box grows and the content doesn't. */
+#adminBomSourcePopup .fieldSourcePanel {
+  display: flex;
+  flex-direction: column;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  box-sizing: border-box;
+}
+
+#adminBomSourcePopup .fieldSourceHeader,
+#adminBomSourcePopup .fieldSourceFooter {
+  flex: 0 0 auto;
+}
+
+#adminBomSourcePopup .fieldSourceUl1 {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto !important;
+  max-height: none !important;
+  width: auto !important;
+  max-width: none !important;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* The opened group's own sublist carries a fixed height and scrolls itself,
+   which left the popup's grown height unused. Make ul1 the only scroller.
+   Scoped to expanded (or filtered) subtrees so a max-height-based collapse of
+   the other groups is left alone. */
+#adminBomSourcePopup .fieldSourceUl1 > li.expanded ul,
+#adminBomSourcePopup .fieldSourceUl1 > li.expanded li,
+#adminBomSourcePopup.fm-src-filtering .fieldSourceUl1 ul,
+#adminBomSourcePopup.fm-src-filtering .fieldSourceUl1 li {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+#adminBomSourcePopup .fieldSourceHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#adminBomSourcePopup .fieldSourceHeader .title {
+  flex: 0 0 auto;
+}
+
+#adminBomSourcePopup .fieldSourceHeader .closePanel {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+#fm-bom-source-filter {
+  flex: 1 1 auto;
+  min-width: 100px;
+  max-width: 320px;
+  margin: 0;
+}
+
+/* Filter mode: force every nested list open so matches deep in a collapsed
+   group are reachable, without touching the page's own "expanded" classes. */
+#adminBomSourcePopup [data-fm-src-hide] {
+  display: none !important;
+}
+
+#adminBomSourcePopup.fm-src-filtering .fieldSourceUl2,
+#adminBomSourcePopup.fm-src-filtering .fieldSourceUl3,
+#adminBomSourcePopup.fm-src-filtering .fieldSourceUl4 {
+  display: block !important;
+}
+
+/* Keyboard cursor: our own highlight, moved by ↑/↓. Distinct from the page's
+   "active" class, which only changes once Enter commits the pick. */
+#adminBomSourcePopup li.sourceField.fm-src-cursor {
+  outline: 2px solid #0696d7;
+  outline-offset: -2px;
+  background: rgba(6, 150, 215, 0.14);
+}
